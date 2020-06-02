@@ -18,42 +18,42 @@
 	Keith ditchburn 2019
 */
 
-#include "ExternalLibraryHeaders.h"
-#include "Helper.h"
-#include "Simulation.h"
-
-int main()
-{
-	// Use the helper function to set up GLFW, GLEW and OpenGL
-	GLFWwindow* window{ Helpers::CreateGLFWWindow(1024, 768, "Simple example") };
-	if (!window)
-		return -1;
-
-	// Create an instance of the simulation class and initialise it
-	// If it could not load, exit gracefully
-	Simulation simulation;	
-	if (!simulation.Initialise())
-	{
-		glfwTerminate();
-		return -1;
-	}
-
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
-
-	// Enter main GLFW loop until the user closes the window
-	while (!glfwWindowShouldClose(window))
-	{				
-		if (!simulation.Update(window))
-			break;
-		
-		// GLFW updating
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-	}
-
-	// Clean up and exit
-	glfwDestroyWindow(window);
-	glfwTerminate();
-
-	return 0;
-}
+//#include "ExternalLibraryHeaders.h"
+//#include "Helper.h"
+//#include "Simulation.h"
+//
+//int main()
+//{
+//	// Use the helper function to set up GLFW, GLEW and OpenGL
+//	GLFWwindow* window{ Helpers::CreateGLFWWindow(1024, 768, "Simple example") };
+//	if (!window)
+//		return -1;
+//
+//	// Create an instance of the simulation class and initialise it
+//	// If it could not load, exit gracefully
+//	Simulation simulation;	
+//	if (!simulation.Initialise())
+//	{
+//		glfwTerminate();
+//		return -1;
+//	}
+//
+//	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+//
+//	// Enter main GLFW loop until the user closes the window
+//	while (!glfwWindowShouldClose(window))
+//	{				
+//		if (!simulation.Update(window))
+//			break;
+//		
+//		// GLFW updating
+//		glfwSwapBuffers(window);
+//		glfwPollEvents();
+//	}
+//
+//	// Clean up and exit
+//	glfwDestroyWindow(window);
+//	glfwTerminate();
+//
+//	return 0;
+//}
