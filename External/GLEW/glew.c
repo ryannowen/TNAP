@@ -30,7 +30,7 @@
 ** THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-
+#define GLEW_INCLUDE "GL/glew.h"
 
 #ifndef GLEW_INCLUDE
 #include "glew.h"

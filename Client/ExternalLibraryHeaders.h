@@ -1,7 +1,8 @@
 #pragma once
 
 // Glew is a library that handles OpenGL extensions for us
-#include <glew.h>
+//#include <glew.h>
+#include <GL/glew.h>
 
 // GLFW is a library to handle OpenGL window setup as well as input
 #include <GLFW/glfw3.h>
