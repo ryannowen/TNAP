@@ -18,13 +18,67 @@
 	Keith ditchburn 2019
 */
 
-//#include "ExternalLibraryHeaders.h"
-//#include "Helper.h"
-//#include "Simulation.h"
-//
+#include "ExternalLibraryHeaders.h"
+#include "Helper.h"
+#include "Simulation.h"
+#include "ImGUI/imgui.h"
+#include "ImGUI/imgui_impl_glfw.h"
+#include "ImGUI/imgui_impl_opengl3.h"
 
 int main()
 {
+	// Use the helper function to set up GLFW, GLEW and OpenGL
+	GLFWwindow* window{ Helpers::CreateGLFWWindow(1600, 900, "Simple example") };
+	if (!window)
+		return -1;
+
+	// Create an instance of the simulation class and initialise it
+	// If it could not load, exit gracefully
+	Simulation simulation;
+	if (!simulation.Initialise())
+	{
+		glfwTerminate();
+		return -1;
+	}
+
+	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+
+	ImGui::CreateContext();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
+	ImGui::StyleColorsDark();
+
+	bool show_demo_window = true;
+
+	// Enter main GLFW loop until the user closes the window
+	while (!glfwWindowShouldClose(window))
+	{
+		if (!simulation.Update(window))
+			break;
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		if (show_demo_window)
+			ImGui::ShowDemoWindow(&show_demo_window);
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		//ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+
+		// GLFW updating
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+	}
+
+	// Clean up and exit
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
+
 	return 0;
 }
 
