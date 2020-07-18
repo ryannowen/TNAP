@@ -29,9 +29,11 @@
 int main()
 {
 	// Use the helper function to set up GLFW, GLEW and OpenGL
-	GLFWwindow* window{ Helpers::CreateGLFWWindow(1600, 900, "Simple example") };
+	GLFWwindow* window{ Helpers::CreateGLFWWindow(1600, 900, "TNAP") };
 	if (!window)
 		return -1;
+
+	
 
 	// Create an instance of the simulation class and initialise it
 	// If it could not load, exit gracefully
@@ -51,6 +53,7 @@ int main()
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+	
 	//io.ConfigViewportsNoAutoMerge = true;
 	//io.ConfigViewportsNoTaskBarIcon = true;
 
@@ -88,43 +91,29 @@ int main()
 	bool show_another_window = false;
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-	GLuint textureBuffer;
-	glGenTextures(1, &textureBuffer);
-	glBindTexture(GL_TEXTURE_2D, textureBuffer);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	std::string textName("aqua_pig_2K.png");
-	Helpers::ImageLoader image = Helpers::ImageLoader();
-	if (!image.Load("Data\\Textures\\" + textName))
-		std::cerr << textName << "does not exist Returning missing texture" << std::endl;
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.Width(), image.Height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image.GetData());
-
 	ImVec2 imageSize(256, 256);
-
 	// Enter main GLFW loop until the user closes the window
 	while (!glfwWindowShouldClose(window))
 	{
 		if (!simulation.Update(window))
 			break;
 
-		ImGui_ImplOpenGL3_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
 
-		if (show_demo_window)
+
+		/*if (show_demo_window)
 			ImGui::ShowDemoWindow(&show_demo_window);
 
 		ImGui::Begin("Image Test");
 
 		ImGui::SliderFloat2("Texture Size", &imageSize.x, 64, 512);
-		ImGui::Image((void*)(intptr_t)textureBuffer, imageSize);
+		ImGui::Image((ImTextureID)textureBuffer, imageSize);
 		ImGui::SetWindowSize("Image Test", imageSize);
 		
-		ImGui::End();
+		ImGui::End();*/
 
+		
+
+		
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -144,6 +133,8 @@ int main()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+
 
 	// Clean up and exit
 	ImGui_ImplOpenGL3_Shutdown();

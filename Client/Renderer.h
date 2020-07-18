@@ -19,6 +19,10 @@ private:
 	GLuint m_numElements{ 0 };
 
 	bool CreateProgram();
+
+	GLuint fbo;
+	GLuint textureBuffer;
+
 public:
 	Renderer()=default;
 	~Renderer();

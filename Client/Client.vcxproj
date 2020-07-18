@@ -112,6 +112,10 @@
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Simulation.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\Shaders\fragment_shader.glsl" />
+    <None Include="Data\Shaders\vertex_shader.glsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

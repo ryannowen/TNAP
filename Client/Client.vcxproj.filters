@@ -114,4 +114,8 @@
       <Filter>ImGui</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Data\Shaders\fragment_shader.glsl" />
+    <None Include="Data\Shaders\vertex_shader.glsl" />
+  </ItemGroup>
 </Project>

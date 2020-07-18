@@ -23,7 +23,7 @@ private:
 	bool HandleInput(GLFWwindow* window);
 public:
 	// Initialise this as well as the renderer, returns false on error
-	bool Initialise();	
+	bool Initialise();
 
 	// Update the simulation (and render) returns false if program should clse
 	bool Update(GLFWwindow* window);
