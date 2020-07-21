@@ -8,6 +8,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <AdditionalIncludeDirectories>$(SolutionDir)External\FREEIMAGE;$(SolutionDir)External\ASSIMP\include;$(SolutionDir)External\GLM;$(SolutionDir)External\GLFW\include;$(SolutionDir)External\GLEW;$(SolutionDir)External\SFML\include;$(SolutionDir)External\ImGui;C:\Program Files (x86)\Visual Leak Detector\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>USE_IMGUI;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>C:\Program Files (x86)\Visual Leak Detector\lib\Win64;%(AdditionalLibraryDirectories);$(SolutionDir)External\GLFW\lib;$(SolutionDir)External\ASSIMP\lib;$(SolutionDir)External\FREEIMAGE;$(SolutionDir)External\SFML\lib</AdditionalLibraryDirectories>

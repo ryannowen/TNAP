@@ -88,12 +88,15 @@
     <ClCompile Include="..\External\ImGui\imgui_impl_opengl3.cpp" />
     <ClCompile Include="..\External\ImGui\imgui_widgets.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Helper.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
+    <ClCompile Include="TNAPImGui.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Simulation.cpp" />
+    <ClCompile Include="System.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\External\ImGui\imconfig.h" />
@@ -105,12 +108,16 @@
     <ClInclude Include="..\External\ImGui\imstb_textedit.h" />
     <ClInclude Include="..\External\ImGui\imstb_truetype.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="Engine.hpp" />
     <ClInclude Include="ExternalLibraryHeaders.h" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="ImageLoader.h" />
+    <ClInclude Include="ImGuiInclude.hpp" />
+    <ClInclude Include="TNAPImGui.hpp" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Simulation.h" />
+    <ClInclude Include="System.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

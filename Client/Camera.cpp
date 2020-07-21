@@ -100,10 +100,12 @@ namespace Helpers
 			int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 			if (state != lastState)
 			{
+#if !USE_IMGUI
 				if (state == GLFW_PRESS)
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				else
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
 
 				lastState = state;
 
