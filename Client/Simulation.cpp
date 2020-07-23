@@ -1,12 +1,17 @@
 #include "Simulation.h"
 #include "Renderer.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 // Initialise this as well as the renderer, returns false on error
 bool Simulation::Initialise()
 {
 	// Set up camera
 	m_camera = std::make_shared<Helpers::Camera>();
-	m_camera->Initialise(glm::vec3(0, 200, 900), glm::vec3(0)); // Jeep
+	//m_camera->Initialise(glm::vec3(0, 200, 900), glm::vec3(0)); // Jeep
+	m_camera->Initialise(glm::vec3(0, 20, 60), glm::vec3(0.3f, 0.0f, 0.0f));
 	//m_camera->Initialise(glm::vec3(-13.82f, 5.0f, 1.886f), glm::vec3(0.25f, 1.5f, 0), 30.0f,0.8f); // Aqua pig
 
 	// Set up renderer
@@ -47,9 +52,27 @@ bool Simulation::Update(GLFWwindow* window)
 	float timeNow = (float)glfwGetTime();
 	float deltaTime{ timeNow - m_lastTime };
 	m_lastTime = timeNow;
+#if USEIMGUI
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+	{
+		ImGui::SetWindowFocus();
+	}
 
 	// The camera needs updating to handle user input internally
+	if (m_renderer->viewportSelected && USEIMGUI)
+	{
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		m_camera->Update(window, deltaTime);
+	}
+	else
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#else
+
 	m_camera->Update(window, deltaTime);
+
+#endif
+
+
 
 	// Render the scene
 	m_renderer->Render(*m_camera, deltaTime);

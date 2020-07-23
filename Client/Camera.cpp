@@ -76,7 +76,7 @@ namespace Helpers
 		// Accelerate movement and rotation if left control key held
 		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 		{
-			worldUnitsPerSecond *= 10.0f;
+			worldUnitsPerSecond *= 5.0f;
 			radiansPerSecond *= 10.0f;
 		}
 
@@ -100,11 +100,13 @@ namespace Helpers
 			int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 			if (state != lastState)
 			{
+#if !USEIMGUI
+
 				if (state == GLFW_PRESS)
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				else
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
+#endif
 				lastState = state;
 
 				double xpos, ypos;
@@ -118,8 +120,8 @@ namespace Helpers
 				double xpos, ypos;
 				glfwGetCursorPos(window, &xpos, &ypos);
 
-				float pitchChange = ((float)xpos - initialPos.x) * 0.001f * radiansPerSecond;
-				float yawChange = ((float)ypos - initialPos.y) * 0.001f * radiansPerSecond;
+				float pitchChange = ((float)xpos - initialPos.x) * 0.005f;
+				float yawChange = ((float)ypos - initialPos.y) * 0.005f;
 
 				m_currentRotation.y = pitchChange;
 				m_currentRotation.x = yawChange;

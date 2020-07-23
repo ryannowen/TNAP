@@ -33,7 +33,7 @@ int main()
 	if (!window)
 		return -1;
 
-	
+
 
 	// Create an instance of the simulation class and initialise it
 	// If it could not load, exit gracefully
@@ -43,12 +43,14 @@ int main()
 		glfwTerminate();
 		return -1;
 	}
+#if USEIMGUI
 
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGuiIO& io = ImGui::GetIO(); 
+	(void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;       // Enable Keyboard Controls
 	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
@@ -69,7 +71,7 @@ int main()
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 130");
+	ImGui_ImplOpenGL3_Init("#version 330");
 
 	// Load Fonts
 	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -92,31 +94,22 @@ int main()
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 	ImVec2 imageSize(256, 256);
+
+#endif
 	// Enter main GLFW loop until the user closes the window
 	while (!glfwWindowShouldClose(window))
 	{
+
 		if (!simulation.Update(window))
 			break;
+#if USEIMGUI
 
 
-
-		/*if (show_demo_window)
-			ImGui::ShowDemoWindow(&show_demo_window);
-
-		ImGui::Begin("Image Test");
-
-		ImGui::SliderFloat2("Texture Size", &imageSize.x, 64, 512);
-		ImGui::Image((ImTextureID)textureBuffer, imageSize);
-		ImGui::SetWindowSize("Image Test", imageSize);
-		
-		ImGui::End();*/
 
 		
-
-		
-
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 
 		// Update and Render additional Platform Windows
 		// (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
@@ -128,6 +121,15 @@ int main()
 			ImGui::RenderPlatformWindowsDefault();
 			glfwMakeContextCurrent(backup_current_context);
 		}
+#endif
+
+		/*if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+		{
+			ImGuiID dockspace_id = ImGui::GetID("MyDockspace");
+			static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+
+			ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+		}*/
 
 		// GLFW updating
 		glfwSwapBuffers(window);
@@ -137,9 +139,12 @@ int main()
 
 
 	// Clean up and exit
+#if USEIMGUI
+
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
+#endif
 
 	glfwDestroyWindow(window);
 	glfwTerminate();
