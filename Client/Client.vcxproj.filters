@@ -22,14 +22,38 @@
     <Filter Include="ImGui">
       <UniqueIdentifier>{567dfeb0-c54b-40f1-9c8b-4922b10408e8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Systems">
+      <UniqueIdentifier>{06395e5d-bc36-41e4-acc3-8dc1f32d3072}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems\Renderer">
+      <UniqueIdentifier>{a935814d-b134-4237-b972-8a1719a1580b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems\Renderer\Materials">
+      <UniqueIdentifier>{717b3603-9ced-45c5-b251-4769d94bed14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems\Scene">
+      <UniqueIdentifier>{45362149-1299-47d3-8cce-891e5594ee8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Systems\Scene\Entities">
+      <UniqueIdentifier>{223412b0-3ad9-4c2d-9fc3-8b4f3d2e7db8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Systems">
+      <UniqueIdentifier>{96921271-f1c4-4e93-89ff-a346ba00666a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Systems\Scene">
+      <UniqueIdentifier>{c4446167-5ed8-44bf-a1a5-ee7528d0d357}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Systems\Scene\Entities">
+      <UniqueIdentifier>{0fa38a02-543e-4b22-a584-52a44e30adc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Systems\Renderer">
+      <UniqueIdentifier>{5c2e68e6-503b-4d95-a98d-cc7c70ec26d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Systems\Renderer\Materials">
+      <UniqueIdentifier>{c09d9fbe-2b8d-4abb-8f8b-7ee9202d92aa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Simulation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
@@ -69,44 +93,59 @@
     <ClCompile Include="Engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="System.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TNAPImGui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SceneManager.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="System.cpp">
+      <Filter>Source Files\Systems</Filter>
     </ClCompile>
-    <ClCompile Include="Scene.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files\Systems\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="FrameBuffer.cpp">
+      <Filter>Source Files\Systems\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer3D.cpp">
+      <Filter>Source Files\Systems\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>Source Files\Systems\Renderer\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="PBR.cpp">
+      <Filter>Source Files\Systems\Renderer\Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="UnlitTexture.cpp">
+      <Filter>Source Files\Systems\Renderer\Materials</Filter>
     </ClCompile>
     <ClCompile Include="Entity.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Transform.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Systems\Scene\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Renderable.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Light.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Systems\Scene\Entities</Filter>
     </ClCompile>
     <ClCompile Include="PointLight.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Systems\Scene\Entities</Filter>
     </ClCompile>
     <ClCompile Include="SpotLight.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Systems\Scene\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Source Files\Systems\Scene\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>Source Files\Systems\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneManager.cpp">
+      <Filter>Source Files\Systems\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Simulation.cpp">
+      <Filter>Source Files\Systems\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>Source Files\Systems\Scene\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Simulation.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Helpers</Filter>
     </ClInclude>
@@ -149,38 +188,59 @@
     <ClInclude Include="Engine.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="System.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TNAPImGui.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ImGuiInclude.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SceneManager.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Scene.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="System.hpp">
+      <Filter>Header Files\Systems</Filter>
     </ClInclude>
     <ClInclude Include="Entity.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Transform.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderable.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Systems\Scene\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Light.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Systems\Scene\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="PointLight.hpp">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Renderable.hpp">
+      <Filter>Header Files\Systems\Scene\Entities</Filter>
     </ClInclude>
     <ClInclude Include="SpotLight.hpp">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Systems\Scene\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.hpp">
+      <Filter>Header Files\Systems\Scene\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.hpp">
+      <Filter>Header Files\Systems\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneManager.hpp">
+      <Filter>Header Files\Systems\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation.h">
+      <Filter>Header Files\Systems\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="UnlitTexture.hpp">
+      <Filter>Header Files\Systems\Renderer\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="PBR.hpp">
+      <Filter>Header Files\Systems\Renderer\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.hpp">
+      <Filter>Header Files\Systems\Renderer\Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameBuffer.hpp">
+      <Filter>Header Files\Systems\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.hpp">
+      <Filter>Header Files\Systems\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer3D.hpp">
+      <Filter>Header Files\Systems\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="PointLight.hpp">
+      <Filter>Header Files\Systems\Scene\Entities</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -90,21 +90,26 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="Helper.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
     <ClCompile Include="Light.cpp" />
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="PBR.cpp" />
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Renderable.cpp" />
+    <ClCompile Include="Renderer3D.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneManager.cpp" />
     <ClCompile Include="SpotLight.cpp" />
     <ClCompile Include="TNAPImGui.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Simulation.cpp" />
     <ClCompile Include="System.cpp" />
     <ClCompile Include="Transform.cpp" />
+    <ClCompile Include="UnlitTexture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\External\ImGui\imconfig.h" />
@@ -119,21 +124,26 @@
     <ClInclude Include="Engine.hpp" />
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="ExternalLibraryHeaders.h" />
+    <ClInclude Include="FrameBuffer.hpp" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="ImGuiInclude.hpp" />
     <ClInclude Include="Light.hpp" />
+    <ClInclude Include="Material.hpp" />
+    <ClInclude Include="Model.hpp" />
+    <ClInclude Include="PBR.hpp" />
     <ClInclude Include="PointLight.hpp" />
     <ClInclude Include="Renderable.hpp" />
+    <ClInclude Include="Renderer3D.hpp" />
     <ClInclude Include="Scene.hpp" />
     <ClInclude Include="SceneManager.hpp" />
     <ClInclude Include="SpotLight.hpp" />
     <ClInclude Include="TNAPImGui.hpp" />
     <ClInclude Include="Mesh.h" />
-    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Simulation.h" />
     <ClInclude Include="System.hpp" />
     <ClInclude Include="Transform.hpp" />
+    <ClInclude Include="UnlitTexture.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

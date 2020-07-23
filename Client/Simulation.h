@@ -19,8 +19,6 @@ private:
 	// Remember last update time so we can calculate delta time
 	float m_lastTime{ 0 };
 
-	// Handle any user input. Return false if program should close.
-	bool HandleInput(GLFWwindow* window);
 public:
 	// Initialise this as well as the renderer, returns false on error
 	bool Initialise();	

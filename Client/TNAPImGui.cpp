@@ -2,6 +2,7 @@
 
 #include "TNAPImGui.hpp"
 #include "ExternalLibraryHeaders.h"
+#include "Renderer3D.hpp"
 
 namespace TNAP {
 
@@ -16,7 +17,7 @@ namespace TNAP {
 		ImGui::DestroyContext();
 	}
 
-	void TNAPImGui::init(GLFWwindow* const argWindow)
+	void TNAPImGui::init()
 	{
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -40,7 +41,7 @@ namespace TNAP {
 		}
 
 		// Setup Platform/Renderer bindings
-		ImGui_ImplGlfw_InitForOpenGL(argWindow, true);
+		ImGui_ImplGlfw_InitForOpenGL(Renderer3D::getWindow(), true);
 		ImGui_ImplOpenGL3_Init("#version 330");
 	}
 

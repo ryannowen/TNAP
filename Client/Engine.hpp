@@ -20,8 +20,6 @@ namespace TNAP {
 #if USE_IMGUI
 		TNAPImGui m_TNAPImGui;
 #endif
-
-		GLFWwindow* m_window;
 		Simulation simulation;
 
 	public:

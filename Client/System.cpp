@@ -1,7 +1,9 @@
 #include "System.hpp"
 
 namespace TNAP {
-
+	System::System()
+	{
+	}
 	void System::init()
 	{
 	}
@@ -17,15 +19,4 @@ namespace TNAP {
 	void System::imGuiRender()
 	{
 	}
-
-	void System::setEnabled(const bool argValue)
-	{
-		m_enabled = argValue;
-	}
-
-	inline const bool System::getEnabled() const
-	{
-		return m_enabled;
-	}
-
 }

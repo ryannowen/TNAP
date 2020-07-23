@@ -2,6 +2,8 @@
 #include "ExternalLibraryHeaders.h"
 #include "Helper.h"
 
+#include "Renderer3D.hpp"
+
 namespace TNAP {
 
 	std::unique_ptr<Engine> Engine::s_instance{nullptr};
@@ -12,16 +14,13 @@ namespace TNAP {
 
 	Engine::~Engine()
 	{
-		glfwDestroyWindow(m_window);
-		glfwTerminate();
+
 	}
 
 	void Engine::init()
 	{
-		// Use the helper function to set up GLFW, GLEW and OpenGL
-		m_window = Helpers::CreateGLFWWindow(1600, 900, "TNAP");
-		if (!m_window)
-			return;
+		m_systems.push_back(std::make_unique<Renderer3D>());
+		m_systems.back()->init();
 
 		// Create an instance of the simulation class and initialise it
 		// If it could not load, exit gracefully
@@ -31,23 +30,27 @@ namespace TNAP {
 			return;
 		}
 
-		glfwSetInputMode(m_window, GLFW_STICKY_KEYS, GLFW_TRUE);
-
 #if USE_IMGUI
-		m_TNAPImGui.init(m_window);
+		m_TNAPImGui.init();
 #endif
 	}
 
 	void Engine::update()
 	{
 		// Enter main GLFW loop until the user closes the window
-		while (!glfwWindowShouldClose(m_window))
+		while (!glfwWindowShouldClose(Renderer3D::getWindow()))
 		{
 #if USE_IMGUI
 			m_TNAPImGui.beginRender();
 #endif
 
-			if (!simulation.Update(m_window))
+			for (std::unique_ptr<System>& system : m_systems)
+			{
+				if (system->getEnabled())
+						system->update();
+			}
+
+			if (!simulation.Update(Renderer3D::getWindow()))
 				break;
 
 #if USE_IMGUI
@@ -58,7 +61,7 @@ namespace TNAP {
 #endif
 
 			// GLFW updating
-			glfwSwapBuffers(m_window);
+			glfwSwapBuffers(Renderer3D::getWindow());
 			glfwPollEvents();
 		}
 	}

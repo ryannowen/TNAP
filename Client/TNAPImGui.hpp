@@ -16,7 +16,7 @@ namespace TNAP {
 	public:
 		TNAPImGui();
 		~TNAPImGui();
-		void init(GLFWwindow* const argWindow);
+		void init();
 		void beginRender();
 		void endRender();
 	};
