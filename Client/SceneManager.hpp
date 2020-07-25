@@ -13,7 +13,7 @@ namespace TNAP {
 	private:
 		SceneManager();
 		static std::unique_ptr<TNAP::SceneManager> s_instance;
-		std::unique_ptr<TNAP::Scene> m_scene;
+		std::unique_ptr<TNAP::Scene> m_scene = nullptr;
 
 	public:
 		~SceneManager();
@@ -32,8 +32,11 @@ namespace TNAP {
 		void loadScene(const std::string& argFilePath);
 		void unloadScene();
 		inline TNAP::Scene* const getCurrentScene();
+#if USE_IMGUI
+		virtual void imGuiRender() override;
+#endif
 	};
 
-	inline TNAP::SceneManager* const getSceneManager() { return TNAP::SceneManager::getInstance(); }
+	inline SceneManager* const getSceneManager() { return SceneManager::getInstance(); }
 
 }

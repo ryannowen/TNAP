@@ -1,6 +1,7 @@
 #include "Engine.hpp"
 #include "ExternalLibraryHeaders.h"
 #include "Helper.h"
+#include "SceneManager.hpp"
 
 #include "Renderer3D.hpp"
 
@@ -21,6 +22,8 @@ namespace TNAP {
 	{
 		m_systems.push_back(std::make_unique<Renderer3D>());
 		m_systems.back()->init();
+
+		TNAP::getSceneManager()->init();
 
 		// Create an instance of the simulation class and initialise it
 		// If it could not load, exit gracefully

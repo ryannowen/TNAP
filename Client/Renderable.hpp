@@ -16,7 +16,6 @@ namespace TNAP {
 		~Renderable();
 		virtual void init() override;
 		virtual void update(const TNAP::Transform& argTransform) override;
-
 #if USE_IMGUI
 		virtual void imGuiRenderProperties() override;
 #endif
