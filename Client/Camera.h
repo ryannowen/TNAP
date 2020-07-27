@@ -30,6 +30,8 @@ namespace Helpers
 
 		glm::mat4 CalcRotationMatrix() const;
 		void ClampRotations();
+
+		bool m_active{ true };
 	public:
 		Camera() = default;
 		~Camera() = default;
@@ -67,5 +69,8 @@ namespace Helpers
 				" y:" + std::to_string(m_rotations.y) +
 				" z:" + std::to_string(m_rotations.z);
 		}
+
+		void setActive(const bool argActive) { m_active = argActive; }
+		const bool getActive() const { return m_active; }
 	};
 }

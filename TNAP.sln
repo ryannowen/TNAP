@@ -7,6 +7,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Client\Client.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{15BE32EA-80D0-4E38-A6F5-1AABF4EF47A7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shaders", "Shaders", "{D21B0186-629D-4AC1-A413-4277A86739ED}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Unlit", "Unlit", "{14EC4241-DECC-46B5-AEAE-86C00BFBF815}"
+	ProjectSection(SolutionItems) = preProject
+		Client\Data\Shaders\unlit_fragment_shader.glsl = Client\Data\Shaders\unlit_fragment_shader.glsl
+		Client\Data\Shaders\unlit_vertex_shader.glsl = Client\Data\Shaders\unlit_vertex_shader.glsl
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -24,6 +32,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{14EC4241-DECC-46B5-AEAE-86C00BFBF815} = {D21B0186-629D-4AC1-A413-4277A86739ED}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5D504319-1AAA-4F9B-9F93-93BA8946B845}

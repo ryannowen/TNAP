@@ -47,6 +47,8 @@ namespace Helpers
 	// A model can be made up of a number of mesh
 	struct Mesh
 	{
+		GLuint VAO{ 0 };
+
 		// Name may well be blank, depends on the mesh creator
 		std::string name;
 
@@ -56,7 +58,7 @@ namespace Helpers
 		std::vector<glm::vec2> uvCoords;
 
 		// Elements
-		std::vector<unsigned int> elements;
+		std::vector<GLuint> elements;
 
 		// Index into the material vector held by the ModelLoader
 		size_t materialIndex;

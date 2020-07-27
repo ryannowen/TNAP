@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Message.hpp"
+
 namespace TNAP {
 
 	class System
@@ -11,7 +13,7 @@ namespace TNAP {
 
 		virtual void init();
 		virtual void update();
-		virtual void sendMessage();
+		virtual void sendMessage(TNAP::Message* const argMessage);
 		virtual void imGuiRender();
 		inline void setEnabled(const bool argValue) { m_enabled = argValue; }
 		inline const bool getEnabled() const { return m_enabled; }

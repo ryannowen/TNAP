@@ -52,6 +52,9 @@
     <Filter Include="Header Files\Systems\Renderer\Materials">
       <UniqueIdentifier>{c09d9fbe-2b8d-4abb-8f8b-7ee9202d92aa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Messages">
+      <UniqueIdentifier>{f92640d0-1123-4ebc-8761-87d9fcd0c578}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp">
@@ -241,6 +244,12 @@
     </ClInclude>
     <ClInclude Include="PointLight.hpp">
       <Filter>Header Files\Systems\Scene\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Message.hpp">
+      <Filter>Header Files\Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="GetTextureMessage.hpp">
+      <Filter>Header Files\Messages</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -10,9 +10,6 @@ struct GLFWwindow;
 class Simulation
 {
 private:
-	// A simple camera
-	std::shared_ptr<Helpers::Camera> m_camera;
-
 	// The renderer
 	std::shared_ptr<Renderer> m_renderer;
 
@@ -25,5 +22,8 @@ public:
 
 	// Update the simulation (and render) returns false if program should clse
 	bool Update(GLFWwindow* window);
+
+	// A simple camera
+	static std::shared_ptr<Helpers::Camera> m_camera;
 };
 

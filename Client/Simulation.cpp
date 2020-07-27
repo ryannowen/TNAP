@@ -1,5 +1,7 @@
 #include "Simulation.h"
 
+std::shared_ptr<Helpers::Camera> Simulation::m_camera{ nullptr };
+
 // Initialise this as well as the renderer, returns false on error
 bool Simulation::Initialise()
 {

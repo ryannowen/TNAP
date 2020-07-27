@@ -125,11 +125,13 @@
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="ExternalLibraryHeaders.h" />
     <ClInclude Include="FrameBuffer.hpp" />
+    <ClInclude Include="GetTextureMessage.hpp" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="ImGuiInclude.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Material.hpp" />
+    <ClInclude Include="Message.hpp" />
     <ClInclude Include="Model.hpp" />
     <ClInclude Include="PBR.hpp" />
     <ClInclude Include="PointLight.hpp" />

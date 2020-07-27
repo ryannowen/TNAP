@@ -70,6 +70,9 @@ namespace Helpers
 	// Update camera position and rotations and handle user input
 	void Camera::Update(GLFWwindow* window, float timePassedSecs)
 	{
+		if (!m_active)
+			return;
+
 		float worldUnitsPerSecond{ m_translationPerSecond };
 		float radiansPerSecond{ m_rotationPerSecond };
 
@@ -100,12 +103,12 @@ namespace Helpers
 			int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
 			if (state != lastState)
 			{
-#if !USE_IMGUI
-				if (state == GLFW_PRESS)
+//#if !USE_IMGUI
+				/*if (state == GLFW_PRESS)
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				else
-					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-#endif
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);*/
+//#endif
 
 				lastState = state;
 

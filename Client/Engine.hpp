@@ -36,7 +36,7 @@ namespace TNAP {
 
 		void init();
 		void update();
-		void sendMessage();
+		void sendMessage(TNAP::Message* const argMessage);
 	};
 
 	inline Engine* const getEngine() { return Engine::getInstance(); }

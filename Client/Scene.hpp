@@ -45,7 +45,7 @@ namespace TNAP {
 			m_entities.emplace_back(std::make_shared<EntityType>(args...));
 			m_entities.back()->setName(argName);
 			m_mapEntities.insert({ argName, m_entities.size() - 1 });
-			return m_entities.back();
+			return m_entities.back().get();
 		}
 
 		return nullptr;

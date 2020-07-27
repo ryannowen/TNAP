@@ -12,7 +12,7 @@ namespace TNAP {
 	{
 	}
 
-	void System::sendMessage()
+	void System::sendMessage(TNAP::Message* const argMessage)
 	{
 	}
 

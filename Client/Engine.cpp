@@ -20,7 +20,7 @@ namespace TNAP {
 
 	void Engine::init()
 	{
-		m_systems.push_back(std::make_unique<Renderer3D>());
+		m_systems.push_back(std::make_unique<TNAP::Renderer3D>());
 		m_systems.back()->init();
 
 		TNAP::getSceneManager()->init();
@@ -41,7 +41,7 @@ namespace TNAP {
 	void Engine::update()
 	{
 		// Enter main GLFW loop until the user closes the window
-		while (!glfwWindowShouldClose(Renderer3D::getWindow()))
+		while (!glfwWindowShouldClose(TNAP::Renderer3D::getWindow()))
 		{
 #if USE_IMGUI
 			m_TNAPImGui.beginRender();
@@ -53,12 +53,18 @@ namespace TNAP {
 						system->update();
 			}
 
-			if (!simulation.Update(Renderer3D::getWindow()))
+			if (!simulation.Update(TNAP::Renderer3D::getWindow()))
 				break;
 
 #if USE_IMGUI
 			bool showDemoWindow = true;
 			ImGui::ShowDemoWindow(&showDemoWindow);
+
+			for (std::unique_ptr<TNAP::System>& system : m_systems)
+			{
+				if (system->getEnabled())
+					system->imGuiRender();
+			}
 
 			m_TNAPImGui.endRender();
 #endif
@@ -69,8 +75,14 @@ namespace TNAP {
 		}
 	}
 
-	void Engine::sendMessage()
+	void Engine::sendMessage(TNAP::Message* const argMessage)
 	{
+		for (std::unique_ptr<TNAP::System>& system : m_systems)
+		{
+			if (system->getEnabled())
+				system->sendMessage(argMessage);
+		}
+
 	}
 
 }
