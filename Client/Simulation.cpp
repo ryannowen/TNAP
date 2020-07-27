@@ -1,5 +1,7 @@
 #include "Simulation.h"
 
+#include "ImGuiInclude.hpp"
+
 std::shared_ptr<Helpers::Camera> Simulation::m_camera{ nullptr };
 
 // Initialise this as well as the renderer, returns false on error
@@ -22,6 +24,12 @@ bool Simulation::Update(GLFWwindow* window)
 	float timeNow = (float)glfwGetTime();
 	float deltaTime{ timeNow - m_lastTime };
 	m_lastTime = timeNow;
+
+	ImGui::Begin("Stats");
+
+	ImGui::Text(("FPS: " + std::to_string(1 / deltaTime)).c_str());
+
+	ImGui::End();
 
 	// The camera needs updating to handle user input internally
 	m_camera->Update(window, deltaTime);

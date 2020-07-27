@@ -52,7 +52,7 @@ namespace TNAP {
 		std::vector<GLuint> m_programs;
 
 		// Map<ModelHandle, Vector<Pair<Vector<ModelTransform>, Vector<MaterialHandles>>>>
-		std::unordered_map<size_t, std::vector<std::pair<std::vector<TNAP::Transform>, std::vector<size_t>>>> m_batchRenders;
+		std::unordered_map<size_t, std::vector<std::pair<std::vector<glm::mat4>, std::vector<size_t>>>> m_batchRenders;
 
 		std::vector<TNAP::Renderable*> m_nextRenders;
 		std::vector<TNAP::Light*> m_nextLights;

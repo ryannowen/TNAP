@@ -47,7 +47,6 @@ namespace TNAP {
 
 		glfwSetInputMode(s_window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-
 		loadModel("AssaultRifleModel.fbx"); // TEMP
 		loadTexture(TNAP::ETextureType::eAO, "aqua_pig_2K.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "MissingTexture.jpg");
@@ -92,6 +91,36 @@ namespace TNAP {
 
 		m_models.back().loadFromFile("Data\\Models\\" + argFilePath);
 		// TODO Log Model loaded
+
+
+		std::vector<glm::mat4> transforms
+		{
+			glm::mat4(1)
+		};
+
+		for (int i = 0; i < 13000; i++)
+		{
+			glm::mat4 newTransform(1);
+
+			newTransform = glm::translate(newTransform, glm::vec3(rand() % 1000, rand() % 1000, rand() % 1000));
+			newTransform = glm::rotate(newTransform, static_cast<float>(rand() % 360), glm::vec3(1, 0, 0));
+			newTransform = glm::rotate(newTransform, static_cast<float>(rand() % 360), glm::vec3(0, 1, 0));
+			newTransform = glm::rotate(newTransform, static_cast<float>(rand() % 360), glm::vec3(0, 0, 1));
+
+			transforms.push_back(newTransform);
+		}
+
+		std::vector<size_t> materialHandles
+		{
+			0
+		};
+
+		std::vector<std::pair<std::vector<glm::mat4>, std::vector<size_t>>> modelTemp
+		{
+			{transforms, materialHandles}
+		};
+
+		m_batchRenders.insert({ 0, modelTemp });
 	}
 
 	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
@@ -264,15 +293,65 @@ namespace TNAP {
 			const Model* const model{ &m_models.at(modelBatch.first) };
 
 			// Transforms, MaterialHandles
-			for (const std::pair<std::vector<TNAP::Transform>, std::vector<size_t>> batch : modelBatch.second)
+			for (const std::pair<std::vector<glm::mat4>, std::vector<size_t>>& batch : modelBatch.second)
 			{
+				if (batch.first.size() <= 0)
+					continue;
+
+				const std::vector<std::unique_ptr<Helpers::Mesh>>& meshes{ model->getMeshVector() };
+				
+				for (int i = 0; i < meshes.size(); i++)
+				{
+					glBindVertexArray(meshes[i]->VAO);
+
+					if (i >= batch.second.size())
+						m_materials[0]->sendShaderData();
+					else
+						m_materials[batch.second[i]]->sendShaderData();
+
+					if (batch.first.size() > 1) // Batch Draw
+					{
+						GLuint batchRenderingBuffer{ 0 };
+						glGenBuffers(1, &batchRenderingBuffer);
+						glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
+						glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_STATIC_DRAW);
+
+						// Set attribute pointers for matrix (4 times vec4)
+						glEnableVertexAttribArray(3);
+						glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+						glEnableVertexAttribArray(4);
+						glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+						glEnableVertexAttribArray(5);
+						glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+						glEnableVertexAttribArray(6);
+						glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+						glVertexAttribDivisor(3, 1);
+						glVertexAttribDivisor(4, 1);
+						glVertexAttribDivisor(5, 1);
+						glVertexAttribDivisor(6, 1);
+
+						glDrawElementsInstanced(GL_TRIANGLES, meshes[i]->elements.size(), GL_UNSIGNED_INT, 0, batch.first.size());
+
+						glDeleteBuffers(1, &batchRenderingBuffer);
+
+						Helpers::CheckForGLError();
+					}
+					else // Normal Draw
+					{
+
+						glDrawElements(GL_TRIANGLES, meshes[i]->elements.size(), GL_UNSIGNED_INT, (void*)0);
+					}
+
+					glBindVertexArray(0);
+				}
 
 			}
 
 		}
 
 
-		for (TNAP::Model& model : m_models)
+		/*for (TNAP::Model& model : m_models)
 		{
 			for (std::unique_ptr<Helpers::Mesh>& mesh : model.getMeshVector())
 			{
@@ -283,7 +362,7 @@ namespace TNAP {
 				glBindVertexArray(0);
 
 			}
-		}
+		}*/
 
 		m_windowFrameBuffer.unbind();
 
