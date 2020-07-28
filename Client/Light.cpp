@@ -12,7 +12,7 @@ namespace TNAP {
 	{
 	}
 
-	void Light::update(const Transform& argTransform)
+	void Light::update(const glm::mat4& parentTransform)
 	{
 	}
 

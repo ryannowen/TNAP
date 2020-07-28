@@ -15,7 +15,7 @@ namespace TNAP {
 	public:
 		Light();
 		~Light();
-		virtual void update(const Transform& argTransform) override;
+		virtual void update(const glm::mat4& parentTransform) override;
 
 		inline void setColour(const glm::vec3& argColour) { m_colour = argColour; }
 		inline const glm::vec3& getColour() const { return m_colour; }

@@ -251,5 +251,11 @@
     <ClInclude Include="GetTextureMessage.hpp">
       <Filter>Header Files\Messages</Filter>
     </ClInclude>
+    <ClInclude Include="SubmitModelMessage.hpp">
+      <Filter>Header Files\Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="GetMaterialMessage.hpp">
+      <Filter>Header Files\Messages</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

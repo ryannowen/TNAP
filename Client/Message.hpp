@@ -9,7 +9,9 @@ namespace TNAP
 		enum class EMessageType
 		{
 			eUnknown,
-			eGetTextureMessage
+			eGetTextureMessage,
+			eSubmitModelMessage,
+			eGetMaterialMessage
 		};
 
 	protected:

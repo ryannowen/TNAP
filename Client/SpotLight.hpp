@@ -13,7 +13,7 @@ namespace TNAP {
 		SpotLight();
 		~SpotLight();
 
-		virtual void update(const Transform& argTransform) override;
+		virtual void update(const glm::mat4& parentTransform) override;
 
 		inline void setFov(const float argFov) { m_fov = argFov; }
 		inline const float getFov() const { return m_fov; }

@@ -15,6 +15,8 @@ namespace TNAP {
 		Transform();
 		~Transform();
 
+		Transform calculateTransform(const Transform& argTransform) const;
+
 		inline void setTranslation(const glm::vec3& argTranslation) { m_translation = argTranslation; }
 		inline const glm::vec3& getTranslation() const { return m_translation; }
 		inline glm::vec3& getTranslation() { return m_translation; }
@@ -26,6 +28,8 @@ namespace TNAP {
 		inline void setScale(const glm::vec3& argScale) { m_scale = argScale; }
 		inline const glm::vec3& getScale() const { return m_scale; }
 		inline glm::vec3& getScale() { return m_scale; }
+
+		const glm::mat4 getMatrix() const;
 	};
 
 }

@@ -4,9 +4,12 @@
 #include <unordered_map>
 #include <vector>
 #include <memory>
+#include <utility>
+#include "Renderable.hpp"
 
 namespace TNAP {
-	
+
+	class Message;
 	class Entity;
 
 	class Scene
@@ -29,7 +32,8 @@ namespace TNAP {
 		TNAP::Entity* const findEntity(const size_t argHandle);
 		void destroyEntity(const std::string& argName);
 		void destroyEntity(const size_t argHandle);
-		void sendMessage();
+
+		void sendMessage(TNAP::Message* const argMessage);
 
 #if USE_IMGUI
 		void imGuiRender();
@@ -39,13 +43,11 @@ namespace TNAP {
 	template<class EntityType, typename... Args>
 	inline EntityType* const Scene::addEntity(const std::string& argName, const Args&... args)
 	{
-
-		if (m_mapEntities.find(argName) == m_mapEntities.end())
+		if (m_mapEntities.insert({ argName, m_entities.size() }).second)
 		{
 			m_entities.emplace_back(std::make_shared<EntityType>(args...));
 			m_entities.back()->setName(argName);
-			m_mapEntities.insert({ argName, m_entities.size() - 1 });
-			return m_entities.back().get();
+			return static_cast<EntityType*>(m_entities.back().get());
 		}
 
 		return nullptr;

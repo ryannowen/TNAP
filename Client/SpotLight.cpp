@@ -10,7 +10,7 @@ namespace TNAP {
 	{
 	}
 
-	void SpotLight::update(const Transform& argTransform)
+	void SpotLight::update(const glm::mat4& parentTransform)
 	{
 	}
 

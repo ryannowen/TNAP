@@ -47,6 +47,8 @@ namespace TNAP {
 			m_TNAPImGui.beginRender();
 #endif
 
+			TNAP::getSceneManager()->update();
+
 			for (std::unique_ptr<System>& system : m_systems)
 			{
 				if (system->getEnabled())
@@ -59,6 +61,8 @@ namespace TNAP {
 #if USE_IMGUI
 			bool showDemoWindow = true;
 			ImGui::ShowDemoWindow(&showDemoWindow);
+
+			TNAP::getSceneManager()->imGuiRender();
 
 			for (std::unique_ptr<TNAP::System>& system : m_systems)
 			{

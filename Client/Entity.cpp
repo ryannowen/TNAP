@@ -1,7 +1,11 @@
 #include "Entity.hpp"
+#include "ImGuiInclude.hpp"
 #include <memory>
 
 namespace TNAP {
+
+	Entity* Entity::s_selected{ nullptr };
+	int Entity::s_treeIndex{ 0 };
 
 	Entity::Entity()
 	{
@@ -15,15 +19,13 @@ namespace TNAP {
 	{
 	}
 
-	void Entity::update(const TNAP::Transform& argTransform)
+	void Entity::update(const glm::mat4& parentTransform)
 	{
-
 		for (const std::shared_ptr<Entity>& entity : m_children)
 		{
-			// TODO: MULTIPLY current transform BY argTransform
-			// TODO: Update children if enabled
+			if (entity->getEnabled())
+				entity->update(parentTransform * getTransform().getMatrix());
 		}
-
 	}
 
 	TNAP::Entity* const Entity::findChild(const size_t argHandle)
@@ -66,17 +68,49 @@ namespace TNAP {
 		// TODO: Send message to scene / parent entity
 	}
 
-	void Entity::sendMessage()
+	void Entity::sendMessage(TNAP::Message* const argMessage)
 	{
 	}
 
 #if USE_IMGUI
 	void Entity::imGuiRenderHierarchy()
 	{
+		static ImGuiTreeNodeFlags base_flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+
+		ImGuiTreeNodeFlags node_flags = base_flags;
+
+		if (this == s_selected)
+			node_flags |= ImGuiTreeNodeFlags_Selected;
+
+		if (0 == m_children.size())
+			node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+
+		bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)s_treeIndex, node_flags, m_name.c_str());
+		if (ImGui::IsItemClicked())
+			s_selected = this;
+
+		s_treeIndex++;
+
+		if (node_open)
+		{
+			for (int i = 0; i < m_children.size(); i++)
+			{
+				m_children[i]->imGuiRenderHierarchy();
+			}
+			if (0 != m_children.size())
+				ImGui::TreePop();
+		}
 	}
 
 	void Entity::imGuiRenderProperties()
 	{
+		ImGui::Text(getName().c_str());
+		if (ImGui::CollapsingHeader("Transform"))
+		{
+			ImGui::InputFloat3("Translation", &getTransform().getTranslation().x);
+			ImGui::InputFloat3("Rotation", &getTransform().getRotation().x);
+			ImGui::InputFloat3("Scale", &getTransform().getScale().x);
+		}
 	}
 #endif
 

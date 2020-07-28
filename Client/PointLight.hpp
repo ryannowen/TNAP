@@ -13,7 +13,7 @@ namespace TNAP {
 		PointLight();
 		~PointLight();
 
-		virtual void update(const Transform& argTransform) override;
+		virtual void update(const glm::mat4& parentTransform) override;
 
 		inline void setRange(const float argRange) { m_range = argRange; }
 		inline const float getRange() const { return m_range; }

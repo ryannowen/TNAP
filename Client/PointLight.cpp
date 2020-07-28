@@ -10,7 +10,7 @@ namespace TNAP {
 	{
 	}
 
-	void PointLight::update(const Transform& argTransform)
+	void PointLight::update(const glm::mat4& parentTransform)
 	{
 	}
 

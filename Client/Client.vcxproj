@@ -125,6 +125,7 @@
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="ExternalLibraryHeaders.h" />
     <ClInclude Include="FrameBuffer.hpp" />
+    <ClInclude Include="GetMaterialMessage.hpp" />
     <ClInclude Include="GetTextureMessage.hpp" />
     <ClInclude Include="Helper.h" />
     <ClInclude Include="ImageLoader.h" />
@@ -140,6 +141,7 @@
     <ClInclude Include="Scene.hpp" />
     <ClInclude Include="SceneManager.hpp" />
     <ClInclude Include="SpotLight.hpp" />
+    <ClInclude Include="SubmitModelMessage.hpp" />
     <ClInclude Include="TNAPImGui.hpp" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Simulation.h" />

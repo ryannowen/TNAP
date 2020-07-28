@@ -7,6 +7,8 @@
 #include "Mesh.h"
 #include "Simulation.h"
 #include "GetTextureMessage.hpp"
+#include "SubmitModelMessage.hpp"
+#include "GetMaterialMessage.hpp"
 
 namespace TNAP {
 	GLFWwindow* Renderer3D::s_window{ nullptr };
@@ -47,9 +49,14 @@ namespace TNAP {
 
 		glfwSetInputMode(s_window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-		loadModel("AssaultRifleModel.fbx"); // TEMP
+		loadModel("Gimble.fbx"); // TEMP
 		loadTexture(TNAP::ETextureType::eAO, "aqua_pig_2K.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "MissingTexture.jpg");
+
+		loadTexture(TNAP::ETextureType::eEmission, "MissingTexture.jpg");
+		loadTexture(TNAP::ETextureType::eMetallic, "MissingTexture.jpg");
+		loadTexture(TNAP::ETextureType::eNormal, "MissingTexture.jpg");
+		loadTexture(TNAP::ETextureType::eRoughness, "MissingTexture.jpg");
 	}
 
 	void Renderer3D::update()
@@ -69,6 +76,85 @@ namespace TNAP {
 
 			textureMessage->m_textureData = textureData.first.get();
 			textureMessage->m_textureBinding = textureData.second;
+		}
+		break;
+
+		case Message::EMessageType::eSubmitModelMessage:
+		{
+			SubmitModelMessage* const submitModel{ static_cast<SubmitModelMessage*>(argMessage) };
+
+			// Map<ModelHandle, Vector<Pair<Vector<ModelTransform>, Vector<MaterialHandles>>>>
+
+			if (m_batchRenders.find(submitModel->m_modelHandle) == m_batchRenders.end())
+			{
+				// New Model
+				std::vector<glm::mat4> transforms
+				{
+					submitModel->m_transform
+				};
+
+				std::vector<size_t> materialHandle
+				{
+					*submitModel->m_materialHandle
+				};
+
+				std::vector<std::pair< std::vector<glm::mat4>, std::vector<size_t> >> temp
+				{
+					{transforms, materialHandle}
+				};
+
+				m_batchRenders.insert({ submitModel->m_modelHandle, temp });
+			}
+			else
+			{
+				// Existing Model
+				bool foundMatch = false;
+				for (std::pair< std::vector<glm::mat4>, std::vector<size_t> >& pair : m_batchRenders.at(submitModel->m_modelHandle))
+				{
+					bool matchingMaterials = true;
+					for (int i = 0; i < pair.second.size(); i++)
+					{
+						if (pair.second[i] != (*submitModel->m_materialHandle)[i])
+						{
+							matchingMaterials = false;
+							break;
+						}
+					}
+					if (matchingMaterials)
+					{
+						pair.first.push_back(submitModel->m_transform);
+						foundMatch = true;
+						break;
+					}
+				}
+
+				if (!foundMatch)
+				{
+					std::vector<glm::mat4> transforms
+					{
+						submitModel->m_transform
+					};
+
+					std::vector<size_t> materialHandle
+					{
+						*submitModel->m_materialHandle
+					};
+
+					m_batchRenders.at(submitModel->m_modelHandle).emplace_back(std::pair< std::vector<glm::mat4>, std::vector<size_t>>(transforms, materialHandle));
+				}
+			}
+
+		}
+		break;
+
+		case Message::EMessageType::eGetMaterialMessage:
+		{
+			GetMaterialMessage* const materialMessage{ static_cast<GetMaterialMessage*>(argMessage) };
+
+			for (int i = 0; i < materialMessage->m_materialHandle->size(); i++)
+			{
+				materialMessage->m_materialVector.emplace_back(m_materials.at(materialMessage->m_materialHandle->at(i)).get());
+			}
 		}
 		break;
 
@@ -98,7 +184,7 @@ namespace TNAP {
 			glm::mat4(1)
 		};
 
-		for (int i = 0; i < 13000; i++)
+		for (int i = 0; i < 5; i++)
 		{
 			glm::mat4 newTransform(1);
 
@@ -120,7 +206,7 @@ namespace TNAP {
 			{transforms, materialHandles}
 		};
 
-		m_batchRenders.insert({ 0, modelTemp });
+		//m_batchRenders.insert({ 0, modelTemp });
 	}
 
 	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
@@ -365,6 +451,8 @@ namespace TNAP {
 		}*/
 
 		m_windowFrameBuffer.unbind();
+
+		m_batchRenders.clear();
 
 		// Always a good idea, when debugging at least, to check for GL errors
 		Helpers::CheckForGLError();
