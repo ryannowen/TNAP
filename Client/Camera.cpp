@@ -94,7 +94,10 @@ namespace Helpers
 			m_currentMovement = -GetRightVector() * worldUnitsPerSecond;
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // Right
 			m_currentMovement = +GetRightVector() * worldUnitsPerSecond;
-
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // Left		
+			m_currentMovement = -GetUpVector() * worldUnitsPerSecond;
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // Right
+			m_currentMovement = +GetUpVector() * worldUnitsPerSecond;
 		// Mouse Input
 		{
 			static int lastState = GLFW_RELEASE;
@@ -123,8 +126,8 @@ namespace Helpers
 				double xpos, ypos;
 				glfwGetCursorPos(window, &xpos, &ypos);
 
-				float pitchChange = ((float)xpos - initialPos.x) * 0.001f * radiansPerSecond;
-				float yawChange = ((float)ypos - initialPos.y) * 0.001f * radiansPerSecond;
+				float pitchChange = ((float)xpos - initialPos.x) * 0.001f;
+				float yawChange = ((float)ypos - initialPos.y) * 0.001f;
 
 				m_currentRotation.y = pitchChange;
 				m_currentRotation.x = yawChange;

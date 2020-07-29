@@ -1,6 +1,8 @@
 #include "Renderer3D.hpp"
 
 #include <array>
+#include <sstream>
+#include <iomanip>
 
 #include "ImGuiInclude.hpp"
 #include "ExternalLibraryHeaders.h"
@@ -80,10 +82,18 @@ namespace TNAP {
 		///
 		// TEMP
 		///
-		loadModel("Gimble.fbx"); 
-		loadTexture(TNAP::ETextureType::eAO, "aqua_pig_2K.png");
+		//loadModel("fire-elemental\\ostatni test1.fbx"); 
+		//loadModel("creature-evolution-2\\EVOLUTION_02_POSED.fbx"); 
+		//loadModel("desert-trooper-rigged\\SandTrooper.fbx");
+		//loadModel("low-poly-spider-tank\\Part_01xxx.fbx"); 
+		//loadModel("three-eyed-demon\\Third_Eyexxx.OBJ");
+
 		loadTexture(TNAP::ETextureType::eAlbedo, "MissingTexture.jpg");
-		loadTexture(TNAP::ETextureType::eEmission, "MissingTexture.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "creature-evolution-2\\Default Material1_Flattened_Diffuse.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged\\LowerBody_Base_Color.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "fire-elemental\\diffuse fire_elemntal.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "low-poly-spider-tank\\Part_01x_albedo.jpg");
+		loadTexture(TNAP::ETextureType::eEmission, "three-eyed-demon\\Third_Eyex_Albedo.jpg");
 	}
 
 	void Renderer3D::update()
@@ -512,19 +522,19 @@ namespace TNAP {
 
 			// plus 1 since material isn't a texture type
 
-			static std::array<bool, static_cast<int>(ETextureType::eCount) + 1> headerOpen;
+			static std::array<bool, static_cast<int>(ETextureType::eCount)> headerOpen;
 			headerOpen.fill(true);
-			static std::array<std::string, headerOpen.size()> headerTitle { "Materials", "Albedo", "eNormal", "Metallic", "Roughness", "AO", "Emission" };
+			static std::array<std::string, headerOpen.size()> headerTitle { "Albedo", "eNormal", "Metallic", "Roughness", "AO", "Emission" };
 
 			if (ImGui::BeginMenuBar())
 			{
 				if (ImGui::BeginMenu("Show"))
 				{
-					ImGui::MenuItem("Materials", NULL, &headerOpen.at(0));
+					ImGui::MenuItem("Materials", NULL, &showMaterials);
 
 					if (ImGui::BeginMenu("Textures"))
 					{
-						for (int i = 1; i < headerTitle.size(); i++)
+						for (int i = 0; i < headerTitle.size(); i++)
 							ImGui::MenuItem(headerTitle.at(i).c_str(), NULL, &headerOpen.at(i));
 						
 						ImGui::EndMenu();
@@ -559,10 +569,9 @@ namespace TNAP {
 					amount = std::max(amount, 1);
 					ImGui::Spacing();
 
-					// Start at 1 since material is 0
-					for (int i = 1; i < headerTitle.size(); i++)
+					for (int i = 0; i < headerTitle.size(); i++)
 					{
-						const std::vector<std::pair<std::unique_ptr<Helpers::ImageLoader>, GLuint>>& textures{ m_textures.at(i - 1) };
+						const std::vector<std::pair<std::unique_ptr<Helpers::ImageLoader>, GLuint>>& textures{ m_textures.at(i) };
 						if (ImGui::CollapsingHeader(headerTitle.at(i).c_str(), &headerOpen.at(i)))
 						{
 							for (int j = 0; j < textures.size(); j++)
@@ -573,7 +582,7 @@ namespace TNAP {
 								ImGui::ImageButton((ImTextureID)textures[j].second, ImVec2(iconSize, iconSize), ImVec2(0, 0), ImVec2(1, 1), 1);
 								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 								{
-									std::pair<ETextureType, size_t>* const id{ new std::pair<ETextureType, size_t>(static_cast<ETextureType>(i - 1), j) };
+									std::pair<ETextureType, size_t>* const id{ new std::pair<ETextureType, size_t>(static_cast<ETextureType>(i), j) };
 
 									ImGui::SetDragDropPayload("TEXTURE_CELL", id, sizeof(*id));
 									ImGui::Image((ImTextureID)textures[j].second, ImVec2(64, 64));
@@ -593,10 +602,29 @@ namespace TNAP {
 				if(ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
 				{
 					for (const std::unique_ptr<Material>& mat : m_materials)
-					{
 						ImGui::Text(mat->getName().c_str());
-					}
+				}
 
+				ImGui::Spacing();
+				ImGui::Spacing();
+				static bool modelsOpen{ true };
+				if (ImGui::CollapsingHeader("Models", &modelsOpen))
+				{
+					ImGui::Columns(3, "models"); // 4-ways, with border
+					ImGui::Separator();
+					ImGui::Text("Path"); ImGui::NextColumn();
+					ImGui::Text("Model Handle"); ImGui::NextColumn();
+					ImGui::Text("Mesh Count"); ImGui::NextColumn();
+					ImGui::Separator();
+
+					for (const auto& mapModel : m_mapModels)
+					{
+						ImGui::Text(mapModel.first.c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(mapModel.second).c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(m_models.at(mapModel.second).getMeshVector().size()).c_str()); ImGui::NextColumn();
+
+						ImGui::Separator();
+					}
 				}
 			}
 		}

@@ -21,11 +21,11 @@ namespace TNAP {
 		TNAP::EMaterialType m_materialType{ TNAP::EMaterialType::eUnlit };
 		size_t m_programHandle{ 0 };
 
-		glm::vec4 m_colourTint{ 0 };
+		glm::vec4 m_colourTint{ 1 };
 
 		size_t m_emissionTextureHandle{ 0 };
 
-		glm::vec3 m_emissionColour{ 0 };
+		glm::vec3 m_emissionColour{ 1 };
 		float m_emissionIntensity{ 0 };
 
 	public:
