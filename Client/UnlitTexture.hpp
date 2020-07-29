@@ -7,12 +7,13 @@ namespace TNAP {
 	class UnlitTexture : public TNAP::Material
 	{
 	private:
+		ETextureType m_textureType{ ETextureType::eAlbedo };
 		size_t m_textureHandle{ 0 };
 
 	public:
 		UnlitTexture();
 
-		virtual void sendShaderData() override;
+		virtual void sendShaderData(const GLuint argProgram) override;
 		
 		void setTexture(const ETextureType argTextureType, const std::string& argFilePath);
 		const size_t getTextureHandle() const { return m_textureHandle; }

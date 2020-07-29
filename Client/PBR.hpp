@@ -12,7 +12,6 @@ namespace TNAP {
 	{
 	private:
 		std::array<size_t, 6> m_textureHandles;
-		std::bitset<6> m_usedTextures;
 
 		float m_defaultMetallic{ 0 };
 		float m_defualtRougness{ 0 };
@@ -21,7 +20,7 @@ namespace TNAP {
 		PBR();
 
 		virtual void init() override final;
-		virtual void sendShaderData() override final;
+		virtual void sendShaderData(const GLuint argProgram) override final;
 
 		void setTexture(const ETextureType argType, const std::string& argFilePath);
 		inline void setMetallicDefaultValue(const float argMetallicValue) { m_defaultMetallic = argMetallicValue; }

@@ -59,6 +59,7 @@ namespace TNAP {
 		void CreateProgram(const std::string& argVertexFilePath, const std::string& argFragmentFilePath);
 
 		GLuint m_currentProgram{ 0 };
+		GLuint batchRenderingBuffer{ 0 };
 
 	public:
 		Renderer3D();
@@ -68,7 +69,7 @@ namespace TNAP {
 		virtual void update() override final;
 		virtual void sendMessage(TNAP::Message* const argMessage) override final;
 
-		void loadModel(const std::string& argFilePath);
+		const size_t loadModel(const std::string& argFilePath);
 		void loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath);
 		void loadMaterials(const std::string& argFilePath);
 

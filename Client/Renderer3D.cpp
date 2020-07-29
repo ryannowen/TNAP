@@ -10,6 +10,8 @@
 #include "SubmitModelMessage.hpp"
 #include "GetMaterialMessage.hpp"
 
+#include "UnlitTexture.hpp"
+
 namespace TNAP {
 	GLFWwindow* Renderer3D::s_window{ nullptr };
 
@@ -49,14 +51,39 @@ namespace TNAP {
 
 		glfwSetInputMode(s_window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-		loadModel("Gimble.fbx"); // TEMP
+		
+		glGenBuffers(1, &batchRenderingBuffer);
+
+
+		GLuint whiteText{ 0 };
+		glGenTextures(1, &whiteText);
+		glBindTexture(GL_TEXTURE_2D, whiteText);
+
+		static GLbyte pixels[4]{ 255, 255, 255, 255 };
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<void*>(pixels));
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		Helpers::CheckForGLError();
+
+
+		for (auto& textType : m_textures)
+		{
+			std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
+			texture->SetData(1, 1, &pixels[0]);
+
+			textType.push_back({ std::move(texture), whiteText });
+		}
+
+		///
+		// TEMP
+		///
+		loadModel("Gimble.fbx"); 
 		loadTexture(TNAP::ETextureType::eAO, "aqua_pig_2K.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "MissingTexture.jpg");
-
 		loadTexture(TNAP::ETextureType::eEmission, "MissingTexture.jpg");
-		loadTexture(TNAP::ETextureType::eMetallic, "MissingTexture.jpg");
-		loadTexture(TNAP::ETextureType::eNormal, "MissingTexture.jpg");
-		loadTexture(TNAP::ETextureType::eRoughness, "MissingTexture.jpg");
 	}
 
 	void Renderer3D::update()
@@ -164,11 +191,13 @@ namespace TNAP {
 
 	}
 
-	void Renderer3D::loadModel(const std::string& argFilePath)
+	const size_t Renderer3D::loadModel(const std::string& argFilePath)
 	{
-		if (m_mapModels.find(argFilePath) != m_mapModels.end())
+		const auto& modelFind{ m_mapModels.find(argFilePath) };
+		if (modelFind != m_mapModels.end())
 		{
 			// TODO Log Model already loaded
+			return modelFind->second;
 		}
 
 		m_models.emplace_back(TNAP::Model());
@@ -178,35 +207,7 @@ namespace TNAP {
 		m_models.back().loadFromFile("Data\\Models\\" + argFilePath);
 		// TODO Log Model loaded
 
-
-		std::vector<glm::mat4> transforms
-		{
-			glm::mat4(1)
-		};
-
-		for (int i = 0; i < 5; i++)
-		{
-			glm::mat4 newTransform(1);
-
-			newTransform = glm::translate(newTransform, glm::vec3(rand() % 1000, rand() % 1000, rand() % 1000));
-			newTransform = glm::rotate(newTransform, static_cast<float>(rand() % 360), glm::vec3(1, 0, 0));
-			newTransform = glm::rotate(newTransform, static_cast<float>(rand() % 360), glm::vec3(0, 1, 0));
-			newTransform = glm::rotate(newTransform, static_cast<float>(rand() % 360), glm::vec3(0, 0, 1));
-
-			transforms.push_back(newTransform);
-		}
-
-		std::vector<size_t> materialHandles
-		{
-			0
-		};
-
-		std::vector<std::pair<std::vector<glm::mat4>, std::vector<size_t>>> modelTemp
-		{
-			{transforms, materialHandles}
-		};
-
-		//m_batchRenders.insert({ 0, modelTemp });
+		return (m_models.size() - 1);
 	}
 
 	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
@@ -265,8 +266,8 @@ namespace TNAP {
 			GLuint program = glCreateProgram();
 
 			// Load and create vertex and fragment shaders
-			GLuint vertex_shader{ Helpers::LoadAndCompileShader(GL_VERTEX_SHADER, "Data/Shaders/unlit_vertex_shader.glsl") };
-			GLuint fragment_shader{ Helpers::LoadAndCompileShader(GL_FRAGMENT_SHADER, "Data/Shaders/unlit_fragment_shader.glsl") };
+			GLuint vertex_shader{ Helpers::LoadAndCompileShader(GL_VERTEX_SHADER, "Data/Shaders/unlitTexture_vertex_shader.glsl") };
+			GLuint fragment_shader{ Helpers::LoadAndCompileShader(GL_FRAGMENT_SHADER, "Data/Shaders/unlitTexture_fragment_shader.glsl") };
 
 			if (0 == vertex_shader || 0 == fragment_shader)
 			{
@@ -297,10 +298,11 @@ namespace TNAP {
 			// continue;
 		}
 
-		m_materials.emplace_back(std::make_unique<Material>());
+		m_materials.emplace_back(std::make_unique<UnlitTexture>());
 		m_mapMaterials.insert({ "DefaultMaterial", m_materials.size() - 1 });
 
 		m_materials.back()->m_programHandle = m_mapPrograms.at("Unlit");
+		m_materials.back()->m_name = "DefaultMaterial";
 
 		// Set other Data
 		/*switch (EMaterialType)
@@ -391,16 +393,15 @@ namespace TNAP {
 					glBindVertexArray(meshes[i]->VAO);
 
 					if (i >= batch.second.size())
-						m_materials[0]->sendShaderData();
+						m_materials.at(0)->sendShaderData(m_currentProgram);
 					else
-						m_materials[batch.second[i]]->sendShaderData();
+						m_materials.at(batch.second[i])->sendShaderData(m_currentProgram);
 
 					if (batch.first.size() > 1) // Batch Draw
 					{
-						GLuint batchRenderingBuffer{ 0 };
-						glGenBuffers(1, &batchRenderingBuffer);
+
 						glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
-						glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_STATIC_DRAW);
+						glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_DYNAMIC_DRAW);
 
 						// Set attribute pointers for matrix (4 times vec4)
 						glEnableVertexAttribArray(3);
@@ -419,8 +420,6 @@ namespace TNAP {
 
 						glDrawElementsInstanced(GL_TRIANGLES, meshes[i]->elements.size(), GL_UNSIGNED_INT, 0, batch.first.size());
 
-						glDeleteBuffers(1, &batchRenderingBuffer);
-
 						Helpers::CheckForGLError();
 					}
 					else // Normal Draw
@@ -435,20 +434,6 @@ namespace TNAP {
 			}
 
 		}
-
-
-		/*for (TNAP::Model& model : m_models)
-		{
-			for (std::unique_ptr<Helpers::Mesh>& mesh : model.getMeshVector())
-			{
-				glBindVertexArray(mesh->VAO);
-
-				glDrawElements(GL_TRIANGLES, mesh->elements.size(), GL_UNSIGNED_INT, (void*)0);
-				
-				glBindVertexArray(0);
-
-			}
-		}*/
 
 		m_windowFrameBuffer.unbind();
 
@@ -580,17 +565,23 @@ namespace TNAP {
 						const std::vector<std::pair<std::unique_ptr<Helpers::ImageLoader>, GLuint>>& textures{ m_textures.at(i - 1) };
 						if (ImGui::CollapsingHeader(headerTitle.at(i).c_str(), &headerOpen.at(i)))
 						{
-							for (int i = 0; i < textures.size(); i++)
+							for (int j = 0; j < textures.size(); j++)
 							{
-								if (i % amount != 0)
+								if (j % amount != 0)
 									ImGui::SameLine();
 
-								ImGui::ImageButton((ImTextureID)textures[i].second, ImVec2(iconSize, iconSize), ImVec2(0, 0), ImVec2(1, 1), 1);
+								ImGui::ImageButton((ImTextureID)textures[j].second, ImVec2(iconSize, iconSize), ImVec2(0, 0), ImVec2(1, 1), 1);
 								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 								{
-									ImGui::SetDragDropPayload("TEXTURE_CELL", &textures[i].second, sizeof(GLuint));
-									ImGui::Image((ImTextureID)textures[i].second, ImVec2(64, 64));
+									std::pair<ETextureType, size_t>* const id{ new std::pair<ETextureType, size_t>(static_cast<ETextureType>(i - 1), j) };
+
+									ImGui::SetDragDropPayload("TEXTURE_CELL", id, sizeof(*id));
+									ImGui::Image((ImTextureID)textures[j].second, ImVec2(64, 64));
+									ImGui::Text(("Texture Type: " + std::to_string(i)).c_str());
+									ImGui::Text(("Texture Handle: " + std::to_string(j)).c_str());
 									ImGui::EndDragDropSource();
+
+									delete id;
 								}
 							}
 						}
@@ -599,7 +590,14 @@ namespace TNAP {
 				
 				ImGui::Spacing();
 				ImGui::Spacing();
-				ImGui::CollapsingHeader("Materials", &headerOpen.at(0));
+				if(ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
+				{
+					for (const std::unique_ptr<Material>& mat : m_materials)
+					{
+						ImGui::Text(mat->getName().c_str());
+					}
+
+				}
 			}
 		}
 		ImGui::End();

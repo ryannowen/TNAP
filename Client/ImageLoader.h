@@ -14,6 +14,7 @@ namespace Helpers
 		int m_height{ 0 };
 		GLbyte* m_data{ nullptr };
 	public:
+
 		// Width in texels of the image
 		int Width() const { return m_width; }
 
@@ -25,6 +26,13 @@ namespace Helpers
 
 		// Allows access to the raw bytes that make up the image
 		GLbyte* GetData() const { return m_data; }
+
+		inline void SetData(const int argWidth, const int argHeight, GLbyte* const argData)
+		{
+			m_width = argWidth;
+			m_height = argHeight;
+			m_data = argData;
+		}
 	};
 
 }

@@ -10,7 +10,7 @@ namespace TNAP {
 	{
 	}
 
-	void PBR::sendShaderData()
+	void PBR::sendShaderData(const GLuint argProgram)
 	{
 	}
 

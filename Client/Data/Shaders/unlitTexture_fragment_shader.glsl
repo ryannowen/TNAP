@@ -10,6 +10,7 @@ struct SMaterial
 {
 	vec4 m_colourTint;
 
+	sampler2D m_texture;
 	sampler2D m_emissionTexture;
 
 	vec3 m_emissionColour;
@@ -23,5 +24,5 @@ void main(void)
 	//fragment_colour = vec4(varying_normal, 1.0);
 	//fragment_colour = vec4(0, 1, 0, 1);
 
-	fragment_colour = material.m_colourTint + ((texture(material.m_emissionTexture, varying_uv) * vec4(material.m_emissionColour, 1)) * material.m_emissionIntensity);
+	fragment_colour = (texture(material.m_emissionTexture, varying_uv) * material.m_colourTint) + ((texture(material.m_emissionTexture, varying_uv) * vec4(material.m_emissionColour, 1)) * material.m_emissionIntensity);
 }
