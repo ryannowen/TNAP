@@ -24,7 +24,6 @@ Client/x64/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
 bld/
-[Oo]bj/
 [Ll]og/
 [Ll]ogs/
 
@@ -67,7 +66,6 @@ StyleCopReport.xml
 *_h.h
 *.ilk
 *.meta
-*.obj
 *.iobj
 *.pch
 *.ipdb
