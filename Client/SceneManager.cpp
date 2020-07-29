@@ -3,6 +3,9 @@
 #include "Entity.hpp"
 #include "Renderable.hpp"
 
+#include "LogMessage.hpp"
+#include "Engine.hpp"
+
 #include <iostream>
 
 namespace TNAP {
@@ -22,6 +25,13 @@ namespace TNAP {
 	{
 		if (nullptr == m_scene)
 			m_scene = std::make_unique<Scene>();
+
+		// Log Message tests
+		LogMessage message;
+		message.m_messageBuffer = "Adding Entity 3";
+		TNAP::getEngine()->sendMessage(&message);
+		message.m_messageBuffer = "Adding Entity 4";
+		TNAP::getEngine()->sendMessage(&message);
 
 		m_scene->addEntity<Renderable>("3");
 		m_scene->findEntity("3")->addChild<Renderable>("5");

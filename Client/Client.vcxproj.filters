@@ -147,6 +147,9 @@
     <ClCompile Include="Transform.cpp">
       <Filter>Source Files\Systems\Scene\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -255,6 +258,12 @@
       <Filter>Header Files\Messages</Filter>
     </ClInclude>
     <ClInclude Include="GetMaterialMessage.hpp">
+      <Filter>Header Files\Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LogMessage.hpp">
       <Filter>Header Files\Messages</Filter>
     </ClInclude>
   </ItemGroup>

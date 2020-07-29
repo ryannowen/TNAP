@@ -4,6 +4,7 @@
 #include "SceneManager.hpp"
 
 #include "Renderer3D.hpp"
+#include "Logger.hpp"
 
 namespace TNAP {
 
@@ -20,7 +21,11 @@ namespace TNAP {
 
 	void Engine::init()
 	{
+		// Renderer3D system
 		m_systems.push_back(std::make_unique<TNAP::Renderer3D>());
+		m_systems.back()->init();
+		// Logger system
+		m_systems.push_back(std::make_unique<TNAP::Logger>());
 		m_systems.back()->init();
 
 		TNAP::getSceneManager()->init();
