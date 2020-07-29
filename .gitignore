@@ -347,3 +347,4 @@ MigrationBackup/
 .ionide/
 Client/imgui.ini
 *.exe
+x64/Debug/Client.pdb
