@@ -85,7 +85,7 @@ namespace TNAP {
 		//loadModel("fire-elemental\\ostatni test1.fbx"); 
 		//loadModel("creature-evolution-2\\EVOLUTION_02_POSED.fbx"); 
 		//loadModel("desert-trooper-rigged\\SandTrooper.fbx");
-		//loadModel("low-poly-spider-tank\\Part_01xxx.fbx"); 
+		loadModel("low-poly-spider-tank\\Part_01xxx.fbx"); 
 		//loadModel("three-eyed-demon\\Third_Eyexxx.OBJ");
 
 		loadTexture(TNAP::ETextureType::eAlbedo, "MissingTexture.jpg");
