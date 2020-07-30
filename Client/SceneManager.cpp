@@ -16,7 +16,7 @@ namespace TNAP {
 	{
 
 	}
-
+	
 	SceneManager::~SceneManager()
 	{
 	}
@@ -27,20 +27,23 @@ namespace TNAP {
 			m_scene = std::make_unique<Scene>();
 
 		// Log Message tests
-		LogMessage message;
-		message.m_messageBuffer = "Adding Entity 3";
+		LogMessage message("Adding Entity 3");
 		TNAP::getEngine()->sendMessage(&message);
-		message.m_messageBuffer = "Adding Entity 4";
+		message.m_message = "Adding Entity 4";
 		TNAP::getEngine()->sendMessage(&message);
 
-		m_scene->addEntity<Renderable>("3");
-		m_scene->findEntity("3")->addChild<Renderable>("5");
+		m_scene->addEntity<Renderable>("BirdPlane", "Primitives\\Plane.fbx");
+		m_scene->addEntity<Renderable>("4", "Cube.fbx");
+		//static_cast<Renderable*>(m_scene->findEntity("3"))->loadModel();
+		/*
+		m_scene->findEntity("3")->addChild<Renderable>("5", "low-poly-spider-tank\\Part_01xxx.fbx");
 		m_scene->findEntity("3")->findChild("5")->getTransform().setScale(glm::vec3(2));
 		m_scene->findEntity("3")->findChild("5")->getTransform().setTranslation(glm::vec3(0,80,0));
-		m_scene->addEntity<Renderable>("4");
+		m_scene->addEntity<Renderable>("4", "low-poly-spider-tank\\Part_01xxx.fbx");
 		m_scene->findEntity("3")->getTransform().setTranslation(glm::vec3(200,0,200));
 		m_scene->findEntity("3")->getTransform().setRotation(glm::vec3(0,0,0));
 		//m_scene->findEntity("3")->getTransform().setRotation(glm::vec3(90,0,0));
+		*/
 	}
 
 	void SceneManager::update()

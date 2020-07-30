@@ -148,7 +148,10 @@
       <Filter>Source Files\Systems\Scene\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="..\External\ImGui\imgui_stdlib.cpp">
+      <Filter>ImGui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -260,11 +263,17 @@
     <ClInclude Include="GetMaterialMessage.hpp">
       <Filter>Header Files\Messages</Filter>
     </ClInclude>
-    <ClInclude Include="Logger.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="LogMessage.hpp">
       <Filter>Header Files\Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.hpp">
+      <Filter>Header Files\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadModelMessage.hpp">
+      <Filter>Header Files\Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="..\External\ImGui\imgui_stdlib.h">
+      <Filter>ImGui</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

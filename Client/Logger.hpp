@@ -9,9 +9,11 @@ namespace TNAP
 	class Logger : public System
 	{
 	private:
+#if USE_IMGUI
 		ImGuiTextBuffer m_buffer;
 		ImGuiTextFilter m_filter;
 		ImVector<int> m_lineOffsets;
+#endif
 		bool m_autoScroll{ false };
 		bool m_scrollToBottom{ false };
 
@@ -21,9 +23,9 @@ namespace TNAP
 
 		virtual void init() override;
 		virtual void sendMessage(TNAP::Message* const argMessage) override;
+#if USE_IMGUI
 		inline void ClearLog();
 		void AddLog(const char* argMessage, ...);
-#if USE_IMGUI
 		virtual void imGuiRender() override;
 #endif
 	};

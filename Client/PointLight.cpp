@@ -2,7 +2,8 @@
 
 namespace TNAP {
 
-	PointLight::PointLight()
+	PointLight::PointLight() 
+		: Light()
 	{
 	}
 

@@ -12,7 +12,8 @@ namespace TNAP
 			eGetTextureMessage,
 			eSubmitModelMessage,
 			eGetMaterialMessage,
-			eLogMessage
+			eLogMessage,
+			eLoadModelMessage
 		};
 
 	protected:

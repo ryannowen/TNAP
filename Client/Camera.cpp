@@ -77,10 +77,10 @@ namespace Helpers
 		float radiansPerSecond{ m_rotationPerSecond };
 
 		// Accelerate movement and rotation if left control key held
-		if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		{
-			worldUnitsPerSecond *= 10.0f;
-			radiansPerSecond *= 10.0f;
+			worldUnitsPerSecond *= 3.0f;
+			radiansPerSecond *= 3.0f;
 		}
 
 		m_currentMovement = glm::vec3(0);
@@ -126,11 +126,12 @@ namespace Helpers
 				double xpos, ypos;
 				glfwGetCursorPos(window, &xpos, &ypos);
 
-				float pitchChange = ((float)xpos - initialPos.x) * 0.001f;
-				float yawChange = ((float)ypos - initialPos.y) * 0.001f;
+				float pitchChange = ((float)xpos - initialPos.x) * 0.05f;
+				float yawChange = ((float)ypos - initialPos.y) * 0.05f;
 
 				m_currentRotation.y = pitchChange;
 				m_currentRotation.x = yawChange;
+				initialPos = glm::vec2((float)xpos, (float)ypos);
 			}
 		}
 

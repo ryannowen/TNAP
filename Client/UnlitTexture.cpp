@@ -64,7 +64,9 @@ namespace TNAP {
 		{
 			ImGui::Text(("Program Handle: " + std::to_string(m_programHandle)).c_str());
 
-			ImGui::ColorEdit4("Colour Tint", &m_colourTint.x);
+			ImGui::ColorEdit4((m_name + "Colour Tint").c_str(), &m_colourTint.x, ImGuiColorEditFlags_::ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Text("Colour Tint");
 
 			ImGui::Text("Albedo");
 			{
@@ -115,7 +117,10 @@ namespace TNAP {
 			}
 
 
-			ImGui::ColorEdit4("Emission Colour", &m_emissionColour.x);
+			ImGui::ColorEdit4((m_name + "Emission Colour").c_str(), &m_emissionColour.x, ImGuiColorEditFlags_::ImGuiColorEditFlags_NoLabel);
+			ImGui::SameLine();
+			ImGui::Text("Emission Colour");
+
 			ImGui::InputFloat("Emission Intesity", &m_emissionIntensity);
 		}
 	}

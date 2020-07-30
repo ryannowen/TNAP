@@ -6,7 +6,7 @@ namespace TNAP {
 	{
 	}
 
-	void Model::loadFromFile(const std::string& argFilePath)
+	bool Model::loadFromFile(const std::string& argFilePath)
 	{
 		// Log loading file
 
@@ -15,7 +15,7 @@ namespace TNAP {
 			aiProcess_JoinIdenticalVertices |				// join identical vertices/ optimize indexing
 			aiProcess_ValidateDataStructure |				// perform a full validation of the loader's output
 			aiProcess_ImproveCacheLocality |				// improve the cache locality of the output vertices
-			aiProcess_RemoveRedundantMaterials |			// remove redundant materials
+			aiProcess_RemoveRedundantMaterials |            // remove redundant materials
 			aiProcess_FindDegenerates |						// remove degenerated polygons from the import
 			aiProcess_FindInvalidData |						// detect invalid model data, such as invalid normal vectors
 			aiProcess_GenUVCoords |							// convert spherical, cylindrical, box and planar mapping to proper UVs
@@ -40,20 +40,38 @@ namespace TNAP {
 
 		const aiScene* scene = importer.ReadFile(argFilePath.c_str(), ppsteps);
 
-
-
 		if (!scene)
 		{
 			//EsOutput(importer.GetErrorString());
 			// TODO Log loading file
-			return;
+			return false;
 		}
 
 		populateModelData(scene);
 
 		// Might need to remove later
 		for (std::unique_ptr<Helpers::Mesh>& mesh : m_meshes)
+		{
 			bindMesh(mesh.get());
+
+			bool isUnique = true;
+			for (const size_t matIndex : m_uniqueMaterialIndices)
+			{
+				if (matIndex == mesh->materialIndex)
+				{
+					isUnique = false;
+					break;
+				}
+			}
+			if (isUnique)
+			{
+				m_uniqueMaterialIndices.push_back(mesh->materialIndex);
+			}
+		}
+
+		m_defaultMaterialHandles.reserve(m_uniqueMaterialIndices.size());
+
+		return true;
 	}
 
 	void Model::populateModelData(const aiScene* const argScene)

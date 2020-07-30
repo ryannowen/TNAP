@@ -25,11 +25,13 @@ bool Simulation::Update(GLFWwindow* window)
 	float deltaTime{ timeNow - m_lastTime };
 	m_lastTime = timeNow;
 
+#if USE_IMGUI
 	ImGui::Begin("Stats");
 
 	ImGui::Text(("FPS: " + std::to_string(1 / deltaTime)).c_str());
 
 	ImGui::End();
+#endif
 
 	// The camera needs updating to handle user input internally
 	m_camera->Update(window, deltaTime);

@@ -19,14 +19,15 @@ namespace TNAP
 		};
 
 	public:
-		LogMessage()
-			: TNAP::Message()
+		LogMessage(const std::string& argMessage)
+			: TNAP::Message(),
+			m_message(argMessage)
 		{
 			m_messageType = EMessageType::eLogMessage;
 		}
 
 		ELogType m_logType{ ELogType::eInfo };
-		std::string m_messageBuffer{ "" };
+		std::string m_message{ "" };
 	};
 
 }

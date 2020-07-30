@@ -69,10 +69,25 @@ namespace TNAP {
 	template<class EntityType, typename... Args>
 	inline EntityType* const Entity::addChild(const std::string& argName, const Args&... args)
 	{
-		if (m_mapChildEntities.insert({ argName, m_children.size() }).second)
+		std::string origionalName = argName;
+		std::string name = argName;
+
+		if (name.empty())
+		{
+			name = "New Entity";
+			origionalName = name;
+		}
+
+		size_t index = 1;
+		while (m_mapChildEntities.find(name) != m_mapChildEntities.end())
+		{
+			name = origionalName + "_" + std::to_string(index++);
+		}
+
+		if (m_mapChildEntities.insert({ name, m_children.size() }).second)
 		{
 			m_children.emplace_back(std::make_shared<EntityType>(args...));
-			m_children.back()->setName(argName);
+			m_children.back()->setName(name);
 			return static_cast<EntityType*>(m_children.back().get());
 		}
 

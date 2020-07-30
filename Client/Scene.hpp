@@ -43,10 +43,25 @@ namespace TNAP {
 	template<class EntityType, typename... Args>
 	inline EntityType* const Scene::addEntity(const std::string& argName, const Args&... args)
 	{
-		if (m_mapEntities.insert({ argName, m_entities.size() }).second)
+		std::string origionalName = argName;
+		std::string name = argName;
+
+		if (name.empty())
+		{
+			name = "New Entity";
+			origionalName = name;
+		}
+
+		size_t index = 1;
+		while (m_mapEntities.find(name) != m_mapEntities.end())
+		{
+			name = origionalName + "_" + std::to_string(index++);
+		}
+
+		if (m_mapEntities.insert({ name, m_entities.size() }).second)
 		{
 			m_entities.emplace_back(std::make_shared<EntityType>(args...));
-			m_entities.back()->setName(argName);
+			m_entities.back()->setName(name);
 			return static_cast<EntityType*>(m_entities.back().get());
 		}
 

@@ -3,6 +3,7 @@
 namespace TNAP {
 
 	TNAP::SpotLight::SpotLight()
+		: PointLight()
 	{
 	}
 

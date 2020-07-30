@@ -22,7 +22,7 @@ namespace Helpers
 		glm::vec3 m_currentRotation{ 0 };
 
 		// Speeds
-		float m_translationPerSecond{ 10.0f };
+		float m_translationPerSecond{ 0.1f };
 		float m_rotationPerSecond{ 1.0f };
 
 		// Held here to improve performance as used a lot

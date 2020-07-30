@@ -4,8 +4,10 @@
 
 namespace TNAP {
 
+#if USE_IMGUI
 	Entity* Entity::s_selected{ nullptr };
 	int Entity::s_treeIndex{ 0 };
+#endif
 
 	Entity::Entity()
 	{
@@ -104,7 +106,11 @@ namespace TNAP {
 
 	void Entity::imGuiRenderProperties()
 	{
-		ImGui::Text(getName().c_str());
+		ImGui::Text(("Name: " + getName()).c_str());
+		ImGui::Spacing();
+		ImGui::Checkbox("Enabled", &m_enabled);
+		ImGui::Spacing();
+
 		if (ImGui::CollapsingHeader("Transform"))
 		{
 			ImGui::DragFloat3("Translation", &getTransform().getTranslation().x);

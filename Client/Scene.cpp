@@ -102,22 +102,72 @@ namespace TNAP {
 			{
 				if (ImGui::BeginMenu("Create"))
 				{
-					/*
-					if (ImGui::MenuItem("Entity"))
+					static std::string newName;
+					static std::string filepath;
+					static bool newEntityEnabled;
+
+					// Clear entity selection
+					if (ImGui::MenuItem("Clear Selected"))
 					{
-						Entity::getSelected()->children.push_back(std::make_shared<Entity>("New Entity!", std::vector<std::shared_ptr<Entity>>()));
-					}
-					
-					if (ImGui::MenuItem("Player"))
-					{
-						Entity::selected->children.push_back(std::make_shared<Player>("New Player!", std::vector<std::shared_ptr<Entity>>()));
+						Entity::setSelected(nullptr);
 					}
 
-					if (ImGui::MenuItem("Mesh"))
+					// Normal Entity
+					if (ImGui::BeginMenu("Entity"))
 					{
-						Entity::selected->children.push_back(std::make_shared<MeshTest>("New Mesh!", std::vector<std::shared_ptr<Entity>>()));
+						ImGui::InputText("Entity Name", &newName);
+						ImGui::Checkbox("Enabled", &newEntityEnabled);
+
+						if (ImGui::MenuItem("Create"))
+						{
+							Entity* newEntity = nullptr;
+
+							//Entity::getSelected()->children.push_back(std::make_shared<Entity>("New Entity!", std::vector<std::shared_ptr<Entity>>()));
+							if (nullptr == Entity::getSelected())
+							{
+								newEntity = addEntity<Entity>(newName);
+							}
+							else
+							{
+								newEntity = Entity::getSelected()->addChild<Entity>(newName);
+							}
+							newEntity->setEnabled(newEntityEnabled);
+							
+							newName = "";
+						}
+
+						ImGui::EndMenu();
 					}
-					*/
+
+					// Renderable
+					if (ImGui::BeginMenu("Renderable"))
+					{
+						ImGui::InputText("Entity Name", &newName);
+						ImGui::InputText("Filepath", &filepath);
+						ImGui::Checkbox("Enabled", &newEntityEnabled);
+
+						if (ImGui::MenuItem("Create"))
+						{
+							Renderable* newRend = nullptr;
+
+							//Entity::getSelected()->children.push_back(std::make_shared<Entity>("New Entity!", std::vector<std::shared_ptr<Entity>>()));
+							if (nullptr == Entity::getSelected())
+							{
+								newRend = addEntity<Renderable>(newName);
+							}
+							else
+							{
+								newRend = Entity::getSelected()->addChild<Renderable>(newName);
+							}
+							newRend->loadModel(filepath);
+							newRend->setEnabled(newEntityEnabled);
+
+							newName = "";
+							filepath = "";
+						}
+
+						ImGui::EndMenu();
+					}
 
 					ImGui::EndMenu();
 				}

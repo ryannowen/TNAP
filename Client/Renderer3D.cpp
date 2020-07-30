@@ -11,6 +11,7 @@
 #include "GetTextureMessage.hpp"
 #include "SubmitModelMessage.hpp"
 #include "GetMaterialMessage.hpp"
+#include "LoadModelMessage.hpp"
 
 #include "UnlitTexture.hpp"
 
@@ -79,20 +80,38 @@ namespace TNAP {
 			textType.push_back({ std::move(texture), whiteText });
 		}
 
+		loadModel("Primitives\\Cube.fbx");
+		loadModel("Primitives\\Sphere.fbx");
+		loadModel("Primitives\\Cylinder.fbx");
+		loadModel("Primitives\\Plane.fbx");
+		loadModel("Primitives\\Cone.fbx");
+		loadModel("Phoenix\\fly.fbx");
+
 		///
 		// TEMP
 		///
 		//loadModel("fire-elemental\\ostatni test1.fbx"); 
 		//loadModel("creature-evolution-2\\EVOLUTION_02_POSED.fbx"); 
 		//loadModel("desert-trooper-rigged\\SandTrooper.fbx");
-		loadModel("low-poly-spider-tank\\Part_01xxx.fbx"); 
+		//loadModel("low-poly-spider-tank\\Part_01xxx.fbx"); 
 		//loadModel("three-eyed-demon\\Third_Eyexxx.OBJ");
 
 		loadTexture(TNAP::ETextureType::eAlbedo, "MissingTexture.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "birdplane.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "creature-evolution-2\\Default Material1_Flattened_Diffuse.png");
+
+		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01a_D_A.tga.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01a_E.tga.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01b_D_A.tga.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01b_E.tga.png");
+
 		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged\\LowerBody_Base_Color.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged\\Helmet_Base_Color.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged\\UpperBody_Base_Color.jpg");
+
 		loadTexture(TNAP::ETextureType::eAlbedo, "fire-elemental\\diffuse fire_elemntal.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "low-poly-spider-tank\\Part_01x_albedo.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "AssaultRifleModel_Albedo.tga");
 		loadTexture(TNAP::ETextureType::eEmission, "three-eyed-demon\\Third_Eyex_Albedo.jpg");
 	}
 
@@ -121,6 +140,9 @@ namespace TNAP {
 			SubmitModelMessage* const submitModel{ static_cast<SubmitModelMessage*>(argMessage) };
 
 			// Map<ModelHandle, Vector<Pair<Vector<ModelTransform>, Vector<MaterialHandles>>>>
+
+			if (submitModel->m_modelHandle >= m_models.size())
+				return;
 
 			if (m_batchRenders.find(submitModel->m_modelHandle) == m_batchRenders.end())
 			{
@@ -195,6 +217,15 @@ namespace TNAP {
 		}
 		break;
 
+		case Message::EMessageType::eLoadModelMessage:
+		{
+			LoadModelMessage* const loadModelMessage{ static_cast<LoadModelMessage*>(argMessage) };
+
+			loadModelMessage->m_modelHandle = loadModel(loadModelMessage->m_modelFilepath);
+			loadModelMessage->m_materialHandles = m_models.at(loadModelMessage->m_modelHandle).getDefaultMaterialHandles();
+		}
+		break;
+
 		default:
 			break;
 		}
@@ -212,9 +243,33 @@ namespace TNAP {
 
 		m_models.emplace_back(TNAP::Model());
 
+		if (!m_models.back().loadFromFile("Data\\Models\\" + argFilePath))
+		{
+			// TODO: Log warning
+			// If file fails to load, return first model
+			return 0;
+		}
+
 		m_mapModels.insert({ argFilePath, m_models.size() - 1 });
 
-		m_models.back().loadFromFile("Data\\Models\\" + argFilePath);
+		// Setup materials
+		for (int i = 0; i < m_models.back().getUniqueMaterialIndicesCount(); i++)
+		{
+			std::string name = argFilePath + "_" + std::to_string(i);
+			if (m_mapMaterials.find(name) != m_mapMaterials.end())
+			{
+				// material already Created 
+				// continue;
+			}
+
+			m_materials.emplace_back(std::make_unique<UnlitTexture>());
+			m_mapMaterials.insert({ name, m_materials.size() - 1 });
+
+			m_materials.back()->m_programHandle = m_mapPrograms.at("Unlit");
+			m_materials.back()->m_name = name;
+			m_models.back().addDefaultMaterialHandle(m_mapMaterials.size() - 1);
+		}
+
 		// TODO Log Model loaded
 
 		return (m_models.size() - 1);
@@ -388,6 +443,9 @@ namespace TNAP {
 
 		for (const auto& modelBatch : m_batchRenders)
 		{
+			if (modelBatch.first >= m_models.size())
+				continue;
+
 			const Model* const model{ &m_models.at(modelBatch.first) };
 
 			// Transforms, MaterialHandles
@@ -402,32 +460,31 @@ namespace TNAP {
 				{
 					glBindVertexArray(meshes[i]->VAO);
 
-					if (i >= batch.second.size())
+					if (meshes[i]->materialIndex >= batch.second.size())
 						m_materials.at(0)->sendShaderData(m_currentProgram);
 					else
-						m_materials.at(batch.second[i])->sendShaderData(m_currentProgram);
+						m_materials.at(batch.second[meshes[i]->materialIndex])->sendShaderData(m_currentProgram);
+
+					glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
+					glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_DYNAMIC_DRAW);
+
+					// Set attribute pointers for matrix (4 times vec4)
+					glEnableVertexAttribArray(3);
+					glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+					glEnableVertexAttribArray(4);
+					glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+					glEnableVertexAttribArray(5);
+					glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+					glEnableVertexAttribArray(6);
+					glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+					glVertexAttribDivisor(3, 1);
+					glVertexAttribDivisor(4, 1);
+					glVertexAttribDivisor(5, 1);
+					glVertexAttribDivisor(6, 1);
 
 					if (batch.first.size() > 1) // Batch Draw
 					{
-
-						glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
-						glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_DYNAMIC_DRAW);
-
-						// Set attribute pointers for matrix (4 times vec4)
-						glEnableVertexAttribArray(3);
-						glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
-						glEnableVertexAttribArray(4);
-						glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
-						glEnableVertexAttribArray(5);
-						glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
-						glEnableVertexAttribArray(6);
-						glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
-
-						glVertexAttribDivisor(3, 1);
-						glVertexAttribDivisor(4, 1);
-						glVertexAttribDivisor(5, 1);
-						glVertexAttribDivisor(6, 1);
-
 						glDrawElementsInstanced(GL_TRIANGLES, meshes[i]->elements.size(), GL_UNSIGNED_INT, 0, batch.first.size());
 
 						Helpers::CheckForGLError();

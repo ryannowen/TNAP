@@ -4,7 +4,8 @@ namespace TNAP {
 
 	int Light::s_numberOfLights{ 0 };
 
-	Light::Light()
+	Light::Light() 
+		: Entity()
 	{
 	}
 

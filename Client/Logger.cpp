@@ -22,27 +22,29 @@ namespace TNAP
 			case Message::EMessageType::eLogMessage:
 			{
 				LogMessage* const logMessage{ static_cast<LogMessage*>(argMessage) };
-				if (logMessage->m_messageBuffer.back() != *"\n")
-					logMessage->m_messageBuffer.append("\n");
+				if (logMessage->m_message.back() != *"\n")
+					logMessage->m_message.append("\n");
 				std::string message{ "" };
 
 				switch (logMessage->m_logType)
 				{
 				case LogMessage::ELogType::eInfo:
-					message = "[Info] " + logMessage->m_messageBuffer;
+					message = "[Info] " + logMessage->m_message;
 					break;
 				case LogMessage::ELogType::eWarning:
-					message = "[Warning] " + logMessage->m_messageBuffer;
+					message = "[Warning] " + logMessage->m_message;
 					break;
 				case LogMessage::ELogType::eError:
-					message = "[Error] " + logMessage->m_messageBuffer;
+					message = "[Error] " + logMessage->m_message;
 					break;
 
 				default:
 					break;
 				}
 
+#if USE_IMGUI
 				AddLog(message.c_str());
+#endif
 			}
 			break;
 
@@ -51,6 +53,7 @@ namespace TNAP
 		}
 	}
 
+#if USE_IMGUI
 	inline void Logger::ClearLog()
 	{
 		m_buffer.clear();
@@ -73,7 +76,6 @@ namespace TNAP
 			m_scrollToBottom = true;
 	}
 
-#if USE_IMGUI
 	void TNAP::Logger::imGuiRender()
 	{
 		static bool showLogger{ true };
