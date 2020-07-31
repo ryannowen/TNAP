@@ -88,6 +88,7 @@ namespace TNAP {
 			node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
 		bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)s_treeIndex, node_flags, m_name.c_str());
+
 		if (ImGui::IsItemClicked())
 			s_selected = this;
 
