@@ -708,6 +708,57 @@ namespace TNAP {
 					}
 				}
 				// test
+				/*
+				
+					ImGui::Spacing();
+				ImGui::Spacing();
+				if (ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
+				{
+					ImGui::Columns(2, "materials"); // 2-ways, with border
+					ImGui::Separator();
+					ImGui::Text("Name"); ImGui::NextColumn();
+					ImGui::Text("Material Handle"); ImGui::NextColumn();
+					ImGui::Separator();
+
+					for (int i = 0; i < m_materials.size(); i++)
+					{
+						ImGui::Text(m_materials[i]->getName().c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(i).c_str()); ImGui::NextColumn();
+
+						ImGui::Separator();
+					}
+
+					ImGui::Columns(1, "materials");
+				}
+
+				ImGui::Spacing();
+				ImGui::Spacing();
+				static bool modelsOpen{ true };
+				if (ImGui::CollapsingHeader("Models", &modelsOpen))
+				{
+					ImGui::Columns(4, "models"); // 4-ways, with border
+					ImGui::Separator();
+					ImGui::Text("Path"); ImGui::NextColumn();
+					ImGui::Text("Model Handle"); ImGui::NextColumn();
+					ImGui::Text("Mesh Count"); ImGui::NextColumn();
+					ImGui::Text("Material Count"); ImGui::NextColumn();
+					ImGui::Separator();
+
+					for (const auto& mapModel : m_mapModels)
+					{
+						ImGui::Text(mapModel.first.c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(mapModel.second).c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(m_models.at(mapModel.second).getMeshVector().size()).c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(m_models.at(mapModel.second).getUniqueMaterialIndicesCount()).c_str()); ImGui::NextColumn();
+
+						ImGui::Separator();
+					}
+
+					ImGui::Columns(1, "models");
+
+				}
+
+				*/
 				ImGui::Spacing();
 				ImGui::Spacing();
 				if (ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
