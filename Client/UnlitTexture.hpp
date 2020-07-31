@@ -18,6 +18,8 @@ namespace TNAP {
 		void setTexture(const ETextureType argTextureType, const std::string& argFilePath);
 		const size_t getTextureHandle() const { return m_textureHandle; }
 
+		inline const ETextureType getTextureType() const { return m_textureType; }
+
 #if USE_IMGUI
 		virtual void imGuiRender() override;
 #endif

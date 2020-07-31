@@ -3,6 +3,7 @@
 #include <array>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 #include "ImGuiInclude.hpp"
 #include "ExternalLibraryHeaders.h"
@@ -71,10 +72,12 @@ namespace TNAP {
 		for (int i = 0; i < m_models.back().getUniqueMaterialIndicesCount(); i++)
 		{
 			std::string name = filePath + "_" + std::to_string(i);
-			if (m_mapMaterials.find(name) != m_mapMaterials.end())
+			const auto& it{ m_mapMaterials.find(name) };
+			if (it != m_mapMaterials.end())
 			{
 				// material already Created
-				break;
+				m_models.back().addDefaultMaterialHandle(it->second);
+				continue;
 			}
 
 			m_materials.emplace_back(std::make_unique<UnlitTexture>());
@@ -90,6 +93,29 @@ namespace TNAP {
 		TNAP::getEngine()->sendMessage(&logMessage);
 
 		return (m_models.size() - 1);
+	}
+
+	void Renderer3D::loadShaders()
+	{
+		std::ifstream savedShaders;
+
+		savedShaders.open("Data/SaveLoad/Shaders.csv");
+
+		std::string name;
+		std::string type;
+		std::string vert;
+		std::string frag;
+		
+		while (savedShaders.good())
+		{
+			std::getline(savedShaders, name, ',');
+			std::getline(savedShaders, type, ',');
+			std::getline(savedShaders, vert, ',');
+			std::getline(savedShaders, frag, '\n');
+			createShader(static_cast<EMaterialType>(std::stoi(type)), name, vert, frag);
+		}
+
+		savedShaders.close();
 	}
 
 	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
@@ -157,6 +183,8 @@ namespace TNAP {
 
 	void Renderer3D::loadMaterials(const std::string& argFilePath)
 	{
+		createMaterial("DefaultMaterial", "Unlit");
+
 		// TODO
 		// Load materials from file
 		// Check if material shaders already exist
@@ -166,14 +194,29 @@ namespace TNAP {
 
 		// Load shaders if is not created
 
-		
-		createShader("Unlit", "Data/Shaders/unlitTexture_vertex_shader.glsl", "Data/Shaders/unlitTexture_fragment_shader.glsl");
+		std::ifstream savedMaterials;
 
-		createMaterial("DefaultMaterial", "Unlit");
+		savedMaterials.open("Data/SaveLoad/" + argFilePath);
+
+		std::string name;
+		std::string shaderName;
+		std::string info;
+
+		while (savedMaterials.good())
+		{
+			std::getline(savedMaterials, name, ',');
+			std::getline(savedMaterials, shaderName, ',');
+			std::getline(savedMaterials, info);
+			createMaterial(name, shaderName);
+		}
+
+		savedMaterials.close();
+		
+		//createShader("Unlit", "Data/Shaders/unlitTexture_vertex_shader.glsl", "Data/Shaders/unlitTexture_fragment_shader.glsl");
 
 	}
 
-	const bool Renderer3D::createShader(const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
+	const bool Renderer3D::createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
 	{
 		// Check if Shader is already created
 		if (m_mapPrograms.find(argShaderName) != m_mapPrograms.end())
@@ -205,7 +248,9 @@ namespace TNAP {
 		if (!Helpers::LinkProgramShaders(program))
 			return false;
 
-		m_programs.emplace_back(program);
+		SProgram newProgram(program, argType, argShaderName, argVertexShaderPath, argFragmentShaderPath);
+
+		m_programs.emplace_back(newProgram);
 		m_mapPrograms.insert({ argShaderName, m_programs.size() - 1 });
 
 		return true;
@@ -220,8 +265,27 @@ namespace TNAP {
 		if (m_mapPrograms.find(argShaderName) == m_mapPrograms.end())
 			return false;
 
+		switch (m_programs.at(m_mapPrograms.at(argShaderName)).m_type)
+		{
+		case EMaterialType::eUnlit:
+		{
+			m_materials.emplace_back(std::make_unique<Material>());
+		}
+		break;
+		case EMaterialType::eUnlitTexture:
+		{
+			m_materials.emplace_back(std::make_unique<UnlitTexture>());
+		}
+		break;
+		case EMaterialType::ePBR:
+		{
+			//m_materials.emplace_back(std::make_unique<PBR>());
+		}
+		break;
 
-		m_materials.emplace_back(std::make_unique<UnlitTexture>());
+		default:
+			break;
+		}
 		m_mapMaterials.insert({ argMaterialName, m_materials.size() - 1 });
 
 		m_materials.back()->m_programHandle = m_mapPrograms.at(argShaderName);
@@ -249,8 +313,8 @@ namespace TNAP {
 
 	Renderer3D::~Renderer3D()
 	{
-		for(const GLuint program : m_programs)
-			glDeleteProgram(program);
+		for(const SProgram program : m_programs)
+			glDeleteProgram(program.m_program);
 
 
 		glfwDestroyWindow(s_window);
@@ -265,7 +329,8 @@ namespace TNAP {
 			return;
 
 
-		loadMaterials("Data\\Materials");
+		loadShaders();
+		loadMaterials("Materials.csv");
 
 		m_windowFrameBuffer.init();
 		m_windowFrameBuffer.resize(glm::vec2( m_windowSize.x, m_windowSize.y));
@@ -491,7 +556,7 @@ namespace TNAP {
 		/// Uses Shaders from our program
 		Material* mat{ m_materials[m_mapMaterials.at("DefaultMaterial")].get() };
 
-		GLuint program{ m_programs[mat->getProgramHandle()] };
+		GLuint program{ m_programs[mat->getProgramHandle()].m_program };
 
 		if (program != m_currentProgram)
 		{
@@ -505,7 +570,6 @@ namespace TNAP {
 		// Clear FRAME buffers from previous frame
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
 
 		/// Create camera ID and then Sends camera forward direction data to shader as Uniform
@@ -778,11 +842,25 @@ namespace TNAP {
 						}
 					}
 				}
-
+				
 				ImGui::Spacing();
 				ImGui::Spacing();
 				if (ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
 				{
+					if (ImGui::Button("Save Materials"))
+					{
+						std::ofstream outputFile;
+
+						outputFile.open("Data/SaveLoad/Materials.csv");
+
+						for (const std::unique_ptr<Material>& mat : m_materials)
+						{
+							mat->saveData(outputFile, m_programs[mat->getProgramHandle()].m_name);
+							outputFile << std::endl;
+						}
+						outputFile.close();
+					}
+
 					ImGui::Columns(2, "materials"); // 2-ways, with border
 					ImGui::Separator();
 					ImGui::Text("Name"); ImGui::NextColumn();

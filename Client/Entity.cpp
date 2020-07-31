@@ -114,9 +114,9 @@ namespace TNAP {
 
 		if (ImGui::CollapsingHeader("Transform"))
 		{
-			ImGui::DragFloat3("Translation", &getTransform().getTranslation().x);
-			ImGui::DragFloat3("Rotation", &getTransform().getRotation().x);
-			ImGui::DragFloat3("Scale", &getTransform().getScale().x);
+			ImGui::DragFloat3("Translation", &getTransform().getTranslation().x, 0.01f);
+			ImGui::DragFloat3("Rotation", &getTransform().getRotation().x, 0.01f);
+			ImGui::DragFloat3("Scale", &getTransform().getScale().x, 0.01f);
 		}
 	}
 #endif

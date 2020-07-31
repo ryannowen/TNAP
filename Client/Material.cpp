@@ -4,6 +4,7 @@
 
 #include "Engine.hpp"
 #include "GetTextureMessage.hpp"
+#include <fstream>
 
 TNAP::Material::Material()
 {
@@ -37,6 +38,14 @@ void TNAP::Material::sendShaderData(const GLuint argProgram)
 	glUniform1f(emissionIntensity_id, m_emissionIntensity);
 
 	Helpers::CheckForGLError();
+}
+
+void TNAP::Material::saveData(std::ofstream& outputFile, const std::string& argShaderName)
+{
+	outputFile << m_name << ",";
+	outputFile << argShaderName << ",";
+	outputFile << m_colourTint.r << " " << m_colourTint.g << " " << m_colourTint.b << " " << m_colourTint.a << ",";
+	outputFile << m_emissionColour.r << " " << m_emissionColour.g << " " << m_emissionColour.b << "," << m_emissionIntensity;
 }
 
 void TNAP::Material::setEmissionTexture(const std::string& argFilePath)
