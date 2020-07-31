@@ -4,7 +4,8 @@
 
 namespace TNAP {
 
-	Scene::Scene()
+	Scene::Scene(const std::string& argName)
+		:	m_sceneName(argName)
 	{
 	}
 
@@ -229,14 +230,14 @@ namespace TNAP {
 					if (ImGui::IsWindowHovered())
 					{
 						if (ImGui::IsMouseClicked(0))
-							Entity::setSelected(false);
+							Entity::setSelected(nullptr);
 					}
 				}
 
 				ImGui::EndMenuBar();
 			}
 
-			ImGui::TextColored(ImVec4(0.9, 0.49, 0.17, 1), "Example Scene Name");
+			ImGui::TextColored(ImVec4(0.9, 0.49, 0.17, 1), m_sceneName.c_str());
 
 			Entity::setTreeIndex(0);
 

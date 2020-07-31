@@ -19,6 +19,7 @@ namespace TNAP
 
 		std::vector<size_t>* m_materialHandle{ nullptr };
 		std::vector<Material*> m_materialVector;
+
 	};
 
 }

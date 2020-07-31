@@ -3,6 +3,7 @@
 #include "SubmitModelMessage.hpp"
 #include "GetMaterialMessage.hpp"
 #include "LoadModelMessage.hpp"
+#include "GenerateMaterialMessage.hpp"
 #include "Material.hpp"
 
 namespace TNAP {
@@ -64,6 +65,48 @@ namespace TNAP {
 
 		if(ImGui::CollapsingHeader("Materials"))
 		{
+			static size_t materialHandle{ 0 };
+			ImGui::InputScalar("Material Handle", ImGuiDataType_::ImGuiDataType_U64, &materialHandle);
+			static std::string materialTypeName{ "Unlit" };
+			static TNAP::EMaterialType materialType{ TNAP::EMaterialType::eUnlit };
+			if(ImGui::BeginCombo("Material Type", materialTypeName.c_str()))
+			{
+				if (ImGui::Selectable("Unlit"))
+				{
+					materialTypeName = "Unlit";
+					materialType = TNAP::EMaterialType::eUnlit;
+				}
+				if (ImGui::Selectable("UnlitTexture"))
+				{
+					materialTypeName = "UnlitTexture";
+					materialType = TNAP::EMaterialType::eUnlitTexture;
+				}
+				if (ImGui::Selectable("PBR"))
+				{
+					materialTypeName = "PBR";
+					materialType = TNAP::EMaterialType::ePBR;
+				}
+
+				ImGui::EndCombo();
+			}
+
+			if (ImGui::Button("Generate New Material", ImVec2(ImGui::GetContentRegionAvailWidth(), 20)))
+			{
+				GenerateMaterialMessage genMessage(materialHandle, materialType);
+				TNAP::getEngine()->sendMessage(&genMessage);
+			}
+
+
+			if (materialHandle >= m_materialHandles.size())
+				materialHandle = m_materialHandles.size() - 1;
+			else if (materialHandle < 0)
+				materialHandle = 0;
+
+			ImGui::Spacing();
+			ImGui::Separator();
+			ImGui::Spacing();
+
+			ImGui::Text("Material Handles");
 			for (int i = 0; i < m_materialHandles.size(); i++)
 			{
 				ImGui::InputScalar(("[" + std::to_string(i) + "] ").c_str(), ImGuiDataType_::ImGuiDataType_U64, static_cast<void*>(&m_materialHandles.at(i)));
@@ -73,7 +116,7 @@ namespace TNAP {
 			ImGui::Separator();
 			ImGui::Spacing();
 
-			for (Material* mat : materialMessage.m_materialVector)
+			for (Material* const mat : materialMessage.m_materialVector)
 			{
 				mat->imGuiRender();
 			}

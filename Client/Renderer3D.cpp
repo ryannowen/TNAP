@@ -14,6 +14,7 @@
 #include "GetMaterialMessage.hpp"
 #include "LoadModelMessage.hpp"
 #include "LogMessage.hpp"
+#include "GenerateMaterialMessage.hpp"
 
 #include "UnlitTexture.hpp"
 
@@ -23,6 +24,222 @@ namespace TNAP {
 	void Renderer3D::CreateProgram(const std::string& argVertexFilePath, const std::string& argFragmentFilePath)
 	{
 		
+	}
+
+	const size_t Renderer3D::loadModel(const std::string& argFilePath)
+	{
+		std::string filePath{ argFilePath };
+
+		// Replaces File Path differences to forward slash
+		static std::array<std::string, 3> replacements{ "\\\\", "\\", "//" };
+		for (const std::string& replace : replacements)
+		{
+			size_t index{ 0 };
+			index = filePath.find(replace);
+			while (std::string::npos != index)
+			{
+				filePath.replace(index, replace.size(), "/");
+				index = filePath.find(replace, index + 2);
+			}
+		}
+
+		LogMessage logMessage("");
+		const auto& modelFind{ m_mapModels.find(filePath) };
+		if (modelFind != m_mapModels.end())
+		{
+			logMessage.m_message = "[Model] " + filePath + " is already loaded";
+			logMessage.m_logType = LogMessage::ELogType::eInfo;
+			TNAP::getEngine()->sendMessage(&logMessage);
+			return modelFind->second;
+		}
+
+		m_models.emplace_back(TNAP::Model());
+
+		if (!m_models.back().loadFromFile("Data\\Models\\" + filePath))
+		{
+			logMessage.m_message = "[Model] " + filePath + " could not load, returning handle 0";
+			logMessage.m_logType = LogMessage::ELogType::eWarning;
+			TNAP::getEngine()->sendMessage(&logMessage);
+
+			// If file fails to load, return first model
+			return 0;
+		}
+
+		m_mapModels.insert({ filePath, m_models.size() - 1 });
+
+		// Setup materials
+		for (int i = 0; i < m_models.back().getUniqueMaterialIndicesCount(); i++)
+		{
+			std::string name = filePath + "_" + std::to_string(i);
+			if (m_mapMaterials.find(name) != m_mapMaterials.end())
+			{
+				// material already Created
+				break;
+			}
+
+			m_materials.emplace_back(std::make_unique<UnlitTexture>());
+			m_mapMaterials.insert({ name, m_materials.size() - 1 });
+
+			m_materials.back()->m_programHandle = m_mapPrograms.at("Unlit");
+			m_materials.back()->m_name = name;
+			m_models.back().addDefaultMaterialHandle(m_mapMaterials.size() - 1);
+		}
+
+		logMessage.m_message = "[Model] " + filePath + " loaded successfully";
+		logMessage.m_logType = LogMessage::ELogType::eInfo;
+		TNAP::getEngine()->sendMessage(&logMessage);
+
+		return (m_models.size() - 1);
+	}
+
+	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
+	{
+		if (m_mapTextures.find(argType) == m_mapTextures.end())
+			m_mapTextures.insert({ argType, std::unordered_map<std::string, size_t>() });
+
+
+		std::string filePath{ argFilePath };
+
+		// Replaces File Path differences to forward slash
+		static std::array<std::string, 3> replacements{ "\\\\", "\\", "//" };
+		for (const std::string& replace : replacements)
+		{
+			size_t index{ 0 };
+			index = filePath.find(replace);
+			while (std::string::npos != index)
+			{
+				filePath.replace(index, replace.size(), "/");
+				index = filePath.find(replace, index + 2);
+			}
+		}
+
+		LogMessage logMessage("");
+		if (m_mapTextures.at(argType).find(filePath) != m_mapTextures.at(argType).end())
+		{
+			// Log Texture Already Loaded
+			logMessage.m_message = "[Texture] " + filePath + " is already loaded";
+			logMessage.m_logType = LogMessage::ELogType::eInfo;
+			TNAP::getEngine()->sendMessage(&logMessage);
+			return;
+		}
+
+		std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
+
+		if (!texture->Load("Data\\Textures\\" + filePath))
+		{
+			// Log Missing texture
+			logMessage.m_message = "[Texture] " + filePath + " could not load";
+			logMessage.m_logType = LogMessage::ELogType::eWarning;
+			TNAP::getEngine()->sendMessage(&logMessage);
+			return;
+		}
+
+		// Log Loaded Texture
+		logMessage.m_message = "[Texture] " + filePath + " is loaded successfully";
+		logMessage.m_logType = LogMessage::ELogType::eInfo;
+		TNAP::getEngine()->sendMessage(&logMessage);
+
+		GLuint textureRef;
+
+		/// Generates texture
+		glGenTextures(1, &textureRef);
+		glBindTexture(GL_TEXTURE_2D, textureRef);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->Width(), texture->Height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->GetData());
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		m_textures.at(static_cast<int>(argType)).push_back({ std::move(texture), textureRef });
+		m_mapTextures.at(argType).insert({ filePath, m_textures.at(static_cast<int>(argType)).size() - 1 });
+	}
+
+	void Renderer3D::loadMaterials(const std::string& argFilePath)
+	{
+		// TODO
+		// Load materials from file
+		// Check if material shaders already exist
+		// assign programHandle to material
+
+		// Load material here
+
+		// Load shaders if is not created
+
+		
+		createShader("Unlit", "Data/Shaders/unlitTexture_vertex_shader.glsl", "Data/Shaders/unlitTexture_fragment_shader.glsl");
+
+		createMaterial("DefaultMaterial", "Unlit");
+
+	}
+
+	const bool Renderer3D::createShader(const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
+	{
+		// Check if Shader is already created
+		if (m_mapPrograms.find(argShaderName) != m_mapPrograms.end())
+		{
+			return false;
+		}
+
+		const GLuint program = glCreateProgram();
+
+		// Load and create vertex and fragment shaders
+		const GLuint vertex_shader{ Helpers::LoadAndCompileShader(GL_VERTEX_SHADER, argVertexShaderPath) };
+		const GLuint fragment_shader{ Helpers::LoadAndCompileShader(GL_FRAGMENT_SHADER, argFragmentShaderPath) };
+
+		if ((0 == vertex_shader) || (0 == fragment_shader))
+		{
+			glDeleteProgram(program);
+			return false;
+		}
+
+		// Attach the vertex shader & fragment shader to this program (copies them)
+		glAttachShader(program, vertex_shader);
+		glAttachShader(program, fragment_shader);
+
+		// Done with the originals of these as we have made copies
+		glDeleteShader(vertex_shader);
+		glDeleteShader(fragment_shader);
+
+		// Link the shaders, checking for errors
+		if (!Helpers::LinkProgramShaders(program))
+			return false;
+
+		m_programs.emplace_back(program);
+		m_mapPrograms.insert({ argShaderName, m_programs.size() - 1 });
+
+		return true;
+	}
+
+	const bool Renderer3D::createMaterial(const std::string& argMaterialName, const std::string& argShaderName)
+	{
+		// material already Created 
+		if (m_mapMaterials.find(argMaterialName) != m_mapMaterials.end())
+			return true;
+
+		if (m_mapPrograms.find(argShaderName) == m_mapPrograms.end())
+			return false;
+
+
+		m_materials.emplace_back(std::make_unique<UnlitTexture>());
+		m_mapMaterials.insert({ argMaterialName, m_materials.size() - 1 });
+
+		m_materials.back()->m_programHandle = m_mapPrograms.at(argShaderName);
+		m_materials.back()->m_name = argMaterialName;
+
+		// Set other Data
+		/*switch (EMaterialType)
+		{
+		case TNAP::EMaterialType::eUnlit:
+			break;
+		case TNAP::EMaterialType::eUnlitTexture:
+			break;
+		case TNAP::EMaterialType::ePBR:
+			break;
+		default:
+			break;
+		}*/
+		return true;
 	}
 
 	Renderer3D::Renderer3D()
@@ -230,179 +447,33 @@ namespace TNAP {
 		}
 		break;
 
-		default:
-			break;
-		}
-
-	}
-
-	const size_t Renderer3D::loadModel(const std::string& argFilePath)
-	{
-		LogMessage logMessage("");
-		const auto& modelFind{ m_mapModels.find(argFilePath) };
-		if (modelFind != m_mapModels.end())
+		case Message::EMessageType::eGenerateMaterialMessage:
 		{
-			logMessage.m_message = "[Model] " + argFilePath + " is already loaded";
-			logMessage.m_logType = LogMessage::ELogType::eInfo;
-			TNAP::getEngine()->sendMessage(&logMessage);
-			return modelFind->second;
-		}
+			GenerateMaterialMessage* const genMessage{ static_cast<GenerateMaterialMessage*>(argMessage) };
 
-		m_models.emplace_back(TNAP::Model());
-
-		if (!m_models.back().loadFromFile("Data\\Models\\" + argFilePath))
-		{
-			logMessage.m_message = "[Model] " + argFilePath + " could not load, returning handle 0";
-			logMessage.m_logType = LogMessage::ELogType::eWarning;
-			TNAP::getEngine()->sendMessage(&logMessage);
-
-			// If file fails to load, return first model
-			return 0;
-		}
-
-		m_mapModels.insert({ argFilePath, m_models.size() - 1 });
-
-		// Setup materials
-		for (int i = 0; i < m_models.back().getUniqueMaterialIndicesCount(); i++)
-		{
-			std::string name = argFilePath + "_" + std::to_string(i);
-			if (m_mapMaterials.find(name) != m_mapMaterials.end())
+			switch (genMessage->m_materialType)
 			{
-				// material already Created
+			case TNAP::EMaterialType::eUnlit:
+				break;
+			case TNAP::EMaterialType::eUnlitTexture:
+				//UnlitTexture
+				break;
+			case TNAP::EMaterialType::ePBR:
+
+				break;
+			default:
 				break;
 			}
 
-			m_materials.emplace_back(std::make_unique<UnlitTexture>());
-			m_mapMaterials.insert({ name, m_materials.size() - 1 });
-
-			m_materials.back()->m_programHandle = m_mapPrograms.at("Unlit");
-			m_materials.back()->m_name = name;
-			m_models.back().addDefaultMaterialHandle(m_mapMaterials.size() - 1);
-		}
-
-		logMessage.m_message = "[Model] " + argFilePath + " loaded successfully";
-		logMessage.m_logType = LogMessage::ELogType::eInfo;
-		TNAP::getEngine()->sendMessage(&logMessage);
-
-		return (m_models.size() - 1);
-	}
-
-	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
-	{
-		if (m_mapTextures.find(argType) == m_mapTextures.end())
-			m_mapTextures.insert({ argType, std::unordered_map<std::string, size_t>() });
-
-		LogMessage logMessage("");
-
-		if (m_mapTextures.at(argType).find(argFilePath) != m_mapTextures.at(argType).end())
-		{
-			// Log Texture Already Loaded
-			logMessage.m_message = "[Texture] " + argFilePath + " is already loaded";
-			logMessage.m_logType = LogMessage::ELogType::eInfo;
-			TNAP::getEngine()->sendMessage(&logMessage);
-			return;
-		}
-
-		std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
-
-		if (!texture->Load("Data\\Textures\\" + argFilePath))
-		{
-			// Log Missing texture
-			logMessage.m_message = "[Texture] " + argFilePath + " could not load";
-			logMessage.m_logType = LogMessage::ELogType::eWarning;
-			TNAP::getEngine()->sendMessage(&logMessage);
-			return;
-		}
-
-		// Log Loaded Texture
-		logMessage.m_message = "[Texture] " + argFilePath + " is loaded successfully";
-		logMessage.m_logType = LogMessage::ELogType::eInfo;
-		TNAP::getEngine()->sendMessage(&logMessage);
-
-		GLuint textureRef;
-
-		/// Generates texture
-		glGenTextures(1, &textureRef);
-		glBindTexture(GL_TEXTURE_2D, textureRef);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->Width(), texture->Height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->GetData());
-		glGenerateMipmap(GL_TEXTURE_2D);
-
-		m_textures.at(static_cast<int>(argType)).push_back({ std::move(texture), textureRef });
-		m_mapTextures.at(argType).insert({ argFilePath, m_textures.at(static_cast<int>(argType)).size() - 1 });
-	}
-
-	void Renderer3D::loadMaterials(const std::string& argFilePath)
-	{
-		// TODO
-		// Load materials from file
-		// Check if material shaders already exist
-		// assign programHandle to material
-
-		// Load material here
-
-		// Load shaders if is not created
-		
-		if (m_mapPrograms.find("Unlit") == m_mapPrograms.end())
-		{
-			GLuint program = glCreateProgram();
-
-			// Load and create vertex and fragment shaders
-			GLuint vertex_shader{ Helpers::LoadAndCompileShader(GL_VERTEX_SHADER, "Data/Shaders/unlitTexture_vertex_shader.glsl") };
-			GLuint fragment_shader{ Helpers::LoadAndCompileShader(GL_FRAGMENT_SHADER, "Data/Shaders/unlitTexture_fragment_shader.glsl") };
-
-			if (0 == vertex_shader || 0 == fragment_shader)
-			{
-				glDeleteProgram(program);
-				return;
-			}
-
-			// Attach the vertex shader & fragment shader to this program (copies them)
-			glAttachShader(program, vertex_shader);
-			glAttachShader(program, fragment_shader);
-
-			// Done with the originals of these as we have made copies
-			glDeleteShader(vertex_shader);
-			glDeleteShader(fragment_shader);
-
-			// Link the shaders, checking for errors
-			if (!Helpers::LinkProgramShaders(program))
-				return;
-
-			m_programs.emplace_back(program);
-			m_mapPrograms.insert({ "Unlit", m_programs.size() - 1 });
-		}
-		
-
-		if (m_mapMaterials.find("DefaultMaterial") != m_mapMaterials.end())
-		{
-			// material already Created 
-			// continue;
-		}
-
-		m_materials.emplace_back(std::make_unique<UnlitTexture>());
-		m_mapMaterials.insert({ "DefaultMaterial", m_materials.size() - 1 });
-
-		m_materials.back()->m_programHandle = m_mapPrograms.at("Unlit");
-		m_materials.back()->m_name = "DefaultMaterial";
-
-		// Set other Data
-		/*switch (EMaterialType)
-		{
-		case TNAP::EMaterialType::eUnlit:
 			break;
-		case TNAP::EMaterialType::eUnlitTexture:
-			break;
-		case TNAP::EMaterialType::ePBR:
-			break;
+		}
 		default:
 			break;
-		}*/
+		}
 
 	}
+
+
 
 	void Renderer3D::render()
 	{
@@ -707,58 +778,7 @@ namespace TNAP {
 						}
 					}
 				}
-				// test
-				/*
-				
-					ImGui::Spacing();
-				ImGui::Spacing();
-				if (ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
-				{
-					ImGui::Columns(2, "materials"); // 2-ways, with border
-					ImGui::Separator();
-					ImGui::Text("Name"); ImGui::NextColumn();
-					ImGui::Text("Material Handle"); ImGui::NextColumn();
-					ImGui::Separator();
 
-					for (int i = 0; i < m_materials.size(); i++)
-					{
-						ImGui::Text(m_materials[i]->getName().c_str()); ImGui::NextColumn();
-						ImGui::Text(std::to_string(i).c_str()); ImGui::NextColumn();
-
-						ImGui::Separator();
-					}
-
-					ImGui::Columns(1, "materials");
-				}
-
-				ImGui::Spacing();
-				ImGui::Spacing();
-				static bool modelsOpen{ true };
-				if (ImGui::CollapsingHeader("Models", &modelsOpen))
-				{
-					ImGui::Columns(4, "models"); // 4-ways, with border
-					ImGui::Separator();
-					ImGui::Text("Path"); ImGui::NextColumn();
-					ImGui::Text("Model Handle"); ImGui::NextColumn();
-					ImGui::Text("Mesh Count"); ImGui::NextColumn();
-					ImGui::Text("Material Count"); ImGui::NextColumn();
-					ImGui::Separator();
-
-					for (const auto& mapModel : m_mapModels)
-					{
-						ImGui::Text(mapModel.first.c_str()); ImGui::NextColumn();
-						ImGui::Text(std::to_string(mapModel.second).c_str()); ImGui::NextColumn();
-						ImGui::Text(std::to_string(m_models.at(mapModel.second).getMeshVector().size()).c_str()); ImGui::NextColumn();
-						ImGui::Text(std::to_string(m_models.at(mapModel.second).getUniqueMaterialIndicesCount()).c_str()); ImGui::NextColumn();
-
-						ImGui::Separator();
-					}
-
-					ImGui::Columns(1, "models");
-
-				}
-
-				*/
 				ImGui::Spacing();
 				ImGui::Spacing();
 				if (ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))

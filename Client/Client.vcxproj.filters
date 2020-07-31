@@ -275,5 +275,8 @@
     <ClInclude Include="..\External\ImGui\imgui_stdlib.h">
       <Filter>ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="GenerateMaterialMessage.hpp">
+      <Filter>Header Files\Messages</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

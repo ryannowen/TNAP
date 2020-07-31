@@ -24,7 +24,7 @@ namespace TNAP {
 	void SceneManager::init()
 	{
 		if (nullptr == m_scene)
-			m_scene = std::make_unique<Scene>();
+			m_scene = std::make_unique<Scene>("Our First Scene");
 
 		// Log Message tests
 		LogMessage message("Adding Entity 3");

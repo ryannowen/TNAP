@@ -15,11 +15,12 @@ namespace TNAP {
 	class Scene
 	{
 	private:
+		std::string m_sceneName{ "" };
 		std::unordered_map<std::string, size_t> m_mapEntities;
 		std::vector<std::shared_ptr<TNAP::Entity>> m_entities;
 
 	public:
-		Scene();
+		Scene(const std::string& argName);
 		~Scene();
 
 		void init();
@@ -34,6 +35,8 @@ namespace TNAP {
 		void destroyEntity(const size_t argHandle);
 
 		void sendMessage(TNAP::Message* const argMessage);
+
+		inline const std::string& getSceneName() const { return m_sceneName; }
 
 #if USE_IMGUI
 		void imGuiRender();
