@@ -6,12 +6,14 @@
 
 #include "ImGuiInclude.hpp"
 #include "ExternalLibraryHeaders.h"
+#include "Engine.hpp"
 #include "Mesh.h"
 #include "Simulation.h"
 #include "GetTextureMessage.hpp"
 #include "SubmitModelMessage.hpp"
 #include "GetMaterialMessage.hpp"
 #include "LoadModelMessage.hpp"
+#include "LogMessage.hpp"
 
 #include "UnlitTexture.hpp"
 
@@ -100,6 +102,8 @@ namespace TNAP {
 		loadTexture(TNAP::ETextureType::eAlbedo, "birdplane.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "creature-evolution-2\\Default Material1_Flattened_Diffuse.png");
 
+		loadTexture(TNAP::ETextureType::eAlbedo, "aqua_pig_2K.png");
+
 		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01a_D_A.tga.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01a_E.tga.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01b_D_A.tga.png");
@@ -111,7 +115,7 @@ namespace TNAP {
 
 		loadTexture(TNAP::ETextureType::eAlbedo, "fire-elemental\\diffuse fire_elemntal.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "low-poly-spider-tank\\Part_01x_albedo.jpg");
-		loadTexture(TNAP::ETextureType::eAlbedo, "AssaultRifleModel_Albedo.tga");
+		loadTexture(TNAP::ETextureType::eAlbedo, "AR\\AssaultRifleModel_Albedo.tga");
 		loadTexture(TNAP::ETextureType::eEmission, "three-eyed-demon\\Third_Eyex_Albedo.jpg");
 	}
 
@@ -234,10 +238,13 @@ namespace TNAP {
 
 	const size_t Renderer3D::loadModel(const std::string& argFilePath)
 	{
+		LogMessage logMessage("");
 		const auto& modelFind{ m_mapModels.find(argFilePath) };
 		if (modelFind != m_mapModels.end())
 		{
-			// TODO Log Model already loaded
+			logMessage.m_message = "[Model] " + argFilePath + " is already loaded";
+			logMessage.m_logType = LogMessage::ELogType::eInfo;
+			TNAP::getEngine()->sendMessage(&logMessage);
 			return modelFind->second;
 		}
 
@@ -245,7 +252,10 @@ namespace TNAP {
 
 		if (!m_models.back().loadFromFile("Data\\Models\\" + argFilePath))
 		{
-			// TODO: Log warning
+			logMessage.m_message = "[Model] " + argFilePath + " could not load, returning handle 0";
+			logMessage.m_logType = LogMessage::ELogType::eWarning;
+			TNAP::getEngine()->sendMessage(&logMessage);
+
 			// If file fails to load, return first model
 			return 0;
 		}
@@ -258,8 +268,8 @@ namespace TNAP {
 			std::string name = argFilePath + "_" + std::to_string(i);
 			if (m_mapMaterials.find(name) != m_mapMaterials.end())
 			{
-				// material already Created 
-				// continue;
+				// material already Created
+				break;
 			}
 
 			m_materials.emplace_back(std::make_unique<UnlitTexture>());
@@ -270,34 +280,44 @@ namespace TNAP {
 			m_models.back().addDefaultMaterialHandle(m_mapMaterials.size() - 1);
 		}
 
-		// TODO Log Model loaded
+		logMessage.m_message = "[Model] " + argFilePath + " loaded successfully";
+		logMessage.m_logType = LogMessage::ELogType::eInfo;
+		TNAP::getEngine()->sendMessage(&logMessage);
 
 		return (m_models.size() - 1);
 	}
 
 	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
 	{
-		//const auto& textMap{  };
 		if (m_mapTextures.find(argType) == m_mapTextures.end())
-		{
 			m_mapTextures.insert({ argType, std::unordered_map<std::string, size_t>() });
-		}
+
+		LogMessage logMessage("");
 
 		if (m_mapTextures.at(argType).find(argFilePath) != m_mapTextures.at(argType).end())
 		{
-			// TODO Log Texture already created
+			// Log Texture Already Loaded
+			logMessage.m_message = "[Texture] " + argFilePath + " is already loaded";
+			logMessage.m_logType = LogMessage::ELogType::eInfo;
+			TNAP::getEngine()->sendMessage(&logMessage);
+			return;
 		}
 
 		std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
 
 		if (!texture->Load("Data\\Textures\\" + argFilePath))
 		{
-			// TODO Log Missing texture
+			// Log Missing texture
+			logMessage.m_message = "[Texture] " + argFilePath + " could not load";
+			logMessage.m_logType = LogMessage::ELogType::eWarning;
+			TNAP::getEngine()->sendMessage(&logMessage);
 			return;
 		}
 
-		// TODO Log Loaded Texture
-
+		// Log Loaded Texture
+		logMessage.m_message = "[Texture] " + argFilePath + " is loaded successfully";
+		logMessage.m_logType = LogMessage::ELogType::eInfo;
+		TNAP::getEngine()->sendMessage(&logMessage);
 
 		GLuint textureRef;
 
@@ -581,14 +601,48 @@ namespace TNAP {
 
 			static std::array<bool, static_cast<int>(ETextureType::eCount)> headerOpen;
 			headerOpen.fill(true);
-			static std::array<std::string, headerOpen.size()> headerTitle { "Albedo", "eNormal", "Metallic", "Roughness", "AO", "Emission" };
+			static std::array<std::string, headerOpen.size()> headerTitle { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Emission" };
 
 			if (ImGui::BeginMenuBar())
 			{
+				if (ImGui::BeginMenu("Create"))
+				{
+					static std::string textureFilePath{ "" };
+					static ETextureType textureType{ ETextureType::eAlbedo };
+					if (ImGui::BeginMenu("Texture"))
+					{
+						ImGui::InputText("Filepath", &textureFilePath);
+
+						if (ImGui::BeginCombo("Texture Type", headerTitle.at(static_cast<int>(textureType)).c_str()))
+						{
+							for (int i = 0; i < headerTitle.size(); i++)
+							{
+								if (ImGui::Selectable(headerTitle.at(i).c_str()))
+									textureType = static_cast<ETextureType>(i);
+							}
+							ImGui::EndCombo();
+						}
+
+						if (ImGui::MenuItem("Create"))
+						{
+							if (!textureFilePath.empty())
+							{
+								loadTexture(textureType, textureFilePath);
+								textureFilePath = "";
+							}
+						}
+
+						ImGui::EndMenu();
+					}
+
+					ImGui::EndMenu();
+				}
+
 				if (ImGui::BeginMenu("Show"))
 				{
 					ImGui::MenuItem("Materials", NULL, &showMaterials);
 
+					
 					if (ImGui::BeginMenu("Textures"))
 					{
 						for (int i = 0; i < headerTitle.size(); i++)
@@ -656,10 +710,23 @@ namespace TNAP {
 				
 				ImGui::Spacing();
 				ImGui::Spacing();
-				if(ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
+				if (ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
 				{
-					for (const std::unique_ptr<Material>& mat : m_materials)
-						ImGui::Text(mat->getName().c_str());
+					ImGui::Columns(2, "materials"); // 2-ways, with border
+					ImGui::Separator();
+					ImGui::Text("Name"); ImGui::NextColumn();
+					ImGui::Text("Material Handle"); ImGui::NextColumn();
+					ImGui::Separator();
+
+					for (int i = 0; i < m_materials.size(); i++)
+					{
+						ImGui::Text(m_materials[i]->getName().c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(i).c_str()); ImGui::NextColumn();
+
+						ImGui::Separator();
+					}
+
+					ImGui::Columns(1, "materials");
 				}
 
 				ImGui::Spacing();
@@ -667,11 +734,12 @@ namespace TNAP {
 				static bool modelsOpen{ true };
 				if (ImGui::CollapsingHeader("Models", &modelsOpen))
 				{
-					ImGui::Columns(3, "models"); // 4-ways, with border
+					ImGui::Columns(4, "models"); // 4-ways, with border
 					ImGui::Separator();
 					ImGui::Text("Path"); ImGui::NextColumn();
 					ImGui::Text("Model Handle"); ImGui::NextColumn();
 					ImGui::Text("Mesh Count"); ImGui::NextColumn();
+					ImGui::Text("Material Count"); ImGui::NextColumn();
 					ImGui::Separator();
 
 					for (const auto& mapModel : m_mapModels)
@@ -679,9 +747,13 @@ namespace TNAP {
 						ImGui::Text(mapModel.first.c_str()); ImGui::NextColumn();
 						ImGui::Text(std::to_string(mapModel.second).c_str()); ImGui::NextColumn();
 						ImGui::Text(std::to_string(m_models.at(mapModel.second).getMeshVector().size()).c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(m_models.at(mapModel.second).getUniqueMaterialIndicesCount()).c_str()); ImGui::NextColumn();
 
 						ImGui::Separator();
 					}
+
+					ImGui::Columns(1, "models");
+
 				}
 			}
 		}

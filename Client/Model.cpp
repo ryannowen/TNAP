@@ -43,7 +43,6 @@ namespace TNAP {
 		if (!scene)
 		{
 			//EsOutput(importer.GetErrorString());
-			// TODO Log loading file
 			return false;
 		}
 
@@ -228,8 +227,6 @@ namespace TNAP {
 			if (scene->mAnimations[i]->mNumChannels)
 				EsOutput("Animation has " + std::to_string(scene->mAnimations[i]->mNumChannels) + " Channels");
 		}*/
-
-		// TODO Log Loaded OK
 	}
 
 	void Model::bindMesh(Helpers::Mesh* const argMesh)

@@ -21,12 +21,14 @@ namespace TNAP {
 
 	void Engine::init()
 	{
-		// Renderer3D system
-		m_systems.push_back(std::make_unique<TNAP::Renderer3D>());
-		m_systems.back()->init();
 		// Logger system
 		m_systems.push_back(std::make_unique<TNAP::Logger>());
 		m_systems.back()->init();
+
+		// Renderer3D system
+		m_systems.push_back(std::make_unique<TNAP::Renderer3D>());
+		m_systems.back()->init();
+
 
 		TNAP::getSceneManager()->init();
 
@@ -64,8 +66,8 @@ namespace TNAP {
 				break;
 
 #if USE_IMGUI
-			bool showDemoWindow = true;
-			ImGui::ShowDemoWindow(&showDemoWindow);
+			/*bool showDemoWindow = true;
+			ImGui::ShowDemoWindow(&showDemoWindow);*/
 
 			TNAP::getSceneManager()->imGuiRender();
 

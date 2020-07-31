@@ -9,7 +9,7 @@ bool Simulation::Initialise()
 {
 	// Set up camera
 	m_camera = std::make_shared<Helpers::Camera>();
-	m_camera->Initialise(glm::vec3(0, 200, 900), glm::vec3(0)); // Jeep
+	m_camera->Initialise(glm::vec3(0, 5, 10), glm::vec3(0), 60); // Jeep
 	//m_camera->Initialise(glm::vec3(-13.82f, 5.0f, 1.886f), glm::vec3(0.25f, 1.5f, 0), 30.0f,0.8f); // Aqua pig
 
 	// Set up renderer
@@ -27,9 +27,10 @@ bool Simulation::Update(GLFWwindow* window)
 
 #if USE_IMGUI
 	ImGui::Begin("Stats");
-
-	ImGui::Text(("FPS: " + std::to_string(1 / deltaTime)).c_str());
-
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		ImGui::Text("FPS average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+	}
 	ImGui::End();
 #endif
 

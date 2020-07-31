@@ -33,7 +33,27 @@ namespace TNAP {
 		TNAP::getEngine()->sendMessage(&message);
 
 		m_scene->addEntity<Renderable>("BirdPlane", "Primitives\\Plane.fbx");
-		m_scene->addEntity<Renderable>("4", "Cube.fbx");
+		m_scene->addEntity<Renderable>("4", "Primitives\\Cube.fbx");
+
+		Renderable* Hull{ m_scene->addEntity<Renderable>("Hull", "AquaPig\\hull.obj") };
+
+			Renderable* Gunbase{ Hull->addChild<Renderable>("Gun_Base", "AquaPig\\gun_base.obj") };
+			Gunbase->getTransform().setTranslation({ 0.0f, 0.569f, -1.866f });
+
+				Renderable* Gun{ Gunbase->addChild<Renderable>("Gun", "AquaPig\\gun.obj") };
+				Gun->getTransform().setTranslation({ 0.0f, 1.506f, 0.644f });
+
+		Renderable* LeftWing{ Hull->addChild<Renderable>("LeftWing", "AquaPig\\wing_left.obj") };
+		LeftWing->getTransform().setTranslation({ 2.231f, 0.272f, -2.663f});
+
+		Renderable* RightWing{ Hull->addChild<Renderable>("LeftWing", "AquaPig\\wing_left.obj") };
+		RightWing->getTransform().setTranslation({ -2.231f, 0.272f, -2.663f});
+		RightWing->getTransform().setScale({ -1, 1, 1});
+
+		Renderable* Propeller{ Hull->addChild<Renderable>("Propeller", "AquaPig\\propeller.obj") };
+		Propeller->getTransform().setTranslation({ 0.0f, 1.395f, -3.616f});
+		Propeller->getTransform().setRotation({ 90.0f, 0.0f, 0.0f});
+
 		//static_cast<Renderable*>(m_scene->findEntity("3"))->loadModel();
 		/*
 		m_scene->findEntity("3")->addChild<Renderable>("5", "low-poly-spider-tank\\Part_01xxx.fbx");
