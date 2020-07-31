@@ -18,17 +18,24 @@
 #include "GenerateMaterialMessage.hpp"
 
 #include "UnlitTexture.hpp"
+#include "PBR.hpp"
 
 namespace TNAP {
 	GLFWwindow* Renderer3D::s_window{ nullptr };
 
-	void Renderer3D::CreateProgram(const std::string& argVertexFilePath, const std::string& argFragmentFilePath)
-	{
-		
-	}
-
 	const size_t Renderer3D::loadModel(const std::string& argFilePath)
 	{
+		LogMessage logMessage("");
+		if (argFilePath.empty())
+		{
+			logMessage.m_message = "[Model] Filepath is empty, returning handle 0";
+			logMessage.m_logType = LogMessage::ELogType::eWarning;
+			TNAP::getEngine()->sendMessage(&logMessage);
+
+			return 0;
+		}
+
+
 		std::string filePath{ argFilePath };
 
 		// Replaces File Path differences to forward slash
@@ -44,7 +51,7 @@ namespace TNAP {
 			}
 		}
 
-		LogMessage logMessage("");
+		
 		const auto& modelFind{ m_mapModels.find(filePath) };
 		if (modelFind != m_mapModels.end())
 		{
@@ -120,6 +127,9 @@ namespace TNAP {
 
 	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
 	{
+		if (argFilePath.empty())
+			return;
+
 		if (m_mapTextures.find(argType) == m_mapTextures.end())
 			m_mapTextures.insert({ argType, std::unordered_map<std::string, size_t>() });
 
@@ -183,8 +193,10 @@ namespace TNAP {
 
 	void Renderer3D::loadMaterials(const std::string& argFilePath)
 	{
-		createMaterial("DefaultMaterial", "Unlit");
+		if (argFilePath.empty())
+			return;
 
+		createMaterial("DefaultMaterial", "Unlit");
 		// TODO
 		// Load materials from file
 		// Check if material shaders already exist
@@ -214,15 +226,29 @@ namespace TNAP {
 		
 		//createShader("Unlit", "Data/Shaders/unlitTexture_vertex_shader.glsl", "Data/Shaders/unlitTexture_fragment_shader.glsl");
 
+		// Set other Data
+		/*switch (EMaterialType)
+		{
+		case TNAP::EMaterialType::eUnlit:
+			break;
+		case TNAP::EMaterialType::eUnlitTexture:
+			break;
+		case TNAP::EMaterialType::ePBR:
+			break;
+		default:
+			break;
+		}*/
+
 	}
 
 	const bool Renderer3D::createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
 	{
+		if (argShaderName.empty() || argVertexShaderPath.empty() || argFragmentShaderPath.empty())
+			return false;
+
 		// Check if Shader is already created
 		if (m_mapPrograms.find(argShaderName) != m_mapPrograms.end())
-		{
 			return false;
-		}
 
 		const GLuint program = glCreateProgram();
 
@@ -256,14 +282,34 @@ namespace TNAP {
 		return true;
 	}
 
-	const bool Renderer3D::createMaterial(const std::string& argMaterialName, const std::string& argShaderName)
+	const bool Renderer3D::createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting)
 	{
-		// material already Created 
-		if (m_mapMaterials.find(argMaterialName) != m_mapMaterials.end())
-			return true;
+		if (argMaterialName.empty() || argShaderName.empty())
+			return false;
 
 		if (m_mapPrograms.find(argShaderName) == m_mapPrograms.end())
 			return false;
+
+		std::string materialName{ argMaterialName };
+
+		// material already Created 
+		if (m_mapMaterials.find(materialName) != m_mapMaterials.end())
+		{
+			if (!argIncrementNameIfExisting)
+				return true;
+			else
+			{
+				// Removes _IDNum from end of name
+				size_t matNameIndex{ materialName.find_last_of("_") };
+				materialName.erase(matNameIndex);
+				matNameIndex = 0;
+
+				while (m_mapMaterials.find(materialName + "_" + std::to_string(matNameIndex)) != m_mapMaterials.end())
+					matNameIndex++;
+
+				materialName += "_" + std::to_string(matNameIndex);
+			}
+		}
 
 		switch (m_programs.at(m_mapPrograms.at(argShaderName)).m_type)
 		{
@@ -279,30 +325,19 @@ namespace TNAP {
 		break;
 		case EMaterialType::ePBR:
 		{
-			//m_materials.emplace_back(std::make_unique<PBR>());
+			m_materials.emplace_back(std::make_unique<PBR>());
 		}
 		break;
 
 		default:
 			break;
 		}
-		m_mapMaterials.insert({ argMaterialName, m_materials.size() - 1 });
+
+		m_mapMaterials.insert({ materialName, m_materials.size() - 1 });
 
 		m_materials.back()->m_programHandle = m_mapPrograms.at(argShaderName);
-		m_materials.back()->m_name = argMaterialName;
+		m_materials.back()->m_name = materialName;
 
-		// Set other Data
-		/*switch (EMaterialType)
-		{
-		case TNAP::EMaterialType::eUnlit:
-			break;
-		case TNAP::EMaterialType::eUnlitTexture:
-			break;
-		case TNAP::EMaterialType::ePBR:
-			break;
-		default:
-			break;
-		}*/
 		return true;
 	}
 
@@ -364,6 +399,7 @@ namespace TNAP {
 			textType.push_back({ std::move(texture), whiteText });
 		}
 
+		loadModel("ErrorMesh.fbx");
 		loadModel("Primitives\\Cube.fbx");
 		loadModel("Primitives\\Sphere.fbx");
 		loadModel("Primitives\\Cylinder.fbx");
@@ -408,6 +444,9 @@ namespace TNAP {
 
 	void Renderer3D::sendMessage(TNAP::Message* const argMessage)
 	{
+		if (nullptr == argMessage)
+			return;
+
 		switch (argMessage->getMessageType())
 		{
 		case Message::EMessageType::eGetTextureMessage:
@@ -516,22 +555,40 @@ namespace TNAP {
 		{
 			GenerateMaterialMessage* const genMessage{ static_cast<GenerateMaterialMessage*>(argMessage) };
 
+			bool createdMaterial{ false };
 			switch (genMessage->m_materialType)
 			{
 			case TNAP::EMaterialType::eUnlit:
+				createdMaterial = createMaterial(genMessage->m_materialName, "Unlit", true);
 				break;
-			case TNAP::EMaterialType::eUnlitTexture:
-				//UnlitTexture
-				break;
-			case TNAP::EMaterialType::ePBR:
 
+			case TNAP::EMaterialType::eUnlitTexture:
+				createdMaterial = createMaterial(genMessage->m_materialName, "UnlitTexture", true);
+				break;
+
+			case TNAP::EMaterialType::ePBR:
+				createdMaterial = createMaterial(genMessage->m_materialName, "PBR", true);
 				break;
 			default:
 				break;
 			}
 
-			break;
+			LogMessage logMessage("Successfully generated new material");
+			if (createdMaterial)
+			{
+				genMessage->m_handle = m_materials.size() - 1;
+				logMessage.m_logType = LogMessage::ELogType::eInfo;
+				TNAP::getEngine()->sendMessage(&logMessage);
+			}
+			else
+			{
+				logMessage.m_message = "Failed to generate new material";
+				logMessage.m_logType = LogMessage::ELogType::eWarning;
+				TNAP::getEngine()->sendMessage(&logMessage);
+			}
 		}
+		break;
+
 		default:
 			break;
 		}

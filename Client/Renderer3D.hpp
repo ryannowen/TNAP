@@ -68,8 +68,6 @@ namespace TNAP {
 
 		std::vector<TNAP::Light*> m_nextLights;
 
-		void CreateProgram(const std::string& argVertexFilePath, const std::string& argFragmentFilePath);
-
 		GLuint m_currentProgram{ 0 };
 		GLuint batchRenderingBuffer{ 0 };
 
@@ -78,7 +76,7 @@ namespace TNAP {
 		void loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath);
 		void loadMaterials(const std::string& argFilePath);
 		const bool createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
-		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName);
+		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting = false);
 
 	public:
 		Renderer3D();
@@ -90,7 +88,7 @@ namespace TNAP {
 
 		void render();
 
-		inline static GLFWwindow* getWindow() { return s_window; }
+		inline static GLFWwindow* const getWindow() { return s_window; }
 
 #if USE_IMGUI
 		virtual void imGuiRender() override final;
@@ -98,4 +96,6 @@ namespace TNAP {
 #endif
 
 	};
+
+	
 }
