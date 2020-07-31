@@ -56,8 +56,6 @@ namespace TNAP {
 
 		std::vector<TNAP::Light*> m_nextLights;
 
-		void CreateProgram(const std::string& argVertexFilePath, const std::string& argFragmentFilePath);
-
 		GLuint m_currentProgram{ 0 };
 		GLuint batchRenderingBuffer{ 0 };
 
@@ -65,7 +63,9 @@ namespace TNAP {
 		void loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath);
 		void loadMaterials(const std::string& argFilePath);
 		const bool createShader(const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
-		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName);
+
+		template<class MaterialType>
+		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting = false);
 
 	public:
 		Renderer3D();
@@ -85,4 +85,39 @@ namespace TNAP {
 #endif
 
 	};
+	template<class MaterialType>
+	inline const bool Renderer3D::createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting)
+	{
+		if (m_mapPrograms.find(argShaderName) == m_mapPrograms.end())
+			return false;
+
+		std::string materialName{ argMaterialName };
+
+		// material already Created 
+		if (m_mapMaterials.find(materialName) != m_mapMaterials.end())
+		{
+			if (!argIncrementNameIfExisting)
+				return true;
+			else
+			{
+				// Removes _IDNum from end of name
+				size_t matNameIndex{ materialName.find_last_of("_") };
+				materialName.erase(matNameIndex);
+				matNameIndex = 0;
+
+				while (m_mapMaterials.find(materialName + "_" + std::to_string(matNameIndex)) != m_mapMaterials.end())
+					matNameIndex++;
+
+				materialName += "_" + std::to_string(matNameIndex);
+			}
+		}
+
+		m_materials.emplace_back(std::make_unique<MaterialType>());
+		m_mapMaterials.insert({ materialName, m_materials.size() - 1 });
+
+		m_materials.back()->m_programHandle = m_mapPrograms.at(argShaderName);
+		m_materials.back()->m_name = materialName;
+
+		return true;
+	}
 }

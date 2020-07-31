@@ -21,11 +21,6 @@
 namespace TNAP {
 	GLFWwindow* Renderer3D::s_window{ nullptr };
 
-	void Renderer3D::CreateProgram(const std::string& argVertexFilePath, const std::string& argFragmentFilePath)
-	{
-		
-	}
-
 	const size_t Renderer3D::loadModel(const std::string& argFilePath)
 	{
 		std::string filePath{ argFilePath };
@@ -169,7 +164,20 @@ namespace TNAP {
 		
 		createShader("Unlit", "Data/Shaders/unlitTexture_vertex_shader.glsl", "Data/Shaders/unlitTexture_fragment_shader.glsl");
 
-		createMaterial("DefaultMaterial", "Unlit");
+		createMaterial<UnlitTexture>("DefaultMaterial", "Unlit");
+
+		// Set other Data
+		/*switch (EMaterialType)
+		{
+		case TNAP::EMaterialType::eUnlit:
+			break;
+		case TNAP::EMaterialType::eUnlitTexture:
+			break;
+		case TNAP::EMaterialType::ePBR:
+			break;
+		default:
+			break;
+		}*/
 
 	}
 
@@ -177,9 +185,7 @@ namespace TNAP {
 	{
 		// Check if Shader is already created
 		if (m_mapPrograms.find(argShaderName) != m_mapPrograms.end())
-		{
 			return false;
-		}
 
 		const GLuint program = glCreateProgram();
 
@@ -208,37 +214,6 @@ namespace TNAP {
 		m_programs.emplace_back(program);
 		m_mapPrograms.insert({ argShaderName, m_programs.size() - 1 });
 
-		return true;
-	}
-
-	const bool Renderer3D::createMaterial(const std::string& argMaterialName, const std::string& argShaderName)
-	{
-		// material already Created 
-		if (m_mapMaterials.find(argMaterialName) != m_mapMaterials.end())
-			return true;
-
-		if (m_mapPrograms.find(argShaderName) == m_mapPrograms.end())
-			return false;
-
-
-		m_materials.emplace_back(std::make_unique<UnlitTexture>());
-		m_mapMaterials.insert({ argMaterialName, m_materials.size() - 1 });
-
-		m_materials.back()->m_programHandle = m_mapPrograms.at(argShaderName);
-		m_materials.back()->m_name = argMaterialName;
-
-		// Set other Data
-		/*switch (EMaterialType)
-		{
-		case TNAP::EMaterialType::eUnlit:
-			break;
-		case TNAP::EMaterialType::eUnlitTexture:
-			break;
-		case TNAP::EMaterialType::ePBR:
-			break;
-		default:
-			break;
-		}*/
 		return true;
 	}
 
@@ -299,6 +274,7 @@ namespace TNAP {
 			textType.push_back({ std::move(texture), whiteText });
 		}
 
+		loadModel("ErrorMesh.fbx");
 		loadModel("Primitives\\Cube.fbx");
 		loadModel("Primitives\\Sphere.fbx");
 		loadModel("Primitives\\Cylinder.fbx");
@@ -451,13 +427,17 @@ namespace TNAP {
 		{
 			GenerateMaterialMessage* const genMessage{ static_cast<GenerateMaterialMessage*>(argMessage) };
 
+			bool createdMaterial{ false };
 			switch (genMessage->m_materialType)
 			{
 			case TNAP::EMaterialType::eUnlit:
+				createdMaterial = createMaterial<Material>(genMessage->m_materialName, "Unlit", true);
 				break;
+
 			case TNAP::EMaterialType::eUnlitTexture:
-				//UnlitTexture
+				createdMaterial = createMaterial<UnlitTexture>(genMessage->m_materialName, "Unlit", true);
 				break;
+
 			case TNAP::EMaterialType::ePBR:
 
 				break;
@@ -465,8 +445,11 @@ namespace TNAP {
 				break;
 			}
 
-			break;
+			if(createdMaterial)
+				genMessage->m_handle = m_materials.size() - 1;
 		}
+		break;
+
 		default:
 			break;
 		}

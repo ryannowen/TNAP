@@ -92,7 +92,7 @@ namespace TNAP {
 
 			if (ImGui::Button("Generate New Material", ImVec2(ImGui::GetContentRegionAvailWidth(), 20)))
 			{
-				GenerateMaterialMessage genMessage(materialHandle, materialType);
+				GenerateMaterialMessage genMessage(materialMessage.m_materialVector.at(materialHandle)->getName(), m_materialHandles.at(materialHandle), materialType);
 				TNAP::getEngine()->sendMessage(&genMessage);
 			}
 
