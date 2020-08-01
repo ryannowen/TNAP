@@ -48,6 +48,26 @@ void TNAP::Material::saveData(std::ofstream& outputFile, const std::string& argS
 	outputFile << m_emissionColour.r << " " << m_emissionColour.g << " " << m_emissionColour.b << "," << m_emissionIntensity;
 }
 
+void TNAP::Material::setData(const std::string& argData)
+{
+	std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& argData) { return argData; }, 3);
+	
+	// Colour Tint
+	{
+		std::vector<float> colourTint = stringToVector<float>(materialData.at(0), " ", [](const std::string& argData) { return std::stod(argData); }, 4);
+		m_colourTint = { colourTint.at(0), colourTint.at(1), colourTint.at(2), colourTint.at(3) };
+	}
+
+	// Colour Tint
+	{
+		std::vector<float> emissionColour = stringToVector<float>(materialData.at(1), " ", [](const std::string& argData) { return std::stod(argData); }, 3);
+		m_emissionColour = { emissionColour.at(0), emissionColour.at(1), emissionColour.at(2) };
+	}
+
+	// Emission Intensity
+	m_emissionIntensity = std::stof(materialData.at(2));
+}
+
 void TNAP::Material::setEmissionTexture(const std::string& argFilePath)
 {
 }
@@ -85,7 +105,7 @@ void TNAP::Material::imGuiRender()
 			}
 		}
 
-		ImGui::ColorEdit4("Emission Colour", &m_emissionColour.x);
+		ImGui::ColorEdit3("Emission Colour", &m_emissionColour.x);
 		ImGui::InputFloat("Emission Intesity", &m_emissionIntensity);
 	}
 }

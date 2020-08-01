@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ExternalLibraryHeaders.h"
+#include <functional>
 
 namespace TNAP {
 
@@ -27,6 +28,9 @@ namespace TNAP {
 		glm::vec3 m_emissionColour{ 1 };
 		float m_emissionIntensity{ 0 };
 
+		template<typename Type>
+		inline const std::vector<Type> stringToVector(const std::string& argData, const std::string& argSeperator, const std::function<Type(const std::string&)>& argFunction, const size_t argSize = 0);
+		
 	public:
 		Material();
 
@@ -34,6 +38,7 @@ namespace TNAP {
 		virtual void sendShaderData(const GLuint argProgram);
 		inline virtual const EMaterialType getMaterialType() const { return EMaterialType::eUnlit; }
 		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName);
+		virtual void setData(const std::string& argData);
 
 		inline void setColourTint(const glm::vec4& argColour) { m_colourTint = argColour; }
 
@@ -54,5 +59,21 @@ namespace TNAP {
 		virtual void imGuiRender();
 #endif
 	};
-}
 
+	template<typename Type>
+	inline const std::vector<Type> Material::stringToVector(const std::string& argData, const std::string& argSeperator, const std::function<Type(const std::string&)>& argFunction, const size_t argSize)
+	{
+		std::string data{ argData };
+		std::vector<Type> vectorToReturn;
+		vectorToReturn.reserve(argSize);
+		size_t offset{ data.find(argSeperator) };
+		while (std::string::npos != offset)
+		{
+			vectorToReturn.emplace_back(argFunction(data.substr(0, offset)));
+			data.erase(0, offset + 1);
+			offset = data.find(argSeperator);
+		}
+		vectorToReturn.emplace_back(argFunction(data));
+		return vectorToReturn;
+	}
+}

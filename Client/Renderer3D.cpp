@@ -196,15 +196,7 @@ namespace TNAP {
 		if (argFilePath.empty())
 			return;
 
-		createMaterial("DefaultMaterial", "Unlit");
-		// TODO
-		// Load materials from file
-		// Check if material shaders already exist
-		// assign programHandle to material
-
-		// Load material here
-
-		// Load shaders if is not created
+		createMaterial("DefaultMaterial_0", "Unlit");
 
 		std::ifstream savedMaterials;
 
@@ -219,26 +211,12 @@ namespace TNAP {
 			std::getline(savedMaterials, name, ',');
 			std::getline(savedMaterials, shaderName, ',');
 			std::getline(savedMaterials, info);
-			createMaterial(name, shaderName);
+
+			if (createMaterial(name, shaderName))
+				m_materials.at(m_mapMaterials.at(name))->setData(info);
 		}
 
 		savedMaterials.close();
-		
-		//createShader("Unlit", "Data/Shaders/unlitTexture_vertex_shader.glsl", "Data/Shaders/unlitTexture_fragment_shader.glsl");
-
-		// Set other Data
-		/*switch (EMaterialType)
-		{
-		case TNAP::EMaterialType::eUnlit:
-			break;
-		case TNAP::EMaterialType::eUnlitTexture:
-			break;
-		case TNAP::EMaterialType::ePBR:
-			break;
-		default:
-			break;
-		}*/
-
 	}
 
 	const bool Renderer3D::createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
@@ -318,11 +296,13 @@ namespace TNAP {
 			m_materials.emplace_back(std::make_unique<Material>());
 		}
 		break;
+
 		case EMaterialType::eUnlitTexture:
 		{
 			m_materials.emplace_back(std::make_unique<UnlitTexture>());
 		}
 		break;
+
 		case EMaterialType::ePBR:
 		{
 			m_materials.emplace_back(std::make_unique<PBR>());
@@ -610,29 +590,12 @@ namespace TNAP {
 		glClearColor(0.5f, 0.5f, 0.5f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
 		
-		/// Uses Shaders from our program
-		Material* mat{ m_materials[m_mapMaterials.at("DefaultMaterial")].get() };
-
-		GLuint program{ m_programs[mat->getProgramHandle()].m_program };
-
-		if (program != m_currentProgram)
-		{
-			glUseProgram(program);
-			m_currentProgram = program;
-		}
-
 		m_windowFrameBuffer.bind();
 		glViewport(0, 0, m_windowFrameBuffer.getSize().x, m_windowFrameBuffer.getSize().y);
 
 		// Clear FRAME buffers from previous frame
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
-		/// Create camera ID and then Sends camera forward direction data to shader as Uniform
-		GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
-		glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
-
 
 		Helpers::CheckForGLError();
 		/// Creates and Gets Viewport size
@@ -647,11 +610,6 @@ namespace TNAP {
 		/// Creates View Matrix for camera
 		glm::mat4 view_xform = glm::lookAt(Simulation::m_camera->GetPosition(), Simulation::m_camera->GetPosition() + Simulation::m_camera->GetLookVector(), Simulation::m_camera->GetUpVector());
 		glm::mat4 combined_xform = projection_xform * view_xform;
-
-
-		/// Create combined xform ID and then Sends Combined Xform data to shader as Uniform
-		GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
-		glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
 
 		for (const auto& modelBatch : m_batchRenders)
 		{
@@ -670,12 +628,34 @@ namespace TNAP {
 				
 				for (int i = 0; i < meshes.size(); i++)
 				{
+					/// Uses Shaders from our program
+					Material* mat{ nullptr };
+					
+					if (meshes[i]->materialIndex >= batch.second.size())
+						mat = m_materials.at(0).get();
+					else
+						mat = m_materials.at(batch.second.at(meshes[i]->materialIndex)).get();
+
+					GLuint program{ m_programs[mat->getProgramHandle()].m_program };
+
+					if (program != m_currentProgram)
+					{
+						glUseProgram(program);
+						m_currentProgram = program;
+					}
+
+					/// Create camera ID and then Sends camera forward direction data to shader as Uniform
+					GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
+					glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
+
+					/// Create combined xform ID and then Sends Combined Xform data to shader as Uniform
+					GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
+					glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
+
+
 					glBindVertexArray(meshes[i]->VAO);
 
-					if (meshes[i]->materialIndex >= batch.second.size())
-						m_materials.at(0)->sendShaderData(m_currentProgram);
-					else
-						m_materials.at(batch.second[meshes[i]->materialIndex])->sendShaderData(m_currentProgram);
+					mat->sendShaderData(m_currentProgram);
 
 					glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
 					glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_DYNAMIC_DRAW);

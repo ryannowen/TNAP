@@ -117,7 +117,7 @@ namespace TNAP {
 			}
 
 
-			ImGui::ColorEdit4((m_name + "Emission Colour").c_str(), &m_emissionColour.x, ImGuiColorEditFlags_::ImGuiColorEditFlags_NoLabel);
+			ImGui::ColorEdit3((m_name + "Emission Colour").c_str(), &m_emissionColour.x, ImGuiColorEditFlags_::ImGuiColorEditFlags_NoLabel);
 			ImGui::SameLine();
 			ImGui::Text("Emission Colour");
 
