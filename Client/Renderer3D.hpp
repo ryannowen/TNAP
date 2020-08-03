@@ -73,10 +73,11 @@ namespace TNAP {
 
 		const size_t loadModel(const std::string& argFilePath);
 		void loadShaders();
-		void loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath);
+		const bool loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath);
 		void loadMaterials(const std::string& argFilePath);
 		const bool createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
 		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting = false);
+		const bool createMaterial(const std::string& argMaterialName, const TNAP::EMaterialType argMaterialType, const bool argIncrementNameIfExisting = false);
 
 	public:
 		Renderer3D();

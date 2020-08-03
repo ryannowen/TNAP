@@ -9,7 +9,8 @@ namespace TNAP {
 	{
 		eUnlit,
 		eUnlitTexture,
-		ePBR
+		ePBR,
+		eCount
 	};
 
 	class Material

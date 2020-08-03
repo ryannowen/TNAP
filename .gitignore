@@ -348,3 +348,4 @@ MigrationBackup/
 Client/imgui.ini
 *.exe
 x64/Debug/Client.pdb
+*.pdb

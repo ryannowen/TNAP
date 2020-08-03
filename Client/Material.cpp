@@ -81,12 +81,11 @@ void TNAP::Material::imGuiRender()
 
 		ImGui::ColorEdit4("Colour Tint", &m_colourTint.x);
 
-		ImGui::Text("Emission");
 		{
 			GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
 			getEngine()->sendMessage(&textureMessage);
 
-			if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(64, 64)))
+			if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
 			{
 				m_emissionTextureHandle = 0;
 			}
@@ -104,6 +103,8 @@ void TNAP::Material::imGuiRender()
 				ImGui::EndDragDropTarget();
 			}
 		}
+		ImGui::SameLine();
+		ImGui::Text("Emission");
 
 		ImGui::ColorEdit3("Emission Colour", &m_emissionColour.x);
 		ImGui::InputFloat("Emission Intesity", &m_emissionIntensity);

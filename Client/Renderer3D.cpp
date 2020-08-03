@@ -63,7 +63,7 @@ namespace TNAP {
 
 		m_models.emplace_back(TNAP::Model());
 
-		if (!m_models.back().loadFromFile("Data\\Models\\" + filePath))
+		if (!m_models.back().loadFromFile("Data/Models/" + filePath))
 		{
 			logMessage.m_message = "[Model] " + filePath + " could not load, returning handle 0";
 			logMessage.m_logType = LogMessage::ELogType::eWarning;
@@ -125,10 +125,10 @@ namespace TNAP {
 		savedShaders.close();
 	}
 
-	void Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
+	const bool Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
 	{
 		if (argFilePath.empty())
-			return;
+			return false;
 
 		if (m_mapTextures.find(argType) == m_mapTextures.end())
 			m_mapTextures.insert({ argType, std::unordered_map<std::string, size_t>() });
@@ -156,18 +156,18 @@ namespace TNAP {
 			logMessage.m_message = "[Texture] " + filePath + " is already loaded";
 			logMessage.m_logType = LogMessage::ELogType::eInfo;
 			TNAP::getEngine()->sendMessage(&logMessage);
-			return;
+			return false;
 		}
 
 		std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
 
-		if (!texture->Load("Data\\Textures\\" + filePath))
+		if (!texture->Load("Data/Textures/" + filePath))
 		{
 			// Log Missing texture
 			logMessage.m_message = "[Texture] " + filePath + " could not load";
 			logMessage.m_logType = LogMessage::ELogType::eWarning;
 			TNAP::getEngine()->sendMessage(&logMessage);
-			return;
+			return false;
 		}
 
 		// Log Loaded Texture
@@ -189,6 +189,8 @@ namespace TNAP {
 
 		m_textures.at(static_cast<int>(argType)).push_back({ std::move(texture), textureRef });
 		m_mapTextures.at(argType).insert({ filePath, m_textures.at(static_cast<int>(argType)).size() - 1 });
+
+		return true;
 	}
 
 	void Renderer3D::loadMaterials(const std::string& argFilePath)
@@ -321,6 +323,26 @@ namespace TNAP {
 		return true;
 	}
 
+	const bool Renderer3D::createMaterial(const std::string& argMaterialName, const TNAP::EMaterialType argMaterialType, const bool argIncrementNameIfExisting)
+	{
+		std::string programName{ "" };
+		bool foundProgram{ false };
+		for (const TNAP::SProgram& program : m_programs)
+		{
+			if (program.m_type == argMaterialType)
+			{
+				foundProgram = true;
+				programName = program.m_name;
+				break;
+			}
+		}
+
+		if (foundProgram && !programName.empty())
+			return createMaterial(argMaterialName, programName, argIncrementNameIfExisting);
+		else
+			return false;
+	}
+
 	Renderer3D::Renderer3D()
 	{
 		m_textures.resize(static_cast<int>(ETextureType::eCount));
@@ -385,7 +407,11 @@ namespace TNAP {
 		loadModel("Primitives\\Cylinder.fbx");
 		loadModel("Primitives\\Plane.fbx");
 		loadModel("Primitives\\Cone.fbx");
-		loadModel("Phoenix\\fly.fbx");
+		
+		loadTexture(TNAP::ETextureType::eAlbedo, "Editor\\MissingTexture.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Editor\\MatTexture.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Editor\\ModelTexture.png");
+
 
 		///
 		// TEMP
@@ -396,7 +422,6 @@ namespace TNAP {
 		//loadModel("low-poly-spider-tank\\Part_01xxx.fbx"); 
 		//loadModel("three-eyed-demon\\Third_Eyexxx.OBJ");
 
-		loadTexture(TNAP::ETextureType::eAlbedo, "MissingTexture.jpg");
 		loadTexture(TNAP::ETextureType::eAlbedo, "birdplane.png");
 		loadTexture(TNAP::ETextureType::eAlbedo, "creature-evolution-2\\Default Material1_Flattened_Diffuse.png");
 
@@ -769,28 +794,27 @@ namespace TNAP {
 			static bool showNormal{ true };
 			static bool showEmission{ true };
 
-			// plus 1 since material isn't a texture type
-
-			static std::array<bool, static_cast<int>(ETextureType::eCount)> headerOpen;
+			static std::array<bool, static_cast<int>(TNAP::ETextureType::eCount)> headerOpen;
 			headerOpen.fill(true);
-			static std::array<std::string, headerOpen.size()> headerTitle { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Emission" };
+			static std::array<std::string, headerOpen.size()> textureNames { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Emission" };
 
 			if (ImGui::BeginMenuBar())
 			{
 				if (ImGui::BeginMenu("Create"))
 				{
-					static std::string textureFilePath{ "" };
-					static ETextureType textureType{ ETextureType::eAlbedo };
 					if (ImGui::BeginMenu("Texture"))
 					{
+						static std::string textureFilePath{ "" };
+						static TNAP::ETextureType textureType{ TNAP::ETextureType::eAlbedo };
+
 						ImGui::InputText("Filepath", &textureFilePath);
 
-						if (ImGui::BeginCombo("Texture Type", headerTitle.at(static_cast<int>(textureType)).c_str()))
+						if (ImGui::BeginCombo("Texture Type", textureNames.at(static_cast<int>(textureType)).c_str()))
 						{
-							for (int i = 0; i < headerTitle.size(); i++)
+							for (int i = 0; i < textureNames.size(); i++)
 							{
-								if (ImGui::Selectable(headerTitle.at(i).c_str()))
-									textureType = static_cast<ETextureType>(i);
+								if (ImGui::Selectable(textureNames.at(i).c_str()))
+									textureType = static_cast<TNAP::ETextureType>(i);
 							}
 							ImGui::EndCombo();
 						}
@@ -807,18 +831,51 @@ namespace TNAP {
 						ImGui::EndMenu();
 					}
 
+					static std::array<std::string, static_cast<int>(TNAP::EMaterialType::eCount)> materialNames{ "Unlit", "UnlitTexture", "PBR"};
+
+					if (ImGui::BeginMenu("Material"))
+					{
+						static std::string name{ "" };
+						static TNAP::EMaterialType materialType{ TNAP::EMaterialType::eUnlit };
+
+						ImGui::InputText("Name", &name);
+
+						if (ImGui::BeginCombo("Material Type", materialNames.at(static_cast<int>(materialType)).c_str()))
+						{
+							for (int i = 0; i < materialNames.size(); i++)
+							{
+								if (ImGui::Selectable(materialNames.at(i).c_str()))
+									materialType = static_cast<TNAP::EMaterialType>(i);
+							}
+							ImGui::EndCombo();
+						}
+
+						if (ImGui::MenuItem("Create"))
+						{
+							if (!name.empty())
+							{
+								if (std::string::npos == name.find('_'))
+									name += "_";
+
+								createMaterial(name, materialType, true);
+								name = "";
+							}
+						}
+
+						ImGui::EndMenu();
+					}
+
 					ImGui::EndMenu();
 				}
 
 				if (ImGui::BeginMenu("Show"))
 				{
 					ImGui::MenuItem("Materials", NULL, &showMaterials);
-
 					
 					if (ImGui::BeginMenu("Textures"))
 					{
-						for (int i = 0; i < headerTitle.size(); i++)
-							ImGui::MenuItem(headerTitle.at(i).c_str(), NULL, &headerOpen.at(i));
+						for (int i = 0; i < textureNames.size(); i++)
+							ImGui::MenuItem(textureNames.at(i).c_str(), NULL, &headerOpen.at(i));
 						
 						ImGui::EndMenu();
 					}
@@ -852,28 +909,24 @@ namespace TNAP {
 					amount = std::max(amount, 1);
 					ImGui::Spacing();
 
-					for (int i = 0; i < headerTitle.size(); i++)
+					for (int i = 0; i < textureNames.size(); i++)
 					{
 						const std::vector<std::pair<std::unique_ptr<Helpers::ImageLoader>, GLuint>>& textures{ m_textures.at(i) };
-						if (ImGui::CollapsingHeader(headerTitle.at(i).c_str(), &headerOpen.at(i)))
+						if (ImGui::CollapsingHeader(textureNames.at(i).c_str(), &headerOpen.at(i)))
 						{
 							for (int j = 0; j < textures.size(); j++)
 							{
 								if (j % amount != 0)
 									ImGui::SameLine();
 
-								ImGui::ImageButton((ImTextureID)textures[j].second, ImVec2(iconSize, iconSize), ImVec2(0, 0), ImVec2(1, 1), 1);
+								ImGui::ImageButton((ImTextureID)textures[j].second, ImVec2(iconSize, iconSize), ImVec2(0, 1), ImVec2(1, 0), 1);
 								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 								{
-									std::pair<ETextureType, size_t>* const id{ new std::pair<ETextureType, size_t>(static_cast<ETextureType>(i), j) };
-
-									ImGui::SetDragDropPayload("TEXTURE_CELL", id, sizeof(*id));
-									ImGui::Image((ImTextureID)textures[j].second, ImVec2(64, 64));
+									ImGui::SetDragDropPayload("TEXTURE_CELL", &std::pair<ETextureType, size_t>(static_cast<ETextureType>(i), j), sizeof(std::pair<ETextureType, size_t>));
+									ImGui::Image((ImTextureID)textures[j].second, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
 									ImGui::Text(("Texture Type: " + std::to_string(i)).c_str());
 									ImGui::Text(("Texture Handle: " + std::to_string(j)).c_str());
 									ImGui::EndDragDropSource();
-
-									delete id;
 								}
 							}
 						}
@@ -898,14 +951,33 @@ namespace TNAP {
 						outputFile.close();
 					}
 
-					ImGui::Columns(2, "materials"); // 2-ways, with border
+					ImGui::Columns(3, "materials"); // 3-ways, with border
+
 					ImGui::Separator();
+					ImGui::Text("Mat"); ImGui::NextColumn();
 					ImGui::Text("Name"); ImGui::NextColumn();
-					ImGui::Text("Material Handle"); ImGui::NextColumn();
+					ImGui::Text("Handle"); ImGui::NextColumn();
 					ImGui::Separator();
 
-					for (int i = 0; i < m_materials.size(); i++)
+					for (size_t i = 0; i < m_materials.size(); i++)
 					{
+						 
+						size_t textureGLuint = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/MatTexture.png")).second;
+
+						ImGui::PushID(i);
+						ImGui::ImageButton((ImTextureID)textureGLuint, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
+						ImGui::PopID();
+
+						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+						{
+							ImGui::SetDragDropPayload("MATERIAL_CELL", &i, sizeof(i));
+							ImGui::Image((ImTextureID)textureGLuint, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
+							ImGui::Text(("Material Name: " + m_materials.at(i)->getName()).c_str());
+							ImGui::Text(("Material Type: " + std::to_string(static_cast<int>(m_materials.at(i)->getMaterialType()))).c_str());
+							ImGui::EndDragDropSource();
+						}
+						ImGui::NextColumn();
+
 						ImGui::Text(m_materials[i]->getName().c_str()); ImGui::NextColumn();
 						ImGui::Text(std::to_string(i).c_str()); ImGui::NextColumn();
 
@@ -920,8 +992,9 @@ namespace TNAP {
 				static bool modelsOpen{ true };
 				if (ImGui::CollapsingHeader("Models", &modelsOpen))
 				{
-					ImGui::Columns(4, "models"); // 4-ways, with border
+					ImGui::Columns(5, "models"); // 5-ways, with border
 					ImGui::Separator();
+					ImGui::Text("Model"); ImGui::NextColumn();
 					ImGui::Text("Path"); ImGui::NextColumn();
 					ImGui::Text("Model Handle"); ImGui::NextColumn();
 					ImGui::Text("Mesh Count"); ImGui::NextColumn();
@@ -930,6 +1003,22 @@ namespace TNAP {
 
 					for (const auto& mapModel : m_mapModels)
 					{
+						size_t textureGLuint = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/ModelTexture.png")).second;
+
+						ImGui::PushID(mapModel.second);
+						ImGui::ImageButton((ImTextureID)textureGLuint, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
+						ImGui::PopID();
+
+						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+						{
+							ImGui::SetDragDropPayload("MODEL_CELL", &mapModel.second, sizeof(mapModel.second));
+							ImGui::Image((ImTextureID)textureGLuint, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
+							ImGui::Text(("Model Name: " + mapModel.first).c_str());
+							ImGui::Text(("Model Handle: " + std::to_string(mapModel.second)).c_str());
+							ImGui::EndDragDropSource();
+						}
+						ImGui::NextColumn();
+
 						ImGui::Text(mapModel.first.c_str()); ImGui::NextColumn();
 						ImGui::Text(std::to_string(mapModel.second).c_str()); ImGui::NextColumn();
 						ImGui::Text(std::to_string(m_models.at(mapModel.second).getMeshVector().size()).c_str()); ImGui::NextColumn();

@@ -73,7 +73,7 @@ namespace TNAP {
 				GetTextureMessage textureMessage({ m_textureType, m_textureHandle });
 				getEngine()->sendMessage(&textureMessage);
 
-				if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(64, 64)))
+				if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
 				{
 					m_textureHandle = 0;
 				}
@@ -97,7 +97,7 @@ namespace TNAP {
 				GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
 				getEngine()->sendMessage(&textureMessage);
 
-				if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(64, 64)))
+				if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
 				{
 					m_emissionTextureHandle = 0;
 				}

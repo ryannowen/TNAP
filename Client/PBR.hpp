@@ -14,17 +14,18 @@ namespace TNAP {
 		std::array<size_t, 6> m_textureHandles;
 
 		float m_defaultMetallic{ 0 };
-		float m_defualtRougness{ 0 };
+		float m_defaultRoughness{ 0 };
 
 	public:
 		PBR();
 
 		virtual void init() override final;
 		virtual void sendShaderData(const GLuint argProgram) override final;
+		inline virtual const EMaterialType getMaterialType() const override final { return EMaterialType::ePBR; }
 
 		void setTexture(const ETextureType argType, const std::string& argFilePath);
 		inline void setMetallicDefaultValue(const float argMetallicValue) { m_defaultMetallic = argMetallicValue; }
-		inline void setRoughnessDefaultValue(const float argRoughnessValue) { m_defualtRougness = argRoughnessValue; }
+		inline void setRoughnessDefaultValue(const float argRoughnessValue) { m_defaultRoughness = argRoughnessValue; }
 
 #if USE_IMGUI
 		virtual void imGuiRender() override final;
