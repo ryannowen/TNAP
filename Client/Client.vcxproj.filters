@@ -278,5 +278,11 @@
     <ClInclude Include="GenerateMaterialMessage.hpp">
       <Filter>Header Files\Messages</Filter>
     </ClInclude>
+    <ClInclude Include="LoadTextureMessage.hpp">
+      <Filter>Header Files\Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="STextureData.hpp">
+      <Filter>Header Files\Systems\Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -136,6 +136,7 @@
     <ClInclude Include="ImGuiInclude.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="LoadModelMessage.hpp" />
+    <ClInclude Include="LoadTextureMessage.hpp" />
     <ClInclude Include="Logger.hpp" />
     <ClInclude Include="LogMessage.hpp" />
     <ClInclude Include="Material.hpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="Scene.hpp" />
     <ClInclude Include="SceneManager.hpp" />
     <ClInclude Include="SpotLight.hpp" />
+    <ClInclude Include="STextureData.hpp" />
     <ClInclude Include="SubmitModelMessage.hpp" />
     <ClInclude Include="TNAPImGui.hpp" />
     <ClInclude Include="Mesh.h" />

@@ -11,6 +11,7 @@
 #include "Mesh.h"
 #include "Simulation.h"
 #include "GetTextureMessage.hpp"
+#include "LoadTextureMessage.hpp"
 #include "SubmitModelMessage.hpp"
 #include "GetMaterialMessage.hpp"
 #include "LoadModelMessage.hpp"
@@ -187,7 +188,7 @@ namespace TNAP {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->Width(), texture->Height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, texture->GetData());
 		glGenerateMipmap(GL_TEXTURE_2D);
 
-		m_textures.at(static_cast<int>(argType)).push_back({ std::move(texture), textureRef });
+		m_textures.at(static_cast<int>(argType)).emplace_back(STextureData(std::move(texture), textureRef, filePath));
 		m_mapTextures.at(argType).insert({ filePath, m_textures.at(static_cast<int>(argType)).size() - 1 });
 
 		return true;
@@ -398,7 +399,7 @@ namespace TNAP {
 			std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
 			texture->SetData(1, 1, &pixels[0]);
 
-			textType.push_back({ std::move(texture), whiteText });
+			textType.push_back(STextureData(std::move(texture), whiteText, ""));
 		}
 
 		loadModel("ErrorMesh.fbx");
@@ -458,10 +459,22 @@ namespace TNAP {
 		{
 			GetTextureMessage* const textureMessage{ static_cast<GetTextureMessage*>(argMessage) };
 
-			const std::pair<std::unique_ptr<Helpers::ImageLoader>, GLuint>& textureData{ m_textures.at(static_cast<int>(textureMessage->m_textureInfo.first)).at(textureMessage->m_textureInfo.second) };
+			textureMessage->m_textureData = &m_textures.at(static_cast<int>(textureMessage->m_textureInfo.first)).at(textureMessage->m_textureInfo.second);
+		}
+		break;
 
-			textureMessage->m_textureData = textureData.first.get();
-			textureMessage->m_textureBinding = textureData.second;
+		case Message::EMessageType::eLoadTextureMessage:
+		{
+			LoadTextureMessage* const textureMessage{ static_cast<LoadTextureMessage*>(argMessage) };
+			
+			if (loadTexture(textureMessage->m_loadInfo.first, textureMessage->m_loadInfo.second))
+			{
+				textureMessage->m_loadedSuccessfully = true;
+				const size_t textureHandle{ m_mapTextures.at(textureMessage->m_loadInfo.first).at(textureMessage->m_loadInfo.second) };
+
+				textureMessage->m_textureData = &m_textures.at(static_cast<size_t>(textureMessage->m_loadInfo.first)).at(textureHandle);
+				textureMessage->m_textureHandle = textureHandle;
+			}
 		}
 		break;
 
@@ -911,7 +924,7 @@ namespace TNAP {
 
 					for (int i = 0; i < textureNames.size(); i++)
 					{
-						const std::vector<std::pair<std::unique_ptr<Helpers::ImageLoader>, GLuint>>& textures{ m_textures.at(i) };
+						const std::vector<STextureData>& textures{ m_textures.at(i) };
 						if (ImGui::CollapsingHeader(textureNames.at(i).c_str(), &headerOpen.at(i)))
 						{
 							for (int j = 0; j < textures.size(); j++)
@@ -919,11 +932,11 @@ namespace TNAP {
 								if (j % amount != 0)
 									ImGui::SameLine();
 
-								ImGui::ImageButton((ImTextureID)textures[j].second, ImVec2(iconSize, iconSize), ImVec2(0, 1), ImVec2(1, 0), 1);
+								ImGui::ImageButton((ImTextureID)textures[j].m_textureBinding, ImVec2(iconSize, iconSize), ImVec2(0, 1), ImVec2(1, 0), 1);
 								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 								{
 									ImGui::SetDragDropPayload("TEXTURE_CELL", &std::pair<ETextureType, size_t>(static_cast<ETextureType>(i), j), sizeof(std::pair<ETextureType, size_t>));
-									ImGui::Image((ImTextureID)textures[j].second, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
+									ImGui::Image((ImTextureID)textures[j].m_textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
 									ImGui::Text(("Texture Type: " + std::to_string(i)).c_str());
 									ImGui::Text(("Texture Handle: " + std::to_string(j)).c_str());
 									ImGui::EndDragDropSource();
@@ -962,16 +975,16 @@ namespace TNAP {
 					for (size_t i = 0; i < m_materials.size(); i++)
 					{
 						 
-						size_t textureGLuint = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/MatTexture.png")).second;
+						size_t textureBinding = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/MatTexture.png")).m_textureBinding;
 
 						ImGui::PushID(i);
-						ImGui::ImageButton((ImTextureID)textureGLuint, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
+						ImGui::ImageButton((ImTextureID)textureBinding, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
 						ImGui::PopID();
 
 						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 						{
 							ImGui::SetDragDropPayload("MATERIAL_CELL", &i, sizeof(i));
-							ImGui::Image((ImTextureID)textureGLuint, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
+							ImGui::Image((ImTextureID)textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
 							ImGui::Text(("Material Name: " + m_materials.at(i)->getName()).c_str());
 							ImGui::Text(("Material Type: " + std::to_string(static_cast<int>(m_materials.at(i)->getMaterialType()))).c_str());
 							ImGui::EndDragDropSource();
@@ -1003,16 +1016,16 @@ namespace TNAP {
 
 					for (const auto& mapModel : m_mapModels)
 					{
-						size_t textureGLuint = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/ModelTexture.png")).second;
+						size_t textureBinding = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/ModelTexture.png")).m_textureBinding;
 
 						ImGui::PushID(mapModel.second);
-						ImGui::ImageButton((ImTextureID)textureGLuint, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
+						ImGui::ImageButton((ImTextureID)textureBinding, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
 						ImGui::PopID();
 
 						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 						{
 							ImGui::SetDragDropPayload("MODEL_CELL", &mapModel.second, sizeof(mapModel.second));
-							ImGui::Image((ImTextureID)textureGLuint, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
+							ImGui::Image((ImTextureID)textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
 							ImGui::Text(("Model Name: " + mapModel.first).c_str());
 							ImGui::Text(("Model Handle: " + std::to_string(mapModel.second)).c_str());
 							ImGui::EndDragDropSource();

@@ -1,10 +1,13 @@
 #include "Material.hpp"
 
+#include <fstream>
+
 #include "ImGuiInclude.hpp"
 
 #include "Engine.hpp"
+#include "Renderer3D.hpp"
 #include "GetTextureMessage.hpp"
-#include <fstream>
+
 
 TNAP::Material::Material()
 {
@@ -16,11 +19,11 @@ void TNAP::Material::init()
 
 void TNAP::Material::sendShaderData(const GLuint argProgram)
 {
-	GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
+	GetTextureMessage textureMessage({ TNAP::ETextureType::eEmission, m_emissionTextureHandle });
 	getEngine()->sendMessage(&textureMessage);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureBinding);
+	glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureData->m_textureBinding);
 
 	Helpers::CheckForGLError();
 
@@ -58,7 +61,7 @@ void TNAP::Material::setData(const std::string& argData)
 		m_colourTint = { colourTint.at(0), colourTint.at(1), colourTint.at(2), colourTint.at(3) };
 	}
 
-	// Colour Tint
+	// Emission Colour
 	{
 		std::vector<float> emissionColour = stringToVector<float>(materialData.at(1), " ", [](const std::string& argData) { return std::stod(argData); }, 3);
 		m_emissionColour = { emissionColour.at(0), emissionColour.at(1), emissionColour.at(2) };
@@ -85,7 +88,7 @@ void TNAP::Material::imGuiRender()
 			GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
 			getEngine()->sendMessage(&textureMessage);
 
-			if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
+			if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureData->m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
 			{
 				m_emissionTextureHandle = 0;
 			}

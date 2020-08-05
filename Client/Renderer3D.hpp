@@ -14,6 +14,7 @@
 #include "FrameBuffer.hpp"
 
 #include "Transform.hpp"
+#include "STextureData.hpp"
 
 namespace TNAP {
 
@@ -55,7 +56,7 @@ namespace TNAP {
 		std::vector<TNAP::Model> m_models;
 
 		std::unordered_map<TNAP::ETextureType, std::unordered_map<std::string, size_t>> m_mapTextures;
-		std::vector<std::vector<std::pair<std::unique_ptr<Helpers::ImageLoader>, GLuint>>> m_textures;
+		std::vector<std::vector<STextureData>> m_textures;
 
 		std::unordered_map<std::string, size_t> m_mapMaterials;
 		std::vector<std::unique_ptr<TNAP::Material>> m_materials;

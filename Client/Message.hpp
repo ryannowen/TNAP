@@ -10,6 +10,7 @@ namespace TNAP
 		{
 			eUnknown,
 			eGetTextureMessage,
+			eLoadTextureMessage,
 			eSubmitModelMessage,
 			eGetMaterialMessage,
 			eGenerateMaterialMessage,

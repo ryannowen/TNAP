@@ -1,9 +1,12 @@
 #include "UnlitTexture.hpp"
 
+#include <fstream>
+
 #include "ImGuiInclude.hpp"
 
 #include "Engine.hpp"
 #include "GetTextureMessage.hpp"
+#include "LoadTextureMessage.hpp"
 
 namespace TNAP {
 
@@ -18,7 +21,7 @@ namespace TNAP {
 			getEngine()->sendMessage(&textureMessage);
 
 			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureBinding);
+			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureData->m_textureBinding);
 
 			Helpers::CheckForGLError();
 		}
@@ -28,7 +31,7 @@ namespace TNAP {
 			getEngine()->sendMessage(&textureMessage);
 
 			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureBinding);
+			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureData->m_textureBinding);
 
 			Helpers::CheckForGLError();
 		}
@@ -53,6 +56,37 @@ namespace TNAP {
 		Helpers::CheckForGLError();
 	}
 
+	void UnlitTexture::saveData(std::ofstream& outputFile, const std::string& argShaderName)
+	{
+		Material::saveData(outputFile, argShaderName);
+
+		GetTextureMessage textureMessage({ m_textureType, m_textureHandle });
+		getEngine()->sendMessage(&textureMessage);
+
+		outputFile << "," << std::to_string(static_cast<int>(m_textureType)) << "," << textureMessage.m_textureData->m_filePath;
+	}
+
+	void UnlitTexture::setData(const std::string& argData)
+	{
+		Material::setData(argData);
+
+		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& argData) { return argData; }, 3);
+
+		// Texture Path
+		{
+			m_textureType = static_cast<ETextureType>(std::stoi(materialData.at(3)));
+			std::string filepath = materialData.at(4);
+
+			LoadTextureMessage loadMessage(m_textureType, filepath);
+			getEngine()->sendMessage(&loadMessage);
+
+			if (loadMessage.m_loadedSuccessfully)
+				m_textureHandle = loadMessage.m_textureHandle;
+			
+		}
+
+	}
+
 	void UnlitTexture::setTexture(const ETextureType argTextureType, const std::string& argFilePath)
 	{
 	}
@@ -73,7 +107,7 @@ namespace TNAP {
 				GetTextureMessage textureMessage({ m_textureType, m_textureHandle });
 				getEngine()->sendMessage(&textureMessage);
 
-				if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
+				if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureData->m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
 				{
 					m_textureHandle = 0;
 				}
@@ -97,7 +131,7 @@ namespace TNAP {
 				GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
 				getEngine()->sendMessage(&textureMessage);
 
-				if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
+				if (ImGui::ImageButton((ImTextureID)textureMessage.m_textureData->m_textureBinding, ImVec2(32, 32), ImVec2(0, 1), ImVec2(1, 0)))
 				{
 					m_emissionTextureHandle = 0;
 				}

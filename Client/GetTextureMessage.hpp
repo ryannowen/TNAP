@@ -3,8 +3,7 @@
 #include "Message.hpp"
 
 #include "ExternalLibraryHeaders.h"
-#include "Renderer3D.hpp"
-#include "ImageLoader.h"
+#include "STextureData.hpp"
 
 namespace TNAP
 {
@@ -20,8 +19,7 @@ namespace TNAP
 		}
 
 		std::pair<ETextureType, size_t> m_textureInfo{ ETextureType::eAlbedo, 0 };
-		Helpers::ImageLoader* m_textureData{ nullptr };
-		GLuint m_textureBinding{ 0 };
+		STextureData* m_textureData;
 	};
 
 }
