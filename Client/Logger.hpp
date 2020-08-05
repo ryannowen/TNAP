@@ -17,8 +17,8 @@ namespace TNAP
 		ImVector<int> m_lineOffsets;
 		std::vector<ImVec4> m_lineColours;
 
-		bool m_autoScroll{ false };
-		bool m_scrollToBottom{ false };
+		bool m_autoScroll{ true };
+		bool m_scrollToBottom{ true };
 
 		inline void ClearLog();
 		void AddLog(const char* argMessage, ...);

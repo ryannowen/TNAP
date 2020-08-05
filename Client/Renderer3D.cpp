@@ -760,55 +760,47 @@ namespace TNAP {
 			{
 				ImGui::PopStyleVar(3);
 
-				const bool focused{ ImGui::IsWindowFocused()  };
+				const bool focused{ ImGui::IsWindowFocused() };
 
+				bool mousePressed{ false };
 				if (focused)
-					glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-				else
-					glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); 
+				{
+					if (glfwGetMouseButton(s_window, 0) == GLFW_PRESS)
+					{
+						glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+						mousePressed = true;
+					}
+				}
+					
+				if(!mousePressed)
+					glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-				Simulation::m_camera->setActive(focused);
-				//viewportSelected = ImGui::IsWindowFocused();
+				Simulation::m_camera->setActive(focused && mousePressed);
 
 				ImVec2 RegionSize = ImGui::GetContentRegionAvail();
 
 				if ((RegionSize.x != m_windowSize.x) || (RegionSize.y != m_windowSize.y))
 				{
-					// Always a good idea, when debugging at least, to check for GL errors
-		/*			Helpers::CheckForGLError();*/
 					m_windowSize.x = RegionSize.x;
 					m_windowSize.y = RegionSize.y;
 
 					m_windowFrameBuffer.resize(m_windowSize);
 
-					// Always a good idea, when debugging at least, to check for GL errors
 					Helpers::CheckForGLError();
 				}
-				//ImVec2 windowSize = ImVec2(ImGui::GetCursorScreenPos().x + 1600 / 2, ImGui::GetCursorScreenPos().y + 900 / 2);
-				//ImVec2 windowSize = ImVec2(ImGui::GetItemRectMin().x + ImGui::GetCursorScreenPos().x, ImGui::GetItemRectMin().y + ImGui::GetCursorScreenPos().y);
+
 				ImGui::Image((ImTextureID)m_windowFrameBuffer.getColourAttachment(), ImVec2(m_windowSize.x, m_windowSize.y), ImVec2(0, 1), ImVec2(1, 0));
 			}
 			ImGui::End();
-		}
-
-		if ((glfwGetKey(s_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) /*|| (glfwGetKey(s_window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE)*/)
-		{
-			Simulation::m_camera->setActive(false);
-			ImGui::SetWindowFocus();
-			glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
 		}
 
 		static bool shelfOpen{ true };
 		ImGui::Begin("Shelf", &shelfOpen, ImGuiWindowFlags_MenuBar);
 		{
 			static bool showMaterials{ true };
-			static bool showAlbedo{ true };
-			static bool showNormal{ true };
-			static bool showEmission{ true };
+			static bool showModels{ true };
 
-			static std::array<bool, static_cast<int>(TNAP::ETextureType::eCount)> headerOpen;
-			headerOpen.fill(true);
+			static std::array<bool, static_cast<int>(TNAP::ETextureType::eCount)> headerOpen{ true, true, true, true, true, true };
 			static std::array<std::string, headerOpen.size()> textureNames { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Emission" };
 
 			if (ImGui::BeginMenuBar())
@@ -884,9 +876,28 @@ namespace TNAP {
 				if (ImGui::BeginMenu("Show"))
 				{
 					ImGui::MenuItem("Materials", NULL, &showMaterials);
+					ImGui::MenuItem("Models", NULL, &showModels);
 					
 					if (ImGui::BeginMenu("Textures"))
 					{
+						if (ImGui::Button("Invert"))
+						{
+							for (int i = 0; i < headerOpen.size(); i++)
+								headerOpen.at(i) = !headerOpen.at(i);
+						}
+
+						ImGui::SameLine();
+
+						if (ImGui::Button("Hide"))
+							headerOpen.fill(false);
+						
+
+						ImGui::SameLine();
+
+						if (ImGui::Button("Open"))
+							headerOpen.fill(true);
+						
+
 						for (int i = 0; i < textureNames.size(); i++)
 							ImGui::MenuItem(textureNames.at(i).c_str(), NULL, &headerOpen.at(i));
 						
@@ -899,13 +910,17 @@ namespace TNAP {
 				ImGui::EndMenuBar();
 
 				static bool showTextures;
-				showTextures = showAlbedo || showNormal || showEmission;
+				bool textureHeaderOpen{ false };
+				for (const bool open : headerOpen)
+				{
+					if (open)
+					{
+						textureHeaderOpen = true;
+						break;
+					}
+				}
 
-		if (!showTextures && !showMaterials)
-		{
-			ImGui::End();
-			return;
-		}
+				showTextures = textureHeaderOpen;
 
 				static int iconSize{ 32 };
 				ImGui::SliderInt("Icon Size", &iconSize, 32, 256);
@@ -916,9 +931,9 @@ namespace TNAP {
 				if (ImGui::CollapsingHeader("Textures", &showTextures))
 				{
 					
-					ImVec2 size{ ImGui::GetContentRegionAvail() };
+					//ImVec2 size{  };
 
-					int amount{ static_cast<int>(size.x) / iconSize };
+					int amount{ static_cast<int>((ImGui::GetWindowWidth() - (iconSize * 2)) / iconSize) };
 					amount = std::max(amount, 1);
 					ImGui::Spacing();
 
@@ -930,9 +945,10 @@ namespace TNAP {
 							for (int j = 0; j < textures.size(); j++)
 							{
 								if (j % amount != 0)
-									ImGui::SameLine();
+									ImGui::SameLine(0.0f, 1.0f);
 
 								ImGui::ImageButton((ImTextureID)textures[j].m_textureBinding, ImVec2(static_cast<float>(iconSize), static_cast<float>(iconSize)), ImVec2(0, 1), ImVec2(1, 0), 1);
+
 								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 								{
 									ImGui::SetDragDropPayload("TEXTURE_CELL", &std::pair<ETextureType, size_t>(static_cast<ETextureType>(i), j), sizeof(std::pair<ETextureType, size_t>));
@@ -946,10 +962,17 @@ namespace TNAP {
 					}
 				}
 				
-				ImGui::Spacing();
-				ImGui::Spacing();
-				if (ImGui::CollapsingHeader("Materials", &headerOpen.at(0)))
+				
+				if (showMaterials)
 				{
+					ImGui::Spacing();
+					ImGui::Spacing();
+				}
+
+				if (ImGui::CollapsingHeader("Materials", &showMaterials))
+				{
+					
+
 					if (ImGui::Button("Save Materials"))
 					{
 						std::ofstream outputFile;
@@ -1002,10 +1025,13 @@ namespace TNAP {
 					ImGui::Columns(1, "materials");
 				}
 
-				ImGui::Spacing();
-				ImGui::Spacing();
-				static bool modelsOpen{ true };
-				if (ImGui::CollapsingHeader("Models", &modelsOpen))
+				if (showModels)
+				{
+					ImGui::Spacing();
+					ImGui::Spacing();
+				}
+
+				if (ImGui::CollapsingHeader("Models", &showModels))
 				{
 					ImGui::Columns(5, "models"); // 5-ways, with border
 					ImGui::Separator();
