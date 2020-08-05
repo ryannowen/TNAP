@@ -23,8 +23,8 @@ namespace TNAP {
 		std::pair<TNAP::ETextureType, std::string> m_loadInfo;
 
 		bool m_loadedSuccessfully{ false };
-		STextureData* m_textureData;
-		size_t m_textureHandle;
+		STextureData* m_textureData{ nullptr };
+		size_t m_textureHandle{ 0 };
 	};
 
 }

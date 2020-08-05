@@ -362,7 +362,7 @@ namespace TNAP {
 	void Renderer3D::init()
 	{
 		// Use the helper function to set up GLFW, GLEW and OpenGL
-		s_window = Helpers::CreateGLFWWindow(m_windowSize.x, m_windowSize.y, "TNAP");
+		s_window = Helpers::CreateGLFWWindow(static_cast<int>(m_windowSize.x), static_cast<int>(m_windowSize.y), "TNAP");
 		if (!s_window)
 			return;
 
@@ -629,7 +629,7 @@ namespace TNAP {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
 		
 		m_windowFrameBuffer.bind();
-		glViewport(0, 0, m_windowFrameBuffer.getSize().x, m_windowFrameBuffer.getSize().y);
+		glViewport(0, 0, static_cast<GLsizei>(m_windowFrameBuffer.getSize().x), static_cast<GLsizei>(m_windowFrameBuffer.getSize().y));
 
 		// Clear FRAME buffers from previous frame
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
@@ -715,14 +715,14 @@ namespace TNAP {
 
 					if (batch.first.size() > 1) // Batch Draw
 					{
-						glDrawElementsInstanced(GL_TRIANGLES, meshes[i]->elements.size(), GL_UNSIGNED_INT, 0, batch.first.size());
+						glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(meshes[i]->elements.size()), GL_UNSIGNED_INT, 0, batch.first.size());
 
 						Helpers::CheckForGLError();
 					}
 					else // Normal Draw
 					{
 
-						glDrawElements(GL_TRIANGLES, meshes[i]->elements.size(), GL_UNSIGNED_INT, (void*)0);
+						glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(meshes[i]->elements.size()), GL_UNSIGNED_INT, (void*)0);
 					}
 
 					glBindVertexArray(0);
@@ -932,7 +932,7 @@ namespace TNAP {
 								if (j % amount != 0)
 									ImGui::SameLine();
 
-								ImGui::ImageButton((ImTextureID)textures[j].m_textureBinding, ImVec2(iconSize, iconSize), ImVec2(0, 1), ImVec2(1, 0), 1);
+								ImGui::ImageButton((ImTextureID)textures[j].m_textureBinding, ImVec2(static_cast<float>(iconSize), static_cast<float>(iconSize)), ImVec2(0, 1), ImVec2(1, 0), 1);
 								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 								{
 									ImGui::SetDragDropPayload("TEXTURE_CELL", &std::pair<ETextureType, size_t>(static_cast<ETextureType>(i), j), sizeof(std::pair<ETextureType, size_t>));
@@ -977,7 +977,9 @@ namespace TNAP {
 						 
 						size_t textureBinding = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/MatTexture.png")).m_textureBinding;
 
-						ImGui::PushID(i);
+						//ImGui::PushID(i);
+						const std::string id{ std::to_string(i) };
+						ImGui::PushID(id.c_str(), id.c_str() + id.size());
 						ImGui::ImageButton((ImTextureID)textureBinding, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
 						ImGui::PopID();
 
@@ -1018,7 +1020,9 @@ namespace TNAP {
 					{
 						size_t textureBinding = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/ModelTexture.png")).m_textureBinding;
 
-						ImGui::PushID(mapModel.second);
+						//ImGui::PushID(mapModel.second);
+						const std::string id{ std::to_string(mapModel.second) };
+						ImGui::PushID(id.c_str(), id.c_str() + id.size());
 						ImGui::ImageButton((ImTextureID)textureBinding, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
 						ImGui::PopID();
 

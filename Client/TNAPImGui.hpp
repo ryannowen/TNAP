@@ -4,7 +4,7 @@
 
 #include "ImGuiInclude.hpp"
 
-class GLFWwindow;
+struct GLFWwindow;
 
 namespace TNAP {
 

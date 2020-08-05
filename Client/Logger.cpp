@@ -41,10 +41,10 @@ namespace TNAP
 	{
 		static const std::vector<ImVec4> colours
 		{
-			ImVec4(1, 1, 1, 1),
-			ImVec4(0.85f, 0.41f, 0.09, 1),
-			ImVec4(1, 0, 0, 1),
-			ImVec4(0, 1, 0, 1)
+			ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+			ImVec4(0.85f, 0.41f, 0.09, 1.0f),
+			ImVec4(1.0f, 0, 0, 1.0f),
+			ImVec4(0, 1.0f, 0, 1.0f)
 		};
 
 		switch (argMessage->getMessageType())

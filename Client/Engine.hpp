@@ -6,7 +6,7 @@
 #include "TNAPImGui.hpp"
 #include "Simulation.h"
 
-class GLFWwindow;
+struct GLFWwindow;
 
 namespace TNAP {
 

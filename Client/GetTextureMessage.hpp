@@ -19,7 +19,7 @@ namespace TNAP
 		}
 
 		std::pair<ETextureType, size_t> m_textureInfo{ ETextureType::eAlbedo, 0 };
-		STextureData* m_textureData;
+		STextureData* m_textureData{ nullptr };
 	};
 
 }

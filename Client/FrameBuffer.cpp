@@ -55,7 +55,7 @@ namespace TNAP {
 
 		bind();
 		glBindTexture(GL_TEXTURE_2D, m_colourAttachment);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, argSize.x, argSize.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(argSize.x), static_cast<GLsizei>(argSize.y), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		unbind();
 

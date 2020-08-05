@@ -237,7 +237,7 @@ namespace TNAP {
 				ImGui::EndMenuBar();
 			}
 
-			ImGui::TextColored(ImVec4(0.9, 0.49, 0.17, 1), m_sceneName.c_str());
+			ImGui::TextColored(ImVec4(0.9f, 0.49f, 0.17f, 1.0f), m_sceneName.c_str());
 
 			Entity::setTreeIndex(0);
 
