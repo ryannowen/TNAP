@@ -96,7 +96,7 @@ namespace TNAP {
 		}
 
 		logMessage.m_message = "[Model] " + filePath + " loaded successfully";
-		logMessage.m_logType = LogMessage::ELogType::eInfo;
+		logMessage.m_logType = LogMessage::ELogType::eSuccess;
 		TNAP::getEngine()->sendMessage(&logMessage);
 
 		return (m_models.size() - 1);
@@ -172,7 +172,7 @@ namespace TNAP {
 
 		// Log Loaded Texture
 		logMessage.m_message = "[Texture] " + filePath + " is loaded successfully";
-		logMessage.m_logType = LogMessage::ELogType::eInfo;
+		logMessage.m_logType = LogMessage::ELogType::eSuccess;
 		TNAP::getEngine()->sendMessage(&logMessage);
 
 		GLuint textureRef;
@@ -582,7 +582,7 @@ namespace TNAP {
 			if (createdMaterial)
 			{
 				genMessage->m_handle = m_materials.size() - 1;
-				logMessage.m_logType = LogMessage::ELogType::eInfo;
+				logMessage.m_logType = LogMessage::ELogType::eSuccess;
 				TNAP::getEngine()->sendMessage(&logMessage);
 			}
 			else

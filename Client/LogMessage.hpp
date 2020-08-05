@@ -15,7 +15,8 @@ namespace TNAP
 		{
 			eInfo,
 			eWarning,
-			eError
+			eError,
+			eSuccess
 		};
 
 	public:
