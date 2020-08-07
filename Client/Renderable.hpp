@@ -17,6 +17,7 @@ namespace TNAP {
 		~Renderable();
 		virtual void init() override;
 		virtual void update(const glm::mat4& parentTransform) override;
+		virtual void saveData(std::ofstream& outputFile) override;
 		void loadModel(const std::string& argFilepath);
 #if USE_IMGUI
 		virtual void imGuiRenderProperties() override;

@@ -1,6 +1,7 @@
 #pragma once
-
 #include "Transform.hpp"
+#include "SceneManager.hpp"
+#include "Scene.hpp"
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -11,21 +12,29 @@ namespace TNAP {
 
 	class Entity
 	{
+		friend class Scene;
 	protected:
-		std::vector<std::shared_ptr<TNAP::Entity>> m_children;
+		std::vector<size_t> m_children;
 
 	private:
 		size_t m_handle{ 0 };
-		bool m_enabled{ true };
-		std::string m_name = "";
-		TNAP::Transform m_transform;
 
-		std::unordered_map<std::string, size_t> m_mapChildEntities;
+		bool m_hasParent{ false };
+		size_t m_parentHandle{ 0 };
+
+		bool m_enabled{ true };
+		std::string m_name{ "" };
+		TNAP::Transform m_transform;
 
 #if USE_IMGUI
 		static Entity* s_selected;
 		static int s_treeIndex;
 #endif
+
+		void updateChildrenParentHandles();
+		void deleteChildren();
+		void removeChild(const size_t argHandle);
+		void replaceChildHandle(const size_t argOld, const size_t argNew);
 
 	public:
 		Entity();
@@ -33,6 +42,7 @@ namespace TNAP {
 
 		virtual void init();
 		virtual void update(const glm::mat4& parentTransform);
+		virtual void saveData(std::ofstream& outputFile);
 
 		inline void setName(const std::string& argName) { m_name = argName; }
 		inline const std::string& getName() const { return m_name; }
@@ -40,13 +50,21 @@ namespace TNAP {
 		inline const TNAP::Transform& getLocalTransform() const { return m_transform; }
 		inline TNAP::Transform& getTransform() { return m_transform; }
 
+		inline void setHasParent(const bool argValue) { m_hasParent = argValue; }
+		inline const bool getHasParent() const { return m_hasParent; }
+		inline void setParentHandle(const size_t argHandle) { m_parentHandle = argHandle; }
+		inline const size_t getParentHandle() const { return m_parentHandle; }
+
 		template<class EntityType, typename... Args>
 		inline EntityType* const addChild(const std::string& argName, const Args&... args);
 
 		TNAP::Entity* const findChild(const size_t argHandle);
 		TNAP::Entity* const findChild(const std::string& argName);
 		TNAP::Entity* const findChildRecursive(const std::string& argName);
+
 		void destroySelf();
+		void destroyChild(const std::string& argName);
+		void destroyChild(const size_t argHandle);
 
 		inline void setHandle(const size_t argHandle) { m_handle = argHandle; }
 		inline const size_t getHandle() const { return m_handle; }
@@ -69,29 +87,19 @@ namespace TNAP {
 	template<class EntityType, typename... Args>
 	inline EntityType* const Entity::addChild(const std::string& argName, const Args&... args)
 	{
-		std::string origionalName = argName;
-		std::string name = argName;
-
-		if (name.empty())
+		static_assert(std::is_base_of<Entity, EntityType>::value, "addChild: Trying to create entity from non-entity type!");
+		EntityType* const e = TNAP::getSceneManager()->getCurrentScene()->addEntity<EntityType>(true, argName, std::move(args)...);
+		if (nullptr != e)
 		{
-			name = "New Entity";
-			origionalName = name;
+			e->setHasParent(true);
+			e->setParentHandle(m_handle);
+			std::pair<bool, size_t> entityIndex { TNAP::getSceneManager()->getCurrentScene()->getEntityIndex(e->getName()) };
+			if (entityIndex.first)
+			{
+				m_children.push_back(entityIndex.second);
+			}
 		}
 
-		size_t index = 1;
-		while (m_mapChildEntities.find(name) != m_mapChildEntities.end())
-		{
-			name = origionalName + "_" + std::to_string(index++);
-		}
-
-		if (m_mapChildEntities.insert({ name, m_children.size() }).second)
-		{
-			m_children.emplace_back(std::make_shared<EntityType>(args...));
-			m_children.back()->setName(name);
-			return static_cast<EntityType*>(m_children.back().get());
-		}
-
-		return nullptr;
+		return e;
 	}
-
 }

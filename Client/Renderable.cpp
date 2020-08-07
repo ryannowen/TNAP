@@ -4,7 +4,9 @@
 #include "GetMaterialMessage.hpp"
 #include "LoadModelMessage.hpp"
 #include "GenerateMaterialMessage.hpp"
+#include "GetModelInfoMessage.hpp"
 #include "Material.hpp"
+#include <fstream>
 
 namespace TNAP {
 
@@ -42,11 +44,27 @@ namespace TNAP {
 
 	}
 
+	void Renderable::saveData(std::ofstream& outputFile)
+	{
+		Entity::saveData(outputFile);
+		GetModelInfoMessage modelInfoMessage;
+		modelInfoMessage.m_modelHandle = m_modelHandle;
+		TNAP::getEngine()->sendMessage(&modelInfoMessage);
+		outputFile << "," << modelInfoMessage.m_filepath << ",";
+		GetMaterialMessage message;
+		message.m_materialHandle = &m_materialHandles;
+		TNAP::getEngine()->sendMessage(&message);
+		for (const TNAP::Material* const mat : message.m_materialVector)
+		{
+			outputFile << mat->getName() << " ";
+		}
+	}
+
 	void Renderable::loadModel(const std::string& argFilepath)
 	{
 		LoadModelMessage loadMessage;
 		loadMessage.m_modelFilepath = argFilepath;
-		Engine::getInstance()->sendMessage(&loadMessage);
+		TNAP::getEngine()->sendMessage(&loadMessage);
 		m_modelHandle = loadMessage.m_modelHandle;
 		m_materialHandles = loadMessage.m_materialHandles;
 	}

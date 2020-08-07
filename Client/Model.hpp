@@ -13,7 +13,8 @@ namespace TNAP {
 		std::vector<std::unique_ptr<Helpers::Mesh>> m_meshes;
 		std::vector<size_t> m_uniqueMaterialIndices;
 		std::vector<size_t> m_defaultMaterialHandles;
-		
+		std::string m_filepath{ "" };
+
 	public:
 		Model();
 
@@ -31,6 +32,8 @@ namespace TNAP {
 		// Retrieves the collection of mesh loaded from the 3D model
 		inline std::vector<std::unique_ptr<Helpers::Mesh>>& getMeshVector() { return m_meshes; }
 		inline const std::vector<std::unique_ptr<Helpers::Mesh>>& getMeshVector() const { return m_meshes; }
+
+		inline const std::string& getFilePath() const { return m_filepath; }
 	};
 }
 

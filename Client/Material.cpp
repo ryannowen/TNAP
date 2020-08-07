@@ -53,17 +53,17 @@ void TNAP::Material::saveData(std::ofstream& outputFile, const std::string& argS
 
 void TNAP::Material::setData(const std::string& argData)
 {
-	std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& argData) { return argData; }, 3);
+	std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 3);
 	
 	// Colour Tint
 	{
-		std::vector<float> colourTint = stringToVector<float>(materialData.at(0), " ", [](const std::string& argData) { return std::stod(argData); }, 4);
+		std::vector<float> colourTint = stringToVector<float>(materialData.at(0), " ", [](const std::string& str) { return std::stod(str); }, 4);
 		m_colourTint = { colourTint.at(0), colourTint.at(1), colourTint.at(2), colourTint.at(3) };
 	}
 
 	// Emission Colour
 	{
-		std::vector<float> emissionColour = stringToVector<float>(materialData.at(1), " ", [](const std::string& argData) { return std::stod(argData); }, 3);
+		std::vector<float> emissionColour = stringToVector<float>(materialData.at(1), " ", [](const std::string& str) { return std::stod(str); }, 3);
 		m_emissionColour = { emissionColour.at(0), emissionColour.at(1), emissionColour.at(2) };
 	}
 

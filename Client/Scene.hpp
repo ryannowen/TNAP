@@ -5,7 +5,6 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include "Renderable.hpp"
 
 namespace TNAP {
 
@@ -18,6 +17,9 @@ namespace TNAP {
 		std::string m_sceneName{ "" };
 		std::unordered_map<std::string, size_t> m_mapEntities;
 		std::vector<std::shared_ptr<TNAP::Entity>> m_entities;
+		std::vector<size_t> m_parentHandles;
+
+		bool m_randomCreationDeletion{ false };
 
 	public:
 		Scene(const std::string& argName);
@@ -25,12 +27,17 @@ namespace TNAP {
 
 		void init();
 		void update();
+		void saveScene();
 
 		template<class EntityType, typename... Args>
-		inline EntityType* const addEntity(const std::string& argName, const Args&... args);
+		inline EntityType* const addEntity(const bool argIsChild, const std::string& argName, const Args&... args);
 
 		TNAP::Entity* const findEntity(const std::string& argName);
 		TNAP::Entity* const findEntity(const size_t argHandle);
+
+		const std::pair<bool, size_t> getEntityIndex(const std::string& argName);
+		const bool entityExists(const std::string& argName);
+
 		void destroyEntity(const std::string& argName);
 		void destroyEntity(const size_t argHandle);
 
@@ -44,7 +51,7 @@ namespace TNAP {
 	};
 
 	template<class EntityType, typename... Args>
-	inline EntityType* const Scene::addEntity(const std::string& argName, const Args&... args)
+	inline EntityType* const Scene::addEntity(const bool argIsChild, const std::string& argName, const Args&... args)
 	{
 		std::string origionalName = argName;
 		std::string name = argName;
@@ -65,6 +72,14 @@ namespace TNAP {
 		{
 			m_entities.emplace_back(std::make_shared<EntityType>(args...));
 			m_entities.back()->setName(name);
+			m_entities.back()->setHandle(m_entities.size() - 1);
+
+			if (!argIsChild)
+			{
+				m_parentHandles.push_back(m_entities.size() - 1);
+				m_entities.back()->setParentHandle(m_parentHandles.size()-1);
+			}
+
 			return static_cast<EntityType*>(m_entities.back().get());
 		}
 

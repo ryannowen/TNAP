@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+
 namespace TNAP {
 
 	class Scene;
@@ -31,7 +32,7 @@ namespace TNAP {
 		virtual void update() override;
 		void loadScene(const std::string& argFilePath);
 		void unloadScene();
-		inline TNAP::Scene* const getCurrentScene();
+		inline TNAP::Scene* const getCurrentScene() { return m_scene.get(); };
 #if USE_IMGUI
 		virtual void imGuiRender() override;
 #endif

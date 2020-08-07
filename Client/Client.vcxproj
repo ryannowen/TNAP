@@ -132,6 +132,7 @@
     <ClInclude Include="FrameBuffer.hpp" />
     <ClInclude Include="GenerateMaterialMessage.hpp" />
     <ClInclude Include="GetMaterialMessage.hpp" />
+    <ClInclude Include="GetModelInfoMessage.hpp" />
     <ClInclude Include="GetTextureMessage.hpp" />
     <ClInclude Include="GLFWCallBacks.hpp" />
     <ClInclude Include="Helper.h" />

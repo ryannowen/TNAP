@@ -5,6 +5,8 @@
 
 #include "Application.hpp"
 #include "Renderer3D.hpp"
+#include "SceneManager.hpp"
+#include "Scene.hpp"
 
 namespace TNAP {
 
@@ -106,6 +108,12 @@ namespace TNAP {
 				//ImGui::MenuItem("Fullscreen", NULL, &opt_fullscreen_persistant);
 
 				//if (ImGui::MenuItem("Exit"));
+				if (ImGui::MenuItem("Save Scene"))
+				{
+					TNAP::getSceneManager()->getCurrentScene()->saveScene();
+					//std::cout << "test" << std::endl;
+				}
+
 				ImGui::EndMenu();
 			}
 

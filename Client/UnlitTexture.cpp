@@ -70,7 +70,7 @@ namespace TNAP {
 	{
 		Material::setData(argData);
 
-		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& argData) { return argData; }, 3);
+		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 3);
 
 		// Texture Path
 		{

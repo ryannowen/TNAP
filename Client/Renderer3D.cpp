@@ -21,6 +21,7 @@
 #include "LoadModelMessage.hpp"
 #include "LogMessage.hpp"
 #include "GenerateMaterialMessage.hpp"
+#include "GetModelInfoMessage.hpp"
 
 #include "UnlitTexture.hpp"
 #include "PBR.hpp"
@@ -994,6 +995,14 @@ namespace TNAP {
 
 		case Message::EMessageType::eGLFWDropCallBackMessage:
 			glfwDropCallBackMessage(argMessage);
+		break;
+
+		case Message::EMessageType::eGetModelInfoMessage:
+		{
+			GetModelInfoMessage* const getModelInfoMessage{ static_cast<GetModelInfoMessage*>(argMessage) };
+
+			getModelInfoMessage->m_filepath = m_models.at(getModelInfoMessage->m_modelHandle).getFilePath();
+		}
 		break;
 
 		default:
