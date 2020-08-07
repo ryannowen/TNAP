@@ -2,6 +2,8 @@
 
 #include "TNAPImGui.hpp"
 #include "ExternalLibraryHeaders.h"
+
+#include "Application.hpp"
 #include "Renderer3D.hpp"
 
 namespace TNAP {
@@ -41,7 +43,7 @@ namespace TNAP {
 		}
 
 		// Setup Platform/Renderer bindings
-		ImGui_ImplGlfw_InitForOpenGL(Renderer3D::getWindow(), true);
+		ImGui_ImplGlfw_InitForOpenGL(getApplication()->getWindow(), true);
 		ImGui_ImplOpenGL3_Init("#version 330");
 	}
 

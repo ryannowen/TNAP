@@ -1,8 +1,9 @@
 #include "Engine.hpp"
 #include "ExternalLibraryHeaders.h"
 #include "Helper.h"
-#include "SceneManager.hpp"
 
+#include "Application.hpp"
+#include "SceneManager.hpp"
 #include "Renderer3D.hpp"
 #include "Logger.hpp"
 
@@ -21,6 +22,8 @@ namespace TNAP {
 
 	void Engine::init()
 	{
+		getApplication()->init();
+
 		// Logger system
 		m_systems.push_back(std::make_unique<TNAP::Logger>());
 		m_systems.back()->init();
@@ -47,8 +50,9 @@ namespace TNAP {
 
 	void Engine::update()
 	{
+		GLFWwindow* const window{ getApplication()->getWindow() };
 		// Enter main GLFW loop until the user closes the window
-		while (!glfwWindowShouldClose(TNAP::Renderer3D::getWindow()))
+		while (!glfwWindowShouldClose(window))
 		{
 #if USE_IMGUI
 			m_TNAPImGui.beginRender();
@@ -62,7 +66,7 @@ namespace TNAP {
 						system->update();
 			}
 
-			if (!simulation.Update(TNAP::Renderer3D::getWindow()))
+			if (!simulation.Update(window))
 				break;
 
 #if USE_IMGUI
@@ -81,7 +85,7 @@ namespace TNAP {
 #endif
 
 			// GLFW updating
-			glfwSwapBuffers(Renderer3D::getWindow());
+			glfwSwapBuffers(window);
 			glfwPollEvents();
 		}
 	}

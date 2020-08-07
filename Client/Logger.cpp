@@ -5,11 +5,16 @@
 
 namespace TNAP
 {
+
 	inline void Logger::ClearLog()
 	{
+#if USE_IMGUI
+
 		m_buffer.clear();
 		m_lineOffsets.clear();
+#endif
 	}
+#if USE_IMGUI
 
 	void Logger::AddLog(const char* argMessage, ...)
 	{
@@ -26,6 +31,7 @@ namespace TNAP
 		if (m_autoScroll)
 			m_scrollToBottom = true;
 	}
+#endif
 
 	Logger::Logger()
 	{
@@ -39,13 +45,7 @@ namespace TNAP
 
 	void Logger::sendMessage(TNAP::Message* const argMessage)
 	{
-		static const std::vector<ImVec4> colours
-		{
-			ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
-			ImVec4(0.85f, 0.41f, 0.09, 1.0f),
-			ImVec4(1.0f, 0, 0, 1.0f),
-			ImVec4(0, 1.0f, 0, 1.0f)
-		};
+		
 
 		switch (argMessage->getMessageType())
 		{
@@ -60,31 +60,46 @@ namespace TNAP
 				{
 				case LogMessage::ELogType::eInfo:
 					message = "[Info] " + logMessage->m_message;
-					m_lineColours.push_back(colours.at(0));
 					break;
 
 				case LogMessage::ELogType::eWarning:
 					message = "[Warning] " + logMessage->m_message;
-					m_lineColours.push_back(colours.at(1));
 					break;
 
 				case LogMessage::ELogType::eError:
 					message = "[Error] " + logMessage->m_message;
-					m_lineColours.push_back(colours.at(2));
 					break;
 
 				case LogMessage::ELogType::eSuccess:
 					message = "[Success] " + logMessage->m_message;
-					m_lineColours.push_back(colours.at(3));
 					break;
 
 				default:
 					message = "[ERROR] Unknown Log Type, : " + logMessage->m_message;
-					m_lineColours.push_back(colours.at(2));
 					break;
 				}
 
 #if USE_IMGUI
+				static const std::vector<ImVec4> colours
+				{
+					ImVec4(1.0f, 1.0f, 1.0f, 1.0f),
+					ImVec4(0.85f, 0.41f, 0.09, 1.0f),
+					ImVec4(1.0f, 0, 0, 1.0f),
+					ImVec4(0, 1.0f, 0, 1.0f)
+				};
+
+				switch (logMessage->m_logType)
+				{
+				case LogMessage::ELogType::eInfo:
+				case LogMessage::ELogType::eWarning:
+				case LogMessage::ELogType::eError:
+				case LogMessage::ELogType::eSuccess:
+					m_lineColours.push_back(colours.at(static_cast<size_t>(logMessage->m_logType)));
+					break;
+				default:
+					m_lineColours.push_back(colours.at(static_cast<size_t>(2)));
+					break;
+				}
 				AddLog(message.c_str());
 #endif
 			}

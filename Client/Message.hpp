@@ -15,7 +15,8 @@ namespace TNAP
 			eGetMaterialMessage,
 			eGenerateMaterialMessage,
 			eLogMessage,
-			eLoadModelMessage
+			eLoadModelMessage,
+			eGLFWDropCallBackMessage
 		};
 
 	protected:

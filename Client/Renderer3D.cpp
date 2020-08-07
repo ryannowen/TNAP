@@ -8,8 +8,12 @@
 #include "ImGuiInclude.hpp"
 #include "ExternalLibraryHeaders.h"
 #include "Engine.hpp"
+#include "Application.hpp"
+
 #include "Mesh.h"
 #include "Simulation.h"
+
+#include "GLFWCallBacks.hpp"
 #include "GetTextureMessage.hpp"
 #include "LoadTextureMessage.hpp"
 #include "SubmitModelMessage.hpp"
@@ -22,9 +26,8 @@
 #include "PBR.hpp"
 
 namespace TNAP {
-	GLFWwindow* Renderer3D::s_window{ nullptr };
 
-	const size_t Renderer3D::loadModel(const std::string& argFilePath)
+	const size_t Renderer3D::loadModel(const std::string& argFilePath, const std::string& argModelName)
 	{
 		LogMessage logMessage("");
 		if (argFilePath.empty())
@@ -52,8 +55,19 @@ namespace TNAP {
 			}
 		}
 
+		std::string modelName{ argModelName };
 		
-		const auto& modelFind{ m_mapModels.find(filePath) };
+		if (modelName.empty())
+		{
+			modelName = filePath;
+
+			size_t offset = modelName.find_last_of('/');
+
+			if (offset != std::string::npos)
+				modelName.replace(0, offset + 1, "");
+		}
+
+		const auto& modelFind{ m_mapModels.find(modelName) };
 		if (modelFind != m_mapModels.end())
 		{
 			logMessage.m_message = "[Model] " + filePath + " is already loaded";
@@ -74,12 +88,12 @@ namespace TNAP {
 			return 0;
 		}
 
-		m_mapModels.insert({ filePath, m_models.size() - 1 });
+		m_mapModels.insert({ modelName, m_models.size() - 1 });
 
 		// Setup materials
 		for (int i = 0; i < m_models.back().getUniqueMaterialIndicesCount(); i++)
 		{
-			std::string name = filePath + "_" + std::to_string(i);
+			std::string name = modelName + "_" + std::to_string(i);
 			const auto& it{ m_mapMaterials.find(name) };
 			if (it != m_mapMaterials.end())
 			{
@@ -126,7 +140,7 @@ namespace TNAP {
 		savedShaders.close();
 	}
 
-	const bool Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath)
+	const bool Renderer3D::loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath, const std::string& argTextureName)
 	{
 		if (argFilePath.empty())
 			return false;
@@ -150,8 +164,19 @@ namespace TNAP {
 			}
 		}
 
+		std::string textureName{ argTextureName };
+
+		if (textureName.empty())
+		{
+			textureName = filePath;
+			size_t offset = textureName.find_last_of('/');
+
+			if (offset != std::string::npos)
+				textureName.replace(0, offset + 1, "");
+		}
+
 		LogMessage logMessage("");
-		if (m_mapTextures.at(argType).find(filePath) != m_mapTextures.at(argType).end())
+		if (m_mapTextures.at(argType).find(textureName) != m_mapTextures.at(argType).end())
 		{
 			// Log Texture Already Loaded
 			logMessage.m_message = "[Texture] " + filePath + " is already loaded";
@@ -172,7 +197,7 @@ namespace TNAP {
 		}
 
 		// Log Loaded Texture
-		logMessage.m_message = "[Texture] " + filePath + " is loaded successfully";
+		logMessage.m_message = "[Texture] " + filePath + " loaded successfully";
 		logMessage.m_logType = LogMessage::ELogType::eSuccess;
 		TNAP::getEngine()->sendMessage(&logMessage);
 
@@ -189,7 +214,7 @@ namespace TNAP {
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		m_textures.at(static_cast<int>(argType)).emplace_back(STextureData(std::move(texture), textureRef, filePath));
-		m_mapTextures.at(argType).insert({ filePath, m_textures.at(static_cast<int>(argType)).size() - 1 });
+		m_mapTextures.at(argType).insert({ textureName, m_textures.at(static_cast<int>(argType)).size() - 1 });
 
 		return true;
 	}
@@ -344,152 +369,60 @@ namespace TNAP {
 			return false;
 	}
 
-	Renderer3D::Renderer3D()
+	void Renderer3D::submitModelMessage(TNAP::Message* const argMessage)
 	{
-		m_textures.resize(static_cast<int>(ETextureType::eCount));
-	}
+		SubmitModelMessage* const submitModel{ static_cast<SubmitModelMessage*>(argMessage) };
 
-	Renderer3D::~Renderer3D()
-	{
-		for(const SProgram program : m_programs)
-			glDeleteProgram(program.m_program);
+		// Map<ModelHandle, Vector<Pair<Vector<ModelTransform>, Vector<MaterialHandles>>>>
 
-
-		glfwDestroyWindow(s_window);
-		glfwTerminate();
-	}
-
-	void Renderer3D::init()
-	{
-		// Use the helper function to set up GLFW, GLEW and OpenGL
-		s_window = Helpers::CreateGLFWWindow(static_cast<int>(m_windowSize.x), static_cast<int>(m_windowSize.y), "TNAP");
-		if (!s_window)
+		if (submitModel->m_modelHandle >= m_models.size())
 			return;
 
-
-		loadShaders();
-		loadMaterials("Materials.csv");
-
-		m_windowFrameBuffer.init();
-		m_windowFrameBuffer.resize(glm::vec2( m_windowSize.x, m_windowSize.y));
-		Helpers::CheckForGLError();
-
-		glfwSetInputMode(s_window, GLFW_STICKY_KEYS, GLFW_TRUE);
-
-		
-		glGenBuffers(1, &batchRenderingBuffer);
-
-
-		GLuint whiteText{ 0 };
-		glGenTextures(1, &whiteText);
-		glBindTexture(GL_TEXTURE_2D, whiteText);
-
-		static GLbyte pixels[4]{ 255, 255, 255, 255 };
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<void*>(pixels));
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		Helpers::CheckForGLError();
-
-
-		for (auto& textType : m_textures)
+		if (m_batchRenders.find(submitModel->m_modelHandle) == m_batchRenders.end())
 		{
-			std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
-			texture->SetData(1, 1, &pixels[0]);
-
-			textType.push_back(STextureData(std::move(texture), whiteText, ""));
-		}
-
-		loadModel("ErrorMesh.fbx");
-		loadModel("Primitives\\Cube.fbx");
-		loadModel("Primitives\\Sphere.fbx");
-		loadModel("Primitives\\Cylinder.fbx");
-		loadModel("Primitives\\Plane.fbx");
-		loadModel("Primitives\\Cone.fbx");
-		
-		loadTexture(TNAP::ETextureType::eAlbedo, "Editor\\MissingTexture.jpg");
-		loadTexture(TNAP::ETextureType::eAlbedo, "Editor\\MatTexture.png");
-		loadTexture(TNAP::ETextureType::eAlbedo, "Editor\\ModelTexture.png");
-
-
-		///
-		// TEMP
-		///
-		//loadModel("fire-elemental\\ostatni test1.fbx"); 
-		//loadModel("creature-evolution-2\\EVOLUTION_02_POSED.fbx"); 
-		//loadModel("desert-trooper-rigged\\SandTrooper.fbx");
-		//loadModel("low-poly-spider-tank\\Part_01xxx.fbx"); 
-		//loadModel("three-eyed-demon\\Third_Eyexxx.OBJ");
-
-		loadTexture(TNAP::ETextureType::eAlbedo, "birdplane.png");
-		loadTexture(TNAP::ETextureType::eAlbedo, "creature-evolution-2\\Default Material1_Flattened_Diffuse.png");
-
-		loadTexture(TNAP::ETextureType::eAlbedo, "aqua_pig_2K.png");
-
-		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01a_D_A.tga.png");
-		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01a_E.tga.png");
-		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01b_D_A.tga.png");
-		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix\\Tex_Ride_FengHuang_01b_E.tga.png");
-
-		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged\\LowerBody_Base_Color.jpg");
-		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged\\Helmet_Base_Color.jpg");
-		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged\\UpperBody_Base_Color.jpg");
-
-		loadTexture(TNAP::ETextureType::eAlbedo, "fire-elemental\\diffuse fire_elemntal.png");
-		loadTexture(TNAP::ETextureType::eAlbedo, "low-poly-spider-tank\\Part_01x_albedo.jpg");
-		loadTexture(TNAP::ETextureType::eAlbedo, "AR\\AssaultRifleModel_Albedo.tga");
-		loadTexture(TNAP::ETextureType::eEmission, "three-eyed-demon\\Third_Eyex_Albedo.jpg");
-	}
-
-	void Renderer3D::update()
-	{
-		render();
-	}
-
-	void Renderer3D::sendMessage(TNAP::Message* const argMessage)
-	{
-		if (nullptr == argMessage)
-			return;
-
-		switch (argMessage->getMessageType())
-		{
-		case Message::EMessageType::eGetTextureMessage:
-		{
-			GetTextureMessage* const textureMessage{ static_cast<GetTextureMessage*>(argMessage) };
-
-			textureMessage->m_textureData = &m_textures.at(static_cast<int>(textureMessage->m_textureInfo.first)).at(textureMessage->m_textureInfo.second);
-		}
-		break;
-
-		case Message::EMessageType::eLoadTextureMessage:
-		{
-			LoadTextureMessage* const textureMessage{ static_cast<LoadTextureMessage*>(argMessage) };
-			
-			if (loadTexture(textureMessage->m_loadInfo.first, textureMessage->m_loadInfo.second))
+			// New Model
+			std::vector<glm::mat4> transforms
 			{
-				textureMessage->m_loadedSuccessfully = true;
-				const size_t textureHandle{ m_mapTextures.at(textureMessage->m_loadInfo.first).at(textureMessage->m_loadInfo.second) };
+				submitModel->m_transform
+			};
 
-				textureMessage->m_textureData = &m_textures.at(static_cast<size_t>(textureMessage->m_loadInfo.first)).at(textureHandle);
-				textureMessage->m_textureHandle = textureHandle;
+			std::vector<size_t> materialHandle
+			{
+				*submitModel->m_materialHandle
+			};
+
+			std::vector<std::pair< std::vector<glm::mat4>, std::vector<size_t> >> temp
+			{
+				{transforms, materialHandle}
+			};
+
+			m_batchRenders.insert({ submitModel->m_modelHandle, temp });
+		}
+		else
+		{
+			// Existing Model
+			bool foundMatch = false;
+			for (std::pair< std::vector<glm::mat4>, std::vector<size_t> >& pair : m_batchRenders.at(submitModel->m_modelHandle))
+			{
+				bool matchingMaterials = true;
+				for (int i = 0; i < pair.second.size(); i++)
+				{
+					if (pair.second[i] != (*submitModel->m_materialHandle)[i])
+					{
+						matchingMaterials = false;
+						break;
+					}
+				}
+				if (matchingMaterials)
+				{
+					pair.first.push_back(submitModel->m_transform);
+					foundMatch = true;
+					break;
+				}
 			}
-		}
-		break;
 
-		case Message::EMessageType::eSubmitModelMessage:
-		{
-			SubmitModelMessage* const submitModel{ static_cast<SubmitModelMessage*>(argMessage) };
-
-			// Map<ModelHandle, Vector<Pair<Vector<ModelTransform>, Vector<MaterialHandles>>>>
-
-			if (submitModel->m_modelHandle >= m_models.size())
-				return;
-
-			if (m_batchRenders.find(submitModel->m_modelHandle) == m_batchRenders.end())
+			if (!foundMatch)
 			{
-				// New Model
 				std::vector<glm::mat4> transforms
 				{
 					submitModel->m_transform
@@ -500,300 +433,72 @@ namespace TNAP {
 					*submitModel->m_materialHandle
 				};
 
-				std::vector<std::pair< std::vector<glm::mat4>, std::vector<size_t> >> temp
-				{
-					{transforms, materialHandle}
-				};
-
-				m_batchRenders.insert({ submitModel->m_modelHandle, temp });
-			}
-			else
-			{
-				// Existing Model
-				bool foundMatch = false;
-				for (std::pair< std::vector<glm::mat4>, std::vector<size_t> >& pair : m_batchRenders.at(submitModel->m_modelHandle))
-				{
-					bool matchingMaterials = true;
-					for (int i = 0; i < pair.second.size(); i++)
-					{
-						if (pair.second[i] != (*submitModel->m_materialHandle)[i])
-						{
-							matchingMaterials = false;
-							break;
-						}
-					}
-					if (matchingMaterials)
-					{
-						pair.first.push_back(submitModel->m_transform);
-						foundMatch = true;
-						break;
-					}
-				}
-
-				if (!foundMatch)
-				{
-					std::vector<glm::mat4> transforms
-					{
-						submitModel->m_transform
-					};
-
-					std::vector<size_t> materialHandle
-					{
-						*submitModel->m_materialHandle
-					};
-
-					m_batchRenders.at(submitModel->m_modelHandle).emplace_back(std::pair< std::vector<glm::mat4>, std::vector<size_t>>(transforms, materialHandle));
-				}
-			}
-
-		}
-		break;
-
-		case Message::EMessageType::eGetMaterialMessage:
-		{
-			GetMaterialMessage* const materialMessage{ static_cast<GetMaterialMessage*>(argMessage) };
-
-			for (int i = 0; i < materialMessage->m_materialHandle->size(); i++)
-			{
-				materialMessage->m_materialVector.emplace_back(m_materials.at(materialMessage->m_materialHandle->at(i)).get());
+				m_batchRenders.at(submitModel->m_modelHandle).emplace_back(std::pair< std::vector<glm::mat4>, std::vector<size_t>>(transforms, materialHandle));
 			}
 		}
-		break;
-
-		case Message::EMessageType::eLoadModelMessage:
-		{
-			LoadModelMessage* const loadModelMessage{ static_cast<LoadModelMessage*>(argMessage) };
-
-			loadModelMessage->m_modelHandle = loadModel(loadModelMessage->m_modelFilepath);
-			loadModelMessage->m_materialHandles = m_models.at(loadModelMessage->m_modelHandle).getDefaultMaterialHandles();
-		}
-		break;
-
-		case Message::EMessageType::eGenerateMaterialMessage:
-		{
-			GenerateMaterialMessage* const genMessage{ static_cast<GenerateMaterialMessage*>(argMessage) };
-
-			bool createdMaterial{ false };
-			switch (genMessage->m_materialType)
-			{
-			case TNAP::EMaterialType::eUnlit:
-				createdMaterial = createMaterial(genMessage->m_materialName, "Unlit", true);
-				break;
-
-			case TNAP::EMaterialType::eUnlitTexture:
-				createdMaterial = createMaterial(genMessage->m_materialName, "UnlitTexture", true);
-				break;
-
-			case TNAP::EMaterialType::ePBR:
-				createdMaterial = createMaterial(genMessage->m_materialName, "PBR", true);
-				break;
-			default:
-				break;
-			}
-
-			LogMessage logMessage("Successfully generated new material");
-			if (createdMaterial)
-			{
-				genMessage->m_handle = m_materials.size() - 1;
-				logMessage.m_logType = LogMessage::ELogType::eSuccess;
-				TNAP::getEngine()->sendMessage(&logMessage);
-			}
-			else
-			{
-				logMessage.m_message = "Failed to generate new material";
-				logMessage.m_logType = LogMessage::ELogType::eWarning;
-				TNAP::getEngine()->sendMessage(&logMessage);
-			}
-		}
-		break;
-
-		default:
-			break;
-		}
-
 	}
 
-
-
-	void Renderer3D::render()
+	void Renderer3D::generateMaterialMessage(TNAP::Message* const argMessage)
 	{
-		// Configure pipeline settings
-		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
+		GenerateMaterialMessage* const genMessage{ static_cast<GenerateMaterialMessage*>(argMessage) };
 
-		// Uncomment to render in wireframe (can be useful when debugging)
-		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		bool createdMaterial{ createMaterial(genMessage->m_materialName, genMessage->m_materialType, true) };
 
-		// Clear buffers from previous frame
-		glClearColor(0.5f, 0.5f, 0.5f, 1.f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
-		
-		m_windowFrameBuffer.bind();
-		glViewport(0, 0, static_cast<GLsizei>(m_windowFrameBuffer.getSize().x), static_cast<GLsizei>(m_windowFrameBuffer.getSize().y));
-
-		// Clear FRAME buffers from previous frame
-		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		Helpers::CheckForGLError();
-		/// Creates and Gets Viewport size
-		GLint viewportDimensions[4];
-		glGetIntegerv(GL_VIEWPORT, viewportDimensions);
-
-		/// Creates viewport Projection Matrix
-		float aspectRatio = m_windowFrameBuffer.getSize().x / m_windowFrameBuffer.getSize().y;
-		float nearPlane{ 1.0f }, farPlane{ 12000.0f };
-		glm::mat4 projection_xform = glm::perspective(glm::radians(45.0f), aspectRatio, nearPlane, farPlane);
-
-		/// Creates View Matrix for camera
-		glm::mat4 view_xform = glm::lookAt(Simulation::m_camera->GetPosition(), Simulation::m_camera->GetPosition() + Simulation::m_camera->GetLookVector(), Simulation::m_camera->GetUpVector());
-		glm::mat4 combined_xform = projection_xform * view_xform;
-
-		for (const auto& modelBatch : m_batchRenders)
+		LogMessage logMessage("Successfully generated new material");
+		if (createdMaterial)
 		{
-			if (modelBatch.first >= m_models.size())
-				continue;
-
-			const Model* const model{ &m_models.at(modelBatch.first) };
-
-			// Transforms, MaterialHandles
-			for (const std::pair<std::vector<glm::mat4>, std::vector<size_t>>& batch : modelBatch.second)
-			{
-				if (batch.first.size() <= 0)
-					continue;
-
-				const std::vector<std::unique_ptr<Helpers::Mesh>>& meshes{ model->getMeshVector() };
-				
-				for (int i = 0; i < meshes.size(); i++)
-				{
-					/// Uses Shaders from our program
-					Material* mat{ nullptr };
-					
-					if (meshes[i]->materialIndex >= batch.second.size())
-						mat = m_materials.at(0).get();
-					else
-						mat = m_materials.at(batch.second.at(meshes[i]->materialIndex)).get();
-
-					GLuint program{ m_programs[mat->getProgramHandle()].m_program };
-
-					if (program != m_currentProgram)
-					{
-						glUseProgram(program);
-						m_currentProgram = program;
-					}
-
-					/// Create camera ID and then Sends camera forward direction data to shader as Uniform
-					GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
-					glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
-
-					/// Create combined xform ID and then Sends Combined Xform data to shader as Uniform
-					GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
-					glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
-
-
-					glBindVertexArray(meshes[i]->VAO);
-
-					mat->sendShaderData(m_currentProgram);
-
-					glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
-					glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_DYNAMIC_DRAW);
-
-					// Set attribute pointers for matrix (4 times vec4)
-					glEnableVertexAttribArray(3);
-					glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
-					glEnableVertexAttribArray(4);
-					glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
-					glEnableVertexAttribArray(5);
-					glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
-					glEnableVertexAttribArray(6);
-					glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
-
-					glVertexAttribDivisor(3, 1);
-					glVertexAttribDivisor(4, 1);
-					glVertexAttribDivisor(5, 1);
-					glVertexAttribDivisor(6, 1);
-
-					if (batch.first.size() > 1) // Batch Draw
-					{
-						glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(meshes[i]->elements.size()), GL_UNSIGNED_INT, 0, batch.first.size());
-
-						Helpers::CheckForGLError();
-					}
-					else // Normal Draw
-					{
-
-						glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(meshes[i]->elements.size()), GL_UNSIGNED_INT, (void*)0);
-					}
-
-					glBindVertexArray(0);
-				}
-
-			}
-
+			genMessage->m_handle = m_materials.size() - 1;
+			logMessage.m_logType = LogMessage::ELogType::eSuccess;
+			TNAP::getEngine()->sendMessage(&logMessage);
 		}
+		else
+		{
+			logMessage.m_message = "Failed to generate new material";
+			logMessage.m_logType = LogMessage::ELogType::eWarning;
+			TNAP::getEngine()->sendMessage(&logMessage);
+		}
+	}
 
-		m_windowFrameBuffer.unbind();
+	void Renderer3D::glfwDropCallBackMessage(TNAP::Message* const argMessage)
+	{
+		const GLFWDropCallBackMessage* const dropCallBackMessage{ static_cast<GLFWDropCallBackMessage*>(argMessage) };
 
-		m_batchRenders.clear();
+		for (const std::string& path : dropCallBackMessage->m_paths)
+		{
+			std::string filePath{ path };
+			std::string fileType{ path };
+			fileType.replace(0, fileType.find_last_of('.'), "");
+			std::transform(fileType.begin(), fileType.end(), fileType.begin(), 
+				[](unsigned char c) 
+					{ return std::tolower(c); });
 
-		// Always a good idea, when debugging at least, to check for GL errors
-		Helpers::CheckForGLError();
+			if (".fbx" == fileType || ".obj" == fileType)
+			{
+				size_t offset{ filePath.find("Models") };
+
+				if (std::string::npos != offset)
+				{
+					filePath.replace(0, offset + 7, "");
+
+					loadModel(filePath);
+				}
+			}
+			else if (".png" == fileType || ".jpg" == fileType || ".jpeg" == fileType || ".tga" == fileType || ".targa" == fileType)
+			{
+				size_t offset{ filePath.find("Textures") };
+
+				if (std::string::npos != offset)
+				{
+					filePath.replace(0, offset + 9, "");
+					loadTexture(static_cast<ETextureType>(0), filePath);
+				}
+			}
+		}
 	}
 
 #if USE_IMGUI
-	void Renderer3D::imGuiRender()
+	void Renderer3D::imGuiRenderShelf()
 	{
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
-		{
-			static bool viewportOpen = true;
-			ImGuiWindowFlags flags = ImGuiWindowFlags_::ImGuiWindowFlags_None;
-			flags |= ImGuiWindowFlags_NoMove;
-			//flags |= ImGuiWindowFlags_NoResize;
-			flags |= ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-			flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
-
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-			ImGui::Begin("Viewport", &viewportOpen, flags);
-			{
-				ImGui::PopStyleVar(3);
-
-				const bool focused{ ImGui::IsWindowFocused() };
-
-				bool mousePressed{ false };
-				if (focused)
-				{
-					if (glfwGetMouseButton(s_window, 0) == GLFW_PRESS)
-					{
-						glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-						mousePressed = true;
-					}
-				}
-					
-				if(!mousePressed)
-					glfwSetInputMode(s_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-
-				Simulation::m_camera->setActive(focused && mousePressed);
-
-				ImVec2 RegionSize = ImGui::GetContentRegionAvail();
-
-				if ((RegionSize.x != m_windowSize.x) || (RegionSize.y != m_windowSize.y))
-				{
-					m_windowSize.x = RegionSize.x;
-					m_windowSize.y = RegionSize.y;
-
-					m_windowFrameBuffer.resize(m_windowSize);
-
-					Helpers::CheckForGLError();
-				}
-
-				ImGui::Image((ImTextureID)m_windowFrameBuffer.getColourAttachment(), ImVec2(m_windowSize.x, m_windowSize.y), ImVec2(0, 1), ImVec2(1, 0));
-			}
-			ImGui::End();
-		}
-
 		static bool shelfOpen{ true };
 		ImGui::Begin("Shelf", &shelfOpen, ImGuiWindowFlags_MenuBar);
 		{
@@ -801,7 +506,7 @@ namespace TNAP {
 			static bool showModels{ true };
 
 			static std::array<bool, static_cast<int>(TNAP::ETextureType::eCount)> headerOpen{ true, true, true, true, true, true };
-			static std::array<std::string, headerOpen.size()> textureNames { "Albedo", "Normal", "Metallic", "Roughness", "AO", "Emission" };
+			static std::array<std::string, headerOpen.size()> textureNames{ "Albedo", "Normal", "Metallic", "Roughness", "AO", "Emission" };
 
 			if (ImGui::BeginMenuBar())
 			{
@@ -809,9 +514,11 @@ namespace TNAP {
 				{
 					if (ImGui::BeginMenu("Texture"))
 					{
+						static std::string textureName{ "" };
 						static std::string textureFilePath{ "" };
 						static TNAP::ETextureType textureType{ TNAP::ETextureType::eAlbedo };
 
+						ImGui::InputText("Name", &textureName);
 						ImGui::InputText("Filepath", &textureFilePath);
 
 						if (ImGui::BeginCombo("Texture Type", textureNames.at(static_cast<int>(textureType)).c_str()))
@@ -828,15 +535,16 @@ namespace TNAP {
 						{
 							if (!textureFilePath.empty())
 							{
-								loadTexture(textureType, textureFilePath);
+								loadTexture(textureType, textureFilePath, textureName);
 								textureFilePath = "";
+								textureName = "";
 							}
 						}
 
 						ImGui::EndMenu();
 					}
 
-					static std::array<std::string, static_cast<int>(TNAP::EMaterialType::eCount)> materialNames{ "Unlit", "UnlitTexture", "PBR"};
+					static std::array<std::string, static_cast<int>(TNAP::EMaterialType::eCount)> materialNames{ "Unlit", "UnlitTexture", "PBR" };
 
 					if (ImGui::BeginMenu("Material"))
 					{
@@ -877,7 +585,7 @@ namespace TNAP {
 				{
 					ImGui::MenuItem("Materials", NULL, &showMaterials);
 					ImGui::MenuItem("Models", NULL, &showModels);
-					
+
 					if (ImGui::BeginMenu("Textures"))
 					{
 						if (ImGui::Button("Invert"))
@@ -890,17 +598,17 @@ namespace TNAP {
 
 						if (ImGui::Button("Hide"))
 							headerOpen.fill(false);
-						
+
 
 						ImGui::SameLine();
 
 						if (ImGui::Button("Open"))
 							headerOpen.fill(true);
-						
+
 
 						for (int i = 0; i < textureNames.size(); i++)
 							ImGui::MenuItem(textureNames.at(i).c_str(), NULL, &headerOpen.at(i));
-						
+
 						ImGui::EndMenu();
 					}
 
@@ -930,7 +638,7 @@ namespace TNAP {
 
 				if (ImGui::CollapsingHeader("Textures", &showTextures))
 				{
-					
+
 					//ImVec2 size{  };
 
 					int amount{ static_cast<int>((ImGui::GetWindowWidth() - (iconSize * 2)) / iconSize) };
@@ -961,8 +669,8 @@ namespace TNAP {
 						}
 					}
 				}
-				
-				
+
+
 				if (showMaterials)
 				{
 					ImGui::Spacing();
@@ -971,7 +679,7 @@ namespace TNAP {
 
 				if (ImGui::CollapsingHeader("Materials", &showMaterials))
 				{
-					
+
 
 					if (ImGui::Button("Save Materials"))
 					{
@@ -997,8 +705,7 @@ namespace TNAP {
 
 					for (size_t i = 0; i < m_materials.size(); i++)
 					{
-						 
-						size_t textureBinding = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/MatTexture.png")).m_textureBinding;
+						size_t textureBinding = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("MatTexture.png")).m_textureBinding;
 
 						//ImGui::PushID(i);
 						const std::string id{ std::to_string(i) };
@@ -1036,7 +743,7 @@ namespace TNAP {
 					ImGui::Columns(5, "models"); // 5-ways, with border
 					ImGui::Separator();
 					ImGui::Text("Model"); ImGui::NextColumn();
-					ImGui::Text("Path"); ImGui::NextColumn();
+					ImGui::Text("Name"); ImGui::NextColumn();
 					ImGui::Text("Model Handle"); ImGui::NextColumn();
 					ImGui::Text("Mesh Count"); ImGui::NextColumn();
 					ImGui::Text("Material Count"); ImGui::NextColumn();
@@ -1044,7 +751,7 @@ namespace TNAP {
 
 					for (const auto& mapModel : m_mapModels)
 					{
-						size_t textureBinding = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("Editor/ModelTexture.png")).m_textureBinding;
+						size_t textureBinding = m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("ModelTexture.png")).m_textureBinding;
 
 						//ImGui::PushID(mapModel.second);
 						const std::string id{ std::to_string(mapModel.second) };
@@ -1076,6 +783,347 @@ namespace TNAP {
 			}
 		}
 		ImGui::End();
+	}
+
+	void Renderer3D::imGuiRenderViewport()
+	{
+		const glm::vec2& windowSize{ getApplication()->getWindowSize() };
+		GLFWwindow* const window{ getApplication()->getWindow() };
+
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE)
+		{
+			static bool viewportOpen = true;
+			ImGuiWindowFlags flags = ImGuiWindowFlags_::ImGuiWindowFlags_None;
+			flags |= ImGuiWindowFlags_NoMove;
+			//flags |= ImGuiWindowFlags_NoResize;
+			flags |= ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+			flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
+
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+			ImGui::Begin("Viewport", &viewportOpen, flags);
+			{
+				ImGui::PopStyleVar(3);
+
+				const bool focused{ ImGui::IsWindowFocused() };
+
+				bool mousePressed{ false };
+				if (focused)
+				{
+					if (glfwGetMouseButton(window, 0) == GLFW_PRESS)
+					{
+						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+						mousePressed = true;
+					}
+				}
+
+				if (!mousePressed)
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
+				Simulation::m_camera->setActive(focused && mousePressed);
+
+				ImVec2 RegionSize = ImGui::GetContentRegionAvail();
+
+				if ((RegionSize.x != windowSize.x) || (RegionSize.y != windowSize.y))
+				{
+					getApplication()->setWindowSize(glm::vec2(RegionSize.x, RegionSize.y));
+
+					m_windowFrameBuffer.resize(windowSize);
+
+					Helpers::CheckForGLError();
+				}
+
+				ImGui::Image((ImTextureID)m_windowFrameBuffer.getColourAttachment(), ImVec2(windowSize.x, windowSize.y), ImVec2(0, 1), ImVec2(1, 0));
+			}
+			ImGui::End();
+		}
+	}
+#endif
+
+	Renderer3D::Renderer3D()
+	{
+		m_textures.resize(static_cast<int>(ETextureType::eCount));
+	}
+
+	Renderer3D::~Renderer3D()
+	{
+		for(const SProgram program : m_programs)
+			glDeleteProgram(program.m_program);
+	}
+
+	void Renderer3D::init()
+	{
+		loadShaders();
+		loadMaterials("Materials.csv");
+
+		m_windowFrameBuffer.init();
+		const glm::vec2& windowSize{ getApplication()->getWindowSize() };
+		m_windowFrameBuffer.resize(windowSize);
+
+		Helpers::CheckForGLError();
+		
+		glGenBuffers(1, &batchRenderingBuffer);
+
+		GLuint whiteText{ 0 };
+		glGenTextures(1, &whiteText);
+		glBindTexture(GL_TEXTURE_2D, whiteText);
+
+		static GLbyte pixels[4]{ 255, 255, 255, 255 };
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<void*>(pixels));
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		Helpers::CheckForGLError();
+
+
+		for (auto& textType : m_textures)
+		{
+			std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
+			texture->SetData(1, 1, &pixels[0]);
+
+			textType.push_back(STextureData(std::move(texture), whiteText, ""));
+		}
+
+		loadModel("ErrorMesh.fbx");
+		loadModel("Primitives/Cube.fbx");
+		loadModel("Primitives/Sphere.fbx");
+		loadModel("Primitives/Cylinder.fbx");
+		loadModel("Primitives/Plane.fbx");
+		loadModel("Primitives/Cone.fbx");
+		
+		loadTexture(TNAP::ETextureType::eAlbedo, "Editor/MissingTexture.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Editor/MatTexture.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Editor/ModelTexture.png");
+
+
+		///
+		// TEMP
+		///
+		//loadModel("fire-elemental\\ostatni test1.fbx"); 
+		//loadModel("creature-evolution-2\\EVOLUTION_02_POSED.fbx"); 
+		//loadModel("desert-trooper-rigged\\SandTrooper.fbx");
+		//loadModel("low-poly-spider-tank\\Part_01xxx.fbx"); 
+		//loadModel("three-eyed-demon\\Third_Eyexxx.OBJ");
+
+		loadTexture(TNAP::ETextureType::eAlbedo, "birdplane.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "creature-evolution-2/Default Material1_Flattened_Diffuse.png");
+
+		loadTexture(TNAP::ETextureType::eAlbedo, "aqua_pig_2K.png");
+
+		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix/Tex_Ride_FengHuang_01a_D_A.tga.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix/Tex_Ride_FengHuang_01a_E.tga.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix/Tex_Ride_FengHuang_01b_D_A.tga.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "Phoenix/Tex_Ride_FengHuang_01b_E.tga.png");
+
+		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged/LowerBody_Base_Color.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged/Helmet_Base_Color.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "desert-trooper-rigged/UpperBody_Base_Color.jpg");
+
+		loadTexture(TNAP::ETextureType::eAlbedo, "fire-elemental/diffuse fire_elemntal.png");
+		loadTexture(TNAP::ETextureType::eAlbedo, "low-poly-spider-tank/Part_01x_albedo.jpg");
+		loadTexture(TNAP::ETextureType::eAlbedo, "AR/AssaultRifleModel_Albedo.tga");
+		loadTexture(TNAP::ETextureType::eEmission, "three-eyed-demon/Third_Eyex_Albedo.jpg");
+	}
+
+	void Renderer3D::update()
+	{
+		render();
+	}
+
+	void Renderer3D::sendMessage(TNAP::Message* const argMessage)
+	{
+		if (nullptr == argMessage)
+			return;
+
+		switch (argMessage->getMessageType())
+		{
+		case Message::EMessageType::eGetTextureMessage:
+		{
+			GetTextureMessage* const textureMessage{ static_cast<GetTextureMessage*>(argMessage) };
+
+			textureMessage->m_textureData = &m_textures.at(static_cast<int>(textureMessage->m_textureInfo.first)).at(textureMessage->m_textureInfo.second);
+		}
+		break;
+
+		case Message::EMessageType::eLoadTextureMessage:
+		{
+			LoadTextureMessage* const textureMessage{ static_cast<LoadTextureMessage*>(argMessage) };
+			
+			if (loadTexture(textureMessage->m_loadInfo.first, textureMessage->m_loadInfo.second))
+			{
+				textureMessage->m_loadedSuccessfully = true;
+				const size_t textureHandle{ m_mapTextures.at(textureMessage->m_loadInfo.first).at(textureMessage->m_loadInfo.second) };
+
+				textureMessage->m_textureData = &m_textures.at(static_cast<size_t>(textureMessage->m_loadInfo.first)).at(textureHandle);
+				textureMessage->m_textureHandle = textureHandle;
+			}
+		}
+		break;
+
+		case Message::EMessageType::eSubmitModelMessage:
+			submitModelMessage(argMessage);
+		break;
+
+		case Message::EMessageType::eGetMaterialMessage:
+		{
+			GetMaterialMessage* const materialMessage{ static_cast<GetMaterialMessage*>(argMessage) };
+
+			for (int i = 0; i < materialMessage->m_materialHandle->size(); i++)
+			{
+				materialMessage->m_materialVector.emplace_back(m_materials.at(materialMessage->m_materialHandle->at(i)).get());
+			}
+		}
+		break;
+
+		case Message::EMessageType::eLoadModelMessage:
+		{
+			LoadModelMessage* const loadModelMessage{ static_cast<LoadModelMessage*>(argMessage) };
+
+			loadModelMessage->m_modelHandle = loadModel(loadModelMessage->m_modelFilepath);
+			loadModelMessage->m_materialHandles = m_models.at(loadModelMessage->m_modelHandle).getDefaultMaterialHandles();
+		}
+		break;
+
+		case Message::EMessageType::eGenerateMaterialMessage:
+			generateMaterialMessage(argMessage);
+		break;
+
+		case Message::EMessageType::eGLFWDropCallBackMessage:
+			glfwDropCallBackMessage(argMessage);
+		break;
+
+		default:
+			break;
+		}
+	}
+
+	void Renderer3D::render()
+	{
+		// Configure pipeline settings
+		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_CULL_FACE);
+
+		// Uncomment to render in wireframe (can be useful when debugging)
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+		// Clear buffers from previous frame
+		glClearColor(0.5f, 0.5f, 0.5f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		
+		
+		m_windowFrameBuffer.bind();
+		glViewport(0, 0, static_cast<GLsizei>(m_windowFrameBuffer.getSize().x), static_cast<GLsizei>(m_windowFrameBuffer.getSize().y));
+
+		// Clear FRAME buffers from previous frame
+		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		Helpers::CheckForGLError();
+
+		/// Creates viewport Projection Matrix
+		float aspectRatio = m_windowFrameBuffer.getSize().x / m_windowFrameBuffer.getSize().y;
+		float nearPlane{ 1.0f }, farPlane{ 12000.0f };
+		glm::mat4 projection_xform = glm::perspective(glm::radians(45.0f), aspectRatio, nearPlane, farPlane);
+
+		/// Creates View Matrix for camera
+		glm::mat4 view_xform = glm::lookAt(Simulation::m_camera->GetPosition(), Simulation::m_camera->GetPosition() + Simulation::m_camera->GetLookVector(), Simulation::m_camera->GetUpVector());
+		glm::mat4 combined_xform = projection_xform * view_xform;
+
+		for (const auto& modelBatch : m_batchRenders)
+		{
+			if (modelBatch.first >= m_models.size())
+				continue;
+
+			const Model* const model{ &m_models.at(modelBatch.first) };
+
+			// Transforms, MaterialHandles
+			for (const std::pair<std::vector<glm::mat4>, std::vector<size_t>>& batch : modelBatch.second)
+			{
+				if (batch.first.size() <= 0)
+					continue;
+
+				const std::vector<std::unique_ptr<Helpers::Mesh>>& meshes{ model->getMeshVector() };
+				
+				//for (int i = 0; i < meshes.size(); i++)
+				for(const std::unique_ptr<Helpers::Mesh>& mesh : meshes)
+				{
+					/// Uses Shaders from our program
+					Material* mat{ nullptr };
+					
+					if (mesh->materialIndex >= batch.second.size())
+						mat = m_materials.at(0).get();
+					else
+						mat = m_materials.at(batch.second.at(mesh->materialIndex)).get();
+
+					const GLuint program{ m_programs[mat->getProgramHandle()].m_program };
+
+					if (program != m_currentProgram)
+					{
+						glUseProgram(program);
+						m_currentProgram = program;
+					}
+
+					/// Create camera ID and then Sends camera forward direction data to shader as Uniform
+					const GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
+					glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
+
+					/// Create combined xform ID and then Sends Combined Xform data to shader as Uniform
+					const GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
+					glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
+
+					glBindVertexArray(mesh->VAO);
+
+					mat->sendShaderData(m_currentProgram);
+
+					glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
+					glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_DYNAMIC_DRAW);
+
+					// Set attribute pointers for matrix (4 times vec4)
+					glEnableVertexAttribArray(3);
+					glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+					glEnableVertexAttribArray(4);
+					glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+					glEnableVertexAttribArray(5);
+					glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+					glEnableVertexAttribArray(6);
+					glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+					glVertexAttribDivisor(3, 1);
+					glVertexAttribDivisor(4, 1);
+					glVertexAttribDivisor(5, 1);
+					glVertexAttribDivisor(6, 1);
+
+					if (batch.first.size() > 1) // Batch Draw
+						glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, 0, batch.first.size());
+					else // Normal Draw
+						glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, (void*)0);
+					
+					Helpers::CheckForGLError();
+
+					glBindVertexArray(0);
+				}
+
+			}
+
+		}
+
+		m_windowFrameBuffer.unbind();
+
+		m_batchRenders.clear();
+
+		// Always a good idea, when debugging at least, to check for GL errors
+		Helpers::CheckForGLError();
+	}
+
+#if USE_IMGUI
+	void Renderer3D::imGuiRender()
+	{
+		imGuiRenderViewport();
+
+		imGuiRenderShelf();
 	}
 
 	void Renderer3D::imGuiRenderMaterial(const size_t argMaterialHandle)

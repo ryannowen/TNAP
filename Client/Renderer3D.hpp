@@ -47,9 +47,6 @@ namespace TNAP {
 	class Renderer3D : public TNAP::System
 	{
 	private:
-		static GLFWwindow* s_window;
-		glm::vec2 m_windowSize{ 1600, 900 };
-
 		TNAP::FrameBuffer m_windowFrameBuffer;
 
 		std::unordered_map<std::string, size_t> m_mapModels;
@@ -71,15 +68,23 @@ namespace TNAP {
 
 		GLuint m_currentProgram{ 0 };
 		GLuint batchRenderingBuffer{ 0 };
-
-		const size_t loadModel(const std::string& argFilePath);
+		
+		const size_t loadModel(const std::string& argFilePath, const std::string& argModelName = "");
 		void loadShaders();
-		const bool loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath);
+		const bool loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath, const std::string& argTextureName = "");
 		void loadMaterials(const std::string& argFilePath);
 		const bool createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
 		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting = false);
 		const bool createMaterial(const std::string& argMaterialName, const TNAP::EMaterialType argMaterialType, const bool argIncrementNameIfExisting = false);
 
+		void submitModelMessage(TNAP::Message* const argMessage);
+		void generateMaterialMessage(TNAP::Message* const argMessage);
+		void glfwDropCallBackMessage(TNAP::Message* const argMessage);
+
+#if USE_IMGUI
+		void imGuiRenderShelf();
+		void imGuiRenderViewport();
+#endif
 	public:
 		Renderer3D();
 		~Renderer3D();
@@ -89,8 +94,6 @@ namespace TNAP {
 		virtual void sendMessage(TNAP::Message* const argMessage) override final;
 
 		void render();
-
-		inline static GLFWwindow* const getWindow() { return s_window; }
 
 #if USE_IMGUI
 		virtual void imGuiRender() override final;

@@ -11,6 +11,8 @@ namespace TNAP
 	class Logger : public System
 	{
 	private:
+		inline void ClearLog();
+
 #if USE_IMGUI
 		ImGuiTextBuffer m_buffer;
 		ImGuiTextFilter m_filter;
@@ -20,7 +22,6 @@ namespace TNAP
 		bool m_autoScroll{ true };
 		bool m_scrollToBottom{ true };
 
-		inline void ClearLog();
 		void AddLog(const char* argMessage, ...);
 #endif
 	public:
