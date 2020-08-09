@@ -113,6 +113,13 @@ namespace TNAP {
 					TNAP::getSceneManager()->getCurrentScene()->saveScene();
 					//std::cout << "test" << std::endl;
 				}
+				static std::string filepath{ "" };
+				ImGui::InputText("Filepath", &filepath);
+				if (ImGui::MenuItem("Load Scene"))
+				{
+					TNAP::getSceneManager()->getCurrentScene()->loadFromFile(filepath);
+					//std::cout << "test" << std::endl;
+				}
 
 				ImGui::EndMenu();
 			}

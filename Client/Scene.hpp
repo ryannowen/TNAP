@@ -28,6 +28,7 @@ namespace TNAP {
 		void init();
 		void update();
 		void saveScene();
+		void loadFromFile(const std::string& argFilePath);
 
 		template<class EntityType, typename... Args>
 		inline EntityType* const addEntity(const bool argIsChild, const std::string& argName, const Args&... args);
@@ -37,6 +38,7 @@ namespace TNAP {
 
 		const std::pair<bool, size_t> getEntityIndex(const std::string& argName);
 		const bool entityExists(const std::string& argName);
+		bool updateEntityInMap(const std::string& argOldName, const std::string& argNewName, const size_t argHandle);
 
 		void destroyEntity(const std::string& argName);
 		void destroyEntity(const size_t argHandle);
@@ -73,11 +75,13 @@ namespace TNAP {
 			m_entities.emplace_back(std::make_shared<EntityType>(args...));
 			m_entities.back()->setName(name);
 			m_entities.back()->setHandle(m_entities.size() - 1);
+			m_entities.back()->setHasParent(true);
 
 			if (!argIsChild)
 			{
 				m_parentHandles.push_back(m_entities.size() - 1);
 				m_entities.back()->setParentHandle(m_parentHandles.size()-1);
+				m_entities.back()->setHasParent(false);
 			}
 
 			return static_cast<EntityType*>(m_entities.back().get());

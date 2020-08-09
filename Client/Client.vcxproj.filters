@@ -292,8 +292,12 @@
     </ClInclude>
     <ClInclude Include="GLFWCallBacks.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="GetModelInfoMessage.hpp">
       <Filter>Header Files\Messages</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

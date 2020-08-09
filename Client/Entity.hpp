@@ -8,6 +8,15 @@
 
 namespace TNAP {
 
+	enum class EEntityType
+	{
+		eEntity,
+		eRenderable,
+		eLight,
+		ePointLight,
+		eSpotLight
+	};
+
 	class Message;
 
 	class Entity
@@ -29,6 +38,7 @@ namespace TNAP {
 #if USE_IMGUI
 		static Entity* s_selected;
 		static int s_treeIndex;
+		std::string m_namePlaceholder;
 #endif
 
 		void updateChildrenParentHandles();
@@ -44,8 +54,29 @@ namespace TNAP {
 		virtual void update(const glm::mat4& parentTransform);
 		virtual void saveData(std::ofstream& outputFile);
 
-		inline void setName(const std::string& argName) { m_name = argName; }
+		inline virtual const EEntityType getEntityType() const { return EEntityType::eEntity; }
+
+		inline bool setName(const std::string& argName) 
+		{ 
+			// Entity doesnt have a name yet
+			if ("" != argName && "" != m_name)
+			{
+				if (updateNameInSceneMap(argName))
+				{
+					m_name = argName;
+					return true;
+				}
+			}
+			if ("" == m_name)
+			{
+				m_name = argName;
+				return true;
+			}
+			return false;
+		}
 		inline const std::string& getName() const { return m_name; }
+
+		bool updateNameInSceneMap(const std::string& argNewName);
 
 		inline const TNAP::Transform& getLocalTransform() const { return m_transform; }
 		inline TNAP::Transform& getTransform() { return m_transform; }
@@ -54,6 +85,8 @@ namespace TNAP {
 		inline const bool getHasParent() const { return m_hasParent; }
 		inline void setParentHandle(const size_t argHandle) { m_parentHandle = argHandle; }
 		inline const size_t getParentHandle() const { return m_parentHandle; }
+
+		void setChildren(const std::vector<size_t>& argChildrenHandles);
 
 		template<class EntityType, typename... Args>
 		inline EntityType* const addChild(const std::string& argName, const Args&... args);
@@ -91,7 +124,6 @@ namespace TNAP {
 		EntityType* const e = TNAP::getSceneManager()->getCurrentScene()->addEntity<EntityType>(true, argName, std::move(args)...);
 		if (nullptr != e)
 		{
-			e->setHasParent(true);
 			e->setParentHandle(m_handle);
 			std::pair<bool, size_t> entityIndex { TNAP::getSceneManager()->getCurrentScene()->getEntityIndex(e->getName()) };
 			if (entityIndex.first)

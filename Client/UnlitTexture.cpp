@@ -7,6 +7,7 @@
 #include "Engine.hpp"
 #include "GetTextureMessage.hpp"
 #include "LoadTextureMessage.hpp"
+#include "Utilities.hpp"
 
 namespace TNAP {
 

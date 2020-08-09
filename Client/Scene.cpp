@@ -4,6 +4,7 @@
 #include "Renderable.hpp"
 #include "Renderer3D.hpp"
 #include "Application.hpp"
+#include "Utilities.hpp"
 #include <fstream>
 
 namespace TNAP {
@@ -89,6 +90,72 @@ namespace TNAP {
 
 	}
 
+	void Scene::loadFromFile(const std::string& argFilePath)
+	{
+
+		m_mapEntities.clear();
+		m_entities.clear();
+		m_parentHandles.clear();
+
+		std::ifstream savedScene;
+
+		savedScene.open("Data/SaveLoad/" + argFilePath + ".csv");
+
+		std::string name;
+		std::string entityType;
+		std::string enabled;
+		std::string hasParent;
+		std::string parentHandle;
+		std::string transform;
+		std::string children;
+
+		static int test = 0;
+
+		while (savedScene.good())
+		{
+			test++;
+			std::getline(savedScene, name, ',');
+			std::getline(savedScene, entityType, ',');
+			std::getline(savedScene, enabled, ',');
+			std::getline(savedScene, hasParent, ',');
+			std::getline(savedScene, parentHandle, ',');
+			std::getline(savedScene, transform, ',');
+			std::getline(savedScene, children, ',');
+
+			EEntityType type = static_cast<EEntityType>(std::stoi(entityType));
+
+			switch (type)
+			{
+			case EEntityType::eRenderable:
+			{
+				std::string modelPath;
+				std::string materialNames;
+				std::getline(savedScene, modelPath, ',');
+				std::getline(savedScene, materialNames);
+
+				Renderable* newRenderable = addEntity<Renderable>(std::stoi(hasParent), name, modelPath);
+				newRenderable->setEnabled(std::stoi(enabled));
+				newRenderable->setParentHandle(std::stoull(parentHandle));
+				std::vector<float> transformValues = TNAP::stringToVector<float>(transform, " ", [](const std::string& str) { return std::stof(str); }, 9);
+				newRenderable->getTransform().setTranslation(glm::vec3(transformValues.at(0), transformValues.at(1), transformValues.at(2)));
+				newRenderable->getTransform().setRotation(glm::vec3(transformValues.at(3), transformValues.at(4), transformValues.at(5)));
+				newRenderable->getTransform().setScale(glm::vec3(transformValues.at(6), transformValues.at(7), transformValues.at(8)));
+				if ("" != children)
+				{
+					std::vector<size_t> childrenHandles = TNAP::stringToVector<size_t>(children, " ", [](const std::string& str) { return std::stof(str); });
+					newRenderable->setChildren(childrenHandles);
+				}
+			}
+			break;
+
+			default:
+				break;
+			}
+		}
+		std::cout << test << std::endl;
+		savedScene.close();
+	}
+
 	TNAP::Entity* const Scene::findEntity(const std::string& argName)
 	{
 		if (m_mapEntities.find(argName) == m_mapEntities.end())
@@ -123,6 +190,21 @@ namespace TNAP {
 		return true;
 	}
 
+	bool Scene::updateEntityInMap(const std::string& argOldName, const std::string& argNewName, const size_t argHandle)
+	{
+		// Entity doesnt exist
+		if (m_mapEntities.find(argOldName) == m_mapEntities.end())
+			return false;
+
+		// New name already exists
+		if (m_mapEntities.find(argNewName) != m_mapEntities.end())
+			return false;
+
+		m_mapEntities.erase(argOldName);
+		m_mapEntities.insert({argNewName, argHandle});
+		return true;
+	}
+
 	void Scene::destroyEntity(const std::string& argName)
 	{
 		// Invalid entity name
@@ -138,7 +220,7 @@ namespace TNAP {
 	void Scene::destroyEntity(const size_t argHandle)
 	{
 		// Invalid entity handle
-		if (argHandle > m_entities.size() || argHandle < 0)
+		if (argHandle >= m_entities.size() || argHandle < 0)
 			return;
 
 		std::string entityName = m_entities.at(argHandle)->getName(); // Store name of entity since the entity handle could change
@@ -208,113 +290,98 @@ namespace TNAP {
 					static bool newEntityEnabled{ true };
 
 					// Clear entity selection
-					if (ImGui::MenuItem("Clear Selected"))
+					if (ImGui::Button("Clear Selected"))
 					{
 						Entity::setSelected(nullptr);
 					}
 
-					// Normal Entity
-					if (ImGui::BeginMenu("Entity"))
+					ImGui::Separator();
+
+					ImGui::InputText("Entity Name", &newName);
+					ImGui::Checkbox("Enabled", &newEntityEnabled);
+
+					ImGui::Separator();
+
+					// Empty Entity
+					if (ImGui::Button("Create Empty"))
 					{
-						// Empty Entity
-						if (ImGui::BeginMenu("Empty"))
+						Entity* newEntity = nullptr;
+
+						if (nullptr == Entity::getSelected())
+							newEntity = addEntity<Entity>(false, newName);
+						else
+							newEntity = Entity::getSelected()->addChild<Entity>(newName);
+						newEntity->setEnabled(newEntityEnabled);
+						newName = "";
+					}
+
+					ImGui::Separator();
+
+					// Primitive
+					if (ImGui::BeginMenu("Primitive"))
+					{
+						bool shouldCreate = false;
+
+						if (ImGui::Button("Cube"))
 						{
-							ImGui::InputText("Entity Name", &newName);
-							ImGui::Checkbox("Enabled", &newEntityEnabled);
-
-							if (ImGui::MenuItem("Create"))
-							{
-								Entity* newEntity = nullptr;
-
-								if (nullptr == Entity::getSelected())
-									newEntity = addEntity<Entity>(false, newName);
-								else
-									newEntity = Entity::getSelected()->addChild<Entity>(newName);
-								newEntity->setEnabled(newEntityEnabled);
-								newName = "";
-							}
-
-							ImGui::EndMenu();
+							shouldCreate = true;
+							filepath = "Primitives\\Cube.fbx";
+						}
+						if (ImGui::Button("Sphere"))
+						{
+							shouldCreate = true;
+							filepath = "Primitives\\Sphere.fbx";
+						}
+						if (ImGui::Button("Cylinder"))
+						{
+							shouldCreate = true;
+							filepath = "Primitives\\Cylinder.fbx";
+						}
+						if (ImGui::Button("Plane"))
+						{
+							shouldCreate = true;
+							filepath = "Primitives\\Plane.fbx";
+						}
+						if (ImGui::Button("Cone"))
+						{
+							shouldCreate = true;
+							filepath = "Primitives\\Cone.fbx";
 						}
 
-						// Renderable
-						if (ImGui::BeginMenu("Renderable"))
+						if (shouldCreate)
 						{
-							// Primitive
-							if (ImGui::BeginMenu("Primitive"))
-							{
-								bool shouldCreate = false;
-								ImGui::InputText("Entity Name", &newName);
-								ImGui::Checkbox("Enabled", &newEntityEnabled);
+							Renderable* newRend = nullptr;
+							if (nullptr == Entity::getSelected())
+								newRend = addEntity<Renderable>(false, newName);
+							else
+								newRend = Entity::getSelected()->addChild<Renderable>(newName);
+							newRend->loadModel(filepath);
+							newRend->setEnabled(newEntityEnabled);
+							newName = "";
+							filepath = "";
+							shouldCreate = false;
+						}
 
-								if (ImGui::MenuItem("Cube"))
-								{
-									shouldCreate = true;
-									filepath = "Primitives\\Cube.fbx";
-								}
-								if (ImGui::MenuItem("Sphere"))
-								{
-									shouldCreate = true;
-									filepath = "Primitives\\Sphere.fbx";
-								}
-								if (ImGui::MenuItem("Cylinder"))
-								{
-									shouldCreate = true;
-									filepath = "Primitives\\Cylinder.fbx";
-								}
-								if (ImGui::MenuItem("Plane"))
-								{
-									shouldCreate = true;
-									filepath = "Primitives\\Plane.fbx";
-								}
-								if (ImGui::MenuItem("Cone"))
-								{
-									shouldCreate = true;
-									filepath = "Primitives\\Cone.fbx";
-								}
+						ImGui::EndMenu();
+					}
 
-								if (shouldCreate)
-								{
-									Renderable* newRend = nullptr;
-									if (nullptr == Entity::getSelected())
-										newRend = addEntity<Renderable>(false, newName);
-									else
-										newRend = Entity::getSelected()->addChild<Renderable>(newName);
-									newRend->loadModel(filepath);
-									newRend->setEnabled(newEntityEnabled);
-									newName = "";
-									filepath = "";
-									shouldCreate = false;
-								}
+					//Custom
+					if (ImGui::BeginMenu("Custom"))
+					{
+						ImGui::InputText("Filepath", &filepath);
 
-								ImGui::EndMenu();
-							}
+						if (ImGui::Button("Create"))
+						{
+							Renderable* newRend = nullptr;
 
-							//Custom
-							if (ImGui::BeginMenu("Custom"))
-							{
-								ImGui::InputText("Entity Name", &newName);
-								ImGui::InputText("Filepath", &filepath);
-								ImGui::Checkbox("Enabled", &newEntityEnabled);
-
-								if (ImGui::MenuItem("Create"))
-								{
-									Renderable* newRend = nullptr;
-
-									if (nullptr == Entity::getSelected())
-										newRend = addEntity<Renderable>(false, newName);
-									else
-										newRend = Entity::getSelected()->addChild<Renderable>(newName);
-									newRend->loadModel(filepath);
-									newRend->setEnabled(newEntityEnabled);
-									newName = "";
-									filepath = "";
-								}
-
-								ImGui::EndMenu();
-							}
-
-							ImGui::EndMenu();
+							if (nullptr == Entity::getSelected())
+								newRend = addEntity<Renderable>(false, newName);
+							else
+								newRend = Entity::getSelected()->addChild<Renderable>(newName);
+							newRend->loadModel(filepath);
+							newRend->setEnabled(newEntityEnabled);
+							newName = "";
+							filepath = "";
 						}
 
 						ImGui::EndMenu();

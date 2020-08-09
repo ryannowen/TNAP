@@ -27,7 +27,13 @@ namespace TNAP {
 
 		m_scene->addEntity<Renderable>(false, "BirdPlane", "Primitives\\Plane.fbx");
 		m_scene->addEntity<Renderable>(false, "4", "Primitives\\Cube.fbx");
-		m_scene->findEntity("4")->addChild<Renderable>("5", "Primitives\\Cube.fbx");
+		m_scene->findEntity("4")->addChild<Renderable>("4", "Primitives\\Cube.fbx");
+		Entity* e = m_scene->findEntity("4_1");
+		if (nullptr != e)
+		{
+			std::cout << "Setting Name: " << e->setName("4_") << std::endl;
+			std::cout << "Setting Name: " << e->setName("4") << std::endl;
+		}
 
 		Renderable* Hull{ m_scene->addEntity<Renderable>(false, "Hull", "AquaPig\\hull.obj") };
 

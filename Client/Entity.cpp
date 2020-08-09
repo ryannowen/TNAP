@@ -86,12 +86,28 @@ namespace TNAP {
 	void Entity::saveData(std::ofstream& outputFile)
 	{
 		outputFile << m_name << ",";
+		outputFile << static_cast<size_t>(getEntityType()) << ",";
 		outputFile << m_enabled << ",";
 		outputFile << m_hasParent << ",";
 		outputFile << m_parentHandle << ",";
-		outputFile << m_transform.getTranslation().x << " " << m_transform.getTranslation().y << " " << m_transform.getTranslation().z << "|";
-		outputFile << m_transform.getRotation().x << " " << m_transform.getRotation().y << " " << m_transform.getRotation().z << "|";
-		outputFile << m_transform.getScale().x << " " << m_transform.getScale().y << " " << m_transform.getScale().z;
+		outputFile << m_transform.getTranslation().x << " " << m_transform.getTranslation().y << " " << m_transform.getTranslation().z << " ";
+		outputFile << m_transform.getRotation().x << " " << m_transform.getRotation().y << " " << m_transform.getRotation().z << " ";
+		outputFile << m_transform.getScale().x << " " << m_transform.getScale().y << " " << m_transform.getScale().z << ",";
+		for (size_t i = 0; i < m_children.size(); i++)
+		{
+			outputFile << m_children.at(i) << " ";
+		}
+	}
+
+	bool Entity::updateNameInSceneMap(const std::string& argNewName)
+	{
+		return TNAP::getSceneManager()->getCurrentScene()->updateEntityInMap(m_name, argNewName, m_handle);
+	}
+
+	void Entity::setChildren(const std::vector<size_t>& argChildrenHandles)
+	{
+		for (const size_t handle : argChildrenHandles)
+			m_children.push_back(handle);
 	}
 
 	TNAP::Entity* const Entity::findChild(const size_t argHandle)
@@ -215,7 +231,13 @@ namespace TNAP {
 
 	void Entity::imGuiRenderProperties()
 	{
-		ImGui::Text(("Name: " + getName()).c_str());
+		if (ImGui::InputText("Name", &m_namePlaceholder))
+		{
+			if ("" != m_namePlaceholder)
+			{
+				setName(m_namePlaceholder);
+			}
+		}
 		ImGui::Spacing();
 		ImGui::Checkbox("Enabled", &m_enabled);
 		ImGui::Spacing();

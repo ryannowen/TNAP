@@ -7,7 +7,7 @@
 #include "Engine.hpp"
 #include "Renderer3D.hpp"
 #include "GetTextureMessage.hpp"
-
+#include "Utilities.hpp"
 
 TNAP::Material::Material()
 {
@@ -57,13 +57,13 @@ void TNAP::Material::setData(const std::string& argData)
 	
 	// Colour Tint
 	{
-		std::vector<float> colourTint = stringToVector<float>(materialData.at(0), " ", [](const std::string& str) { return std::stod(str); }, 4);
+		std::vector<float> colourTint = stringToVector<float>(materialData.at(0), " ", [](const std::string& str) { return std::stof(str); }, 4);
 		m_colourTint = { colourTint.at(0), colourTint.at(1), colourTint.at(2), colourTint.at(3) };
 	}
 
 	// Emission Colour
 	{
-		std::vector<float> emissionColour = stringToVector<float>(materialData.at(1), " ", [](const std::string& str) { return std::stod(str); }, 3);
+		std::vector<float> emissionColour = stringToVector<float>(materialData.at(1), " ", [](const std::string& str) { return std::stof(str); }, 3);
 		m_emissionColour = { emissionColour.at(0), emissionColour.at(1), emissionColour.at(2) };
 	}
 

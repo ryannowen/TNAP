@@ -161,6 +161,7 @@
     <ClInclude Include="System.hpp" />
     <ClInclude Include="Transform.hpp" />
     <ClInclude Include="UnlitTexture.hpp" />
+    <ClInclude Include="Utilities.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

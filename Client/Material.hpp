@@ -28,9 +28,6 @@ namespace TNAP {
 
 		glm::vec3 m_emissionColour{ 1 };
 		float m_emissionIntensity{ 0 };
-
-		template<typename Type>
-		inline const std::vector<Type> stringToVector(const std::string& argData, const std::string& argSeperator, const std::function<Type(const std::string&)>& argFunction, const size_t argSize = 0);
 		
 	public:
 		Material();
@@ -60,21 +57,4 @@ namespace TNAP {
 		virtual void imGuiRender();
 #endif
 	};
-
-	template<typename Type>
-	inline const std::vector<Type> Material::stringToVector(const std::string& argData, const std::string& argSeperator, const std::function<Type(const std::string&)>& argFunction, const size_t argSize)
-	{
-		std::string data{ argData };
-		std::vector<Type> vectorToReturn;
-		vectorToReturn.reserve(argSize);
-		size_t offset{ data.find(argSeperator) };
-		while (std::string::npos != offset)
-		{
-			vectorToReturn.emplace_back(argFunction(data.substr(0, offset)));
-			data.erase(0, offset + 1);
-			offset = data.find(argSeperator);
-		}
-		vectorToReturn.emplace_back(argFunction(data));
-		return vectorToReturn;
-	}
 }
