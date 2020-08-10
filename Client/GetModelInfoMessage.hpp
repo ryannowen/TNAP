@@ -19,8 +19,9 @@ namespace TNAP
 		}
 
 		size_t m_modelHandle{ 0 };
-		std::string m_filepath{ "" };
 
+		std::string m_filepath{ "" };
+		std::vector<size_t> m_defaultMaterialHandles;
 	};
 
 }

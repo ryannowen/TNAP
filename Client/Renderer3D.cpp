@@ -505,7 +505,9 @@ namespace TNAP {
 		static bool polyMode{ false };
 
 		static bool held{ false };
-
+#if USE_IMGUI
+		if(m_viewportSelected)
+#endif
 		if (glfwGetKey(getApplication()->getWindow(), GLFW_KEY_P) == GLFW_PRESS && !held)
 		{
 			held = true;
@@ -633,6 +635,143 @@ namespace TNAP {
 #if USE_IMGUI
 	void Renderer3D::imGuiRenderShelf()
 	{
+		static std::vector<std::pair<std::string, std::function<void()>>> shelves
+		{
+			{
+				"Textures", [&]()
+				{
+					static int iconSize{ 32 };
+					ImGui::SliderInt("Icon Size", &iconSize, 32, 256);
+
+					if (iconSize <= 0)
+						iconSize = 1;
+
+					int amount{ static_cast<int>((ImGui::GetWindowWidth() - (iconSize * 2)) / iconSize) };
+					amount = std::max(amount, 1);
+					ImGui::Spacing();
+
+					for (int i = 0; i < textureTypeNames.size(); i++)
+					{
+						const std::vector<STextureData>& textures{ m_textures.at(i) };
+						if (ImGui::CollapsingHeader(textureTypeNames.at(i).c_str()))
+						{
+							for (int j = 0; j < textures.size(); j++)
+							{
+								if (j % amount != 0)
+									ImGui::SameLine(0.0f, 0.0f);
+
+								ImGui::ImageButton((ImTextureID)textures[j].m_textureBinding, ImVec2(static_cast<float>(iconSize), static_cast<float>(iconSize)), ImVec2(0, 1), ImVec2(1, 0), 1);
+
+								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+								{
+									ImGui::SetDragDropPayload("TEXTURE_CELL", &std::pair<ETextureType, size_t>(static_cast<ETextureType>(i), j), sizeof(std::pair<ETextureType, size_t>));
+									ImGui::Image((ImTextureID)textures[j].m_textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
+									ImGui::Text(("Texture Path: " + textures[j].m_filePath).c_str());
+									ImGui::Text(("Texture Type: " + textureTypeNames.at(i)).c_str());
+									ImGui::Text(("Texture Handle: " + std::to_string(j)).c_str());
+									ImGui::EndDragDropSource();
+								}
+							}
+						}
+					}
+					
+				}
+			},
+
+			{
+				"Materials", [&]() 
+				{
+					if (ImGui::Button("Save Materials"))
+					{
+						saveMaterials();
+					}
+
+					ImGui::Columns(3, "materials"); // 3-ways, with border
+
+					ImGui::Separator();
+					ImGui::Text("Mat"); ImGui::NextColumn();
+					ImGui::Text("Name"); ImGui::NextColumn();
+					ImGui::Text("Handle"); ImGui::NextColumn();
+					ImGui::Separator();
+
+					for (size_t i = 0; i < m_materials.size(); i++)
+					{
+						const size_t textureBinding{ m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("MatTexture.png")).m_textureBinding };
+
+						//ImGui::PushID(i);
+						const std::string id{ std::to_string(i) };
+						ImGui::PushID(id.c_str(), id.c_str() + id.size());
+						ImGui::ImageButton((ImTextureID)textureBinding, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
+						ImGui::PopID();
+
+						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+						{
+							ImGui::SetDragDropPayload("MATERIAL_CELL", &i, sizeof(i));
+							ImGui::Image((ImTextureID)textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
+							ImGui::Text(("Material Name: " + m_materials.at(i)->getName()).c_str());
+							ImGui::Text(("Material Type: " + std::to_string(static_cast<int>(m_materials.at(i)->getMaterialType()))).c_str());
+							ImGui::EndDragDropSource();
+						}
+						ImGui::NextColumn();
+
+						ImGui::Text(m_materials[i]->getName().c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(i).c_str()); ImGui::NextColumn();
+
+						ImGui::Separator();
+					}
+
+					ImGui::Columns(1, "materials");
+				} 
+			},
+
+			{
+				"Models", [&]() 
+				{ 	
+					ImGui::Columns(6, "models"); // 6-ways, with border
+					ImGui::Separator();
+					ImGui::Text("Model"); ImGui::NextColumn();
+					ImGui::Text("Name"); ImGui::NextColumn();
+					ImGui::Text("Path"); ImGui::NextColumn();
+					ImGui::Text("Handle"); ImGui::NextColumn();
+					ImGui::Text("Mesh Count"); ImGui::NextColumn();
+					ImGui::Text("Mat Count"); ImGui::NextColumn();
+					ImGui::Separator();
+
+					for (const auto& mapModel : m_mapModels)
+					{
+						const size_t textureBinding{ m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("ModelTexture.png")).m_textureBinding };
+
+						//ImGui::PushID(mapModel.second);
+						const std::string id{ std::to_string(mapModel.second) };
+						ImGui::PushID(id.c_str(), id.c_str() + id.size());
+						ImGui::ImageButton((ImTextureID)textureBinding, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
+						ImGui::PopID();
+
+						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
+						{
+							ImGui::SetDragDropPayload("MODEL_CELL", &mapModel.second, sizeof(mapModel.second));
+							ImGui::Image((ImTextureID)textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
+							ImGui::Text(("Model Name: " + mapModel.first).c_str());
+							ImGui::Text(("Model Path: " + m_models.at(mapModel.second).getFilePath()).c_str());
+							ImGui::Text(("Model Handle: " + std::to_string(mapModel.second)).c_str());
+							ImGui::EndDragDropSource();
+						}
+						ImGui::NextColumn();
+
+						ImGui::Text(mapModel.first.c_str()); ImGui::NextColumn();
+						ImGui::Text(m_models.at(mapModel.second).getFilePath().c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(mapModel.second).c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(m_models.at(mapModel.second).getMeshVector().size()).c_str()); ImGui::NextColumn();
+						ImGui::Text(std::to_string(m_models.at(mapModel.second).getUniqueMaterialIndicesCount()).c_str()); ImGui::NextColumn();
+
+						ImGui::Separator();
+					}
+
+					ImGui::Columns(1, "models"); 
+				} 
+			}
+		};
+
 		static bool shelfOpen{ true };
 		ImGui::Begin("Shelf", &shelfOpen, ImGuiWindowFlags_MenuBar);
 		{
@@ -742,162 +881,32 @@ namespace TNAP {
 				}
 
 				ImGui::EndMenuBar();
+			}
 
-				static bool showTextures;
-				bool textureHeaderOpen{ false };
-				for (const bool open : headerOpen)
+			static std::function<void()>* currentShelf{ nullptr };
+			ImGui::BeginChild("Shelf Hierarchy", ImVec2(100, 0), true);
+			{
+				for (int i = 0; i < shelves.size(); i++)
 				{
-					if (open)
-					{
-						textureHeaderOpen = true;
-						break;
-					}
-				}
-
-				showTextures = textureHeaderOpen;
-
-				static int iconSize{ 32 };
-				ImGui::SliderInt("Icon Size", &iconSize, 32, 256);
-
-				if (iconSize <= 0)
-					iconSize = 1;
-
-				if (ImGui::CollapsingHeader("Textures", &showTextures))
-				{
-					int amount{ static_cast<int>((ImGui::GetWindowWidth() - (iconSize * 2)) / iconSize) };
-					amount = std::max(amount, 1);
-					ImGui::Spacing();
-
-					for (int i = 0; i < textureTypeNames.size(); i++)
-					{
-						const std::vector<STextureData>& textures{ m_textures.at(i) };
-						if (ImGui::CollapsingHeader(textureTypeNames.at(i).c_str(), &headerOpen.at(i)))
-						{
-							for (int j = 0; j < textures.size(); j++)
-							{
-								if (j % amount != 0)
-									ImGui::SameLine(0.0f, 1.0f);
-
-								ImGui::ImageButton((ImTextureID)textures[j].m_textureBinding, ImVec2(static_cast<float>(iconSize), static_cast<float>(iconSize)), ImVec2(0, 1), ImVec2(1, 0), 1);
-
-								if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-								{
-									ImGui::SetDragDropPayload("TEXTURE_CELL", &std::pair<ETextureType, size_t>(static_cast<ETextureType>(i), j), sizeof(std::pair<ETextureType, size_t>));
-									ImGui::Image((ImTextureID)textures[j].m_textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
-									ImGui::Text(("Texture Path: " +  textures[j].m_filePath).c_str());
-									ImGui::Text(("Texture Type: " + textureTypeNames.at(i)).c_str());
-									ImGui::Text(("Texture Handle: " + std::to_string(j)).c_str());
-									ImGui::EndDragDropSource();
-								}
-							}
-						}
-					}
-				}
-
-				if (showMaterials)
-				{
-					ImGui::Spacing();
-					ImGui::Spacing();
-				}
-
-				if (ImGui::CollapsingHeader("Materials", &showMaterials))
-				{
-					if (ImGui::Button("Save Materials"))
-					{
-						saveMaterials();
-					}
-
-					ImGui::Columns(3, "materials"); // 3-ways, with border
-
-					ImGui::Separator();
-					ImGui::Text("Mat"); ImGui::NextColumn();
-					ImGui::Text("Name"); ImGui::NextColumn();
-					ImGui::Text("Handle"); ImGui::NextColumn();
-					ImGui::Separator();
-
-					for (size_t i = 0; i < m_materials.size(); i++)
-					{
-						const size_t textureBinding{ m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("MatTexture.png")).m_textureBinding };
-
-						//ImGui::PushID(i);
-						const std::string id{ std::to_string(i) };
-						ImGui::PushID(id.c_str(), id.c_str() + id.size());
-						ImGui::ImageButton((ImTextureID)textureBinding, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
-						ImGui::PopID();
-
-						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-						{
-							ImGui::SetDragDropPayload("MATERIAL_CELL", &i, sizeof(i));
-							ImGui::Image((ImTextureID)textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
-							ImGui::Text(("Material Name: " + m_materials.at(i)->getName()).c_str());
-							ImGui::Text(("Material Type: " + std::to_string(static_cast<int>(m_materials.at(i)->getMaterialType()))).c_str());
-							ImGui::EndDragDropSource();
-						}
-						ImGui::NextColumn();
-
-						ImGui::Text(m_materials[i]->getName().c_str()); ImGui::NextColumn();
-						ImGui::Text(std::to_string(i).c_str()); ImGui::NextColumn();
-
-						ImGui::Separator();
-					}
-
-					ImGui::Columns(1, "materials");
-				}
-
-				if (showModels)
-				{
-					ImGui::Spacing();
-					ImGui::Spacing();
-				}
-
-				if (ImGui::CollapsingHeader("Models", &showModels))
-				{
-					ImGui::Columns(6, "models"); // 6-ways, with border
-					ImGui::Separator();
-					ImGui::Text("Model"); ImGui::NextColumn();
-					ImGui::Text("Name"); ImGui::NextColumn();
-					ImGui::Text("Path"); ImGui::NextColumn();
-					ImGui::Text("Handle"); ImGui::NextColumn();
-					ImGui::Text("Mesh Count"); ImGui::NextColumn();
-					ImGui::Text("Material Count"); ImGui::NextColumn();
-					ImGui::Separator();
-
-					for (const auto& mapModel : m_mapModels)
-					{
-						const size_t textureBinding{ m_textures.at(static_cast<size_t>(ETextureType::eAlbedo)).at(m_mapTextures.at(ETextureType::eAlbedo).at("ModelTexture.png")).m_textureBinding };
-
-						//ImGui::PushID(mapModel.second);
-						const std::string id{ std::to_string(mapModel.second) };
-						ImGui::PushID(id.c_str(), id.c_str() + id.size());
-						ImGui::ImageButton((ImTextureID)textureBinding, ImVec2(16, 16), ImVec2(0, 1), ImVec2(1, 0), 1);
-						ImGui::PopID();
-
-						if (ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
-						{
-							ImGui::SetDragDropPayload("MODEL_CELL", &mapModel.second, sizeof(mapModel.second));
-							ImGui::Image((ImTextureID)textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
-							ImGui::Text(("Model Name: " + mapModel.first).c_str());
-							ImGui::Text(("Model Path: " + m_models.at(mapModel.second).getFilePath()).c_str());
-							ImGui::Text(("Model Handle: " + std::to_string(mapModel.second)).c_str());
-							ImGui::EndDragDropSource();
-						}
-						ImGui::NextColumn();
-
-						ImGui::Text(mapModel.first.c_str()); ImGui::NextColumn();
-						ImGui::Text(std::to_string(mapModel.second).c_str()); ImGui::NextColumn();
-						ImGui::Text(m_models.at(mapModel.second).getFilePath().c_str()); ImGui::NextColumn();
-						ImGui::Text(std::to_string(m_models.at(mapModel.second).getMeshVector().size()).c_str()); ImGui::NextColumn();
-						ImGui::Text(std::to_string(m_models.at(mapModel.second).getUniqueMaterialIndicesCount()).c_str()); ImGui::NextColumn();
-
-						ImGui::Separator();
-					}
-
-					ImGui::Columns(1, "models");
+					if (ImGui::Selectable(shelves.at(i).first.c_str()))
+						currentShelf = &shelves.at(i).second;
 
 				}
 			}
+			ImGui::EndChild();
+
+			ImGui::SameLine();
+
+			ImGui::BeginChild("Shelf Data", ImVec2(0, 0), true);
+			{
+				if (nullptr != currentShelf)
+					(*currentShelf)();
+			}
+
+			ImGui::EndChild();
 		}
 		ImGui::End();
+
 	}
 
 	void Renderer3D::imGuiRenderViewport()
@@ -922,10 +931,10 @@ namespace TNAP {
 			{
 				ImGui::PopStyleVar(3);
 
-				const bool focused{ ImGui::IsWindowFocused() };
+				m_viewportSelected = ImGui::IsWindowFocused();
 
 				bool mousePressed{ false };
-				if (focused)
+				if (m_viewportSelected)
 				{
 					if (glfwGetMouseButton(window, 0) == GLFW_PRESS)
 					{
@@ -937,7 +946,7 @@ namespace TNAP {
 				if (!mousePressed)
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-				Simulation::m_camera->setActive(focused && mousePressed);
+				Simulation::m_camera->setActive(m_viewportSelected && mousePressed);
 
 				ImVec2 RegionSize{ ImGui::GetContentRegionAvail() };
 
@@ -1121,6 +1130,7 @@ namespace TNAP {
 			GetModelInfoMessage* const getModelInfoMessage{ static_cast<GetModelInfoMessage*>(argMessage) };
 
 			getModelInfoMessage->m_filepath = m_models.at(getModelInfoMessage->m_modelHandle).getFilePath();
+			getModelInfoMessage->m_defaultMaterialHandles = m_models.at(getModelInfoMessage->m_modelHandle).getDefaultMaterialHandles();
 		}
 		break;
 

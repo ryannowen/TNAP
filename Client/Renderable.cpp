@@ -98,6 +98,13 @@ namespace TNAP {
 				const size_t data{ *static_cast<size_t*>(payload->Data) };
 
 				m_modelHandle = data;
+
+				GetModelInfoMessage modelInfoMessage;
+				modelInfoMessage.m_modelHandle = m_modelHandle;
+				getEngine()->sendMessage(&modelInfoMessage);
+
+				m_materialHandles = modelInfoMessage.m_defaultMaterialHandles;
+
 			}
 
 			ImGui::EndDragDropTarget();
