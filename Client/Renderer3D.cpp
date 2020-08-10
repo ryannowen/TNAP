@@ -21,6 +21,7 @@
 #include "LogMessage.hpp"
 #include "GenerateMaterialMessage.hpp"
 #include "GetModelInfoMessage.hpp"
+#include "GetMaterialHandleMessage.hpp"
 
 #include "UnlitTexture.hpp"
 #include "PBR.hpp"
@@ -80,6 +81,7 @@ namespace TNAP {
 			// If file fails to load, return first model
 			return std::pair<bool, size_t>(false, 0);
 		}
+		m_models.back().setFilepath(filePath);
 
 		m_mapModels.insert({ modelName, m_models.size() - 1 });
 
@@ -214,18 +216,13 @@ namespace TNAP {
 
 		savedMaterials.open("Data/SaveLoad/" + argFilePath);
 
-		std::string name;
-		std::string shaderName;
-		std::string info;
+		std::string material;
 
-		while (savedMaterials.good())
+		while (std::getline(savedMaterials, material))
 		{
-			std::getline(savedMaterials, name, ',');
-			std::getline(savedMaterials, shaderName, ',');
-			std::getline(savedMaterials, info);
-
-			if (createMaterial(name, shaderName))
-				m_materials.at(m_mapMaterials.at(name))->setData(info);
+			std::vector<std::string> materialInfo = TNAP::stringToStrings(material, ",", 3);
+			if (createMaterial(materialInfo.at(0), materialInfo.at(1)))
+				m_materials.at(m_mapMaterials.at(materialInfo.at(0)))->setData(materialInfo.at(2));
 		}
 
 		savedMaterials.close();
@@ -353,6 +350,23 @@ namespace TNAP {
 			return createMaterial(argMaterialName, programName, argIncrementNameIfExisting);
 		else
 			return false;
+	}
+
+	void Renderer3D::saveMaterials()
+	{
+		std::ofstream outputFile;
+
+		outputFile.open("Data/SaveLoad/Materials.csv");
+
+		for (const std::unique_ptr<Material>& mat : m_materials)
+		{
+			if (!((mat->getProgramHandle() >= 0) && (mat->getProgramHandle() < m_programs.size())))
+				continue;
+
+			mat->saveData(outputFile, m_programs.at(mat->getProgramHandle()).m_name);
+			outputFile << std::endl;
+		}
+		outputFile.close();
 	}
 
 	void Renderer3D::submitModelMessage(TNAP::Message* const argMessage)
@@ -790,19 +804,7 @@ namespace TNAP {
 				{
 					if (ImGui::Button("Save Materials"))
 					{
-						std::ofstream outputFile;
-
-						outputFile.open("Data/SaveLoad/Materials.csv");
-
-						for (const std::unique_ptr<Material>& mat : m_materials)
-						{
-							if (!((mat->getProgramHandle() >= 0) && (mat->getProgramHandle() < m_programs.size())))
-								continue;
-
-							mat->saveData(outputFile, m_programs.at(mat->getProgramHandle()).m_name);
-							outputFile << std::endl;
-						}
-						outputFile.close();
+						saveMaterials();
 					}
 
 					ImGui::Columns(3, "materials"); // 3-ways, with border
@@ -1119,6 +1121,16 @@ namespace TNAP {
 			GetModelInfoMessage* const getModelInfoMessage{ static_cast<GetModelInfoMessage*>(argMessage) };
 
 			getModelInfoMessage->m_filepath = m_models.at(getModelInfoMessage->m_modelHandle).getFilePath();
+		}
+		break;
+
+		case Message::EMessageType::eGetMaterialHandleMessage:
+		{
+			GetMaterialHandleMessage* const getMaterialHandleMessage{ static_cast<GetMaterialHandleMessage*>(argMessage) };
+			
+			const auto& materialFind{ m_mapMaterials.find(getMaterialHandleMessage->m_materialName) };
+			if (materialFind != m_mapMaterials.end())
+				getMaterialHandleMessage->m_materialHandle = m_mapMaterials.at(getMaterialHandleMessage->m_materialName);
 		}
 		break;
 

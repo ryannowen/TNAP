@@ -26,6 +26,8 @@ namespace TNAP {
 		inline void addDefaultMaterialHandle(const size_t argHandle) { m_defaultMaterialHandles.emplace_back(argHandle); }
 		inline const std::vector<size_t>& getDefaultMaterialHandles() const { return m_defaultMaterialHandles; }
 
+		inline void setFilepath(const std::string& argFilepath) { m_filepath = argFilepath; }
+
 		// Retrieve the dimensions of this model in local coordinates
 		void getLocalExtents(glm::vec3& argMinExtents, glm::vec3& argMaxExtents) const;
 

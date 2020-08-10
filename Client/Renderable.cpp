@@ -47,16 +47,21 @@ namespace TNAP {
 	void Renderable::saveData(std::ofstream& outputFile)
 	{
 		Entity::saveData(outputFile);
+
 		GetModelInfoMessage modelInfoMessage;
 		modelInfoMessage.m_modelHandle = m_modelHandle;
 		TNAP::getEngine()->sendMessage(&modelInfoMessage);
 		outputFile << "," << modelInfoMessage.m_filepath << ",";
+
 		GetMaterialMessage message;
 		message.m_materialHandle = &m_materialHandles;
 		TNAP::getEngine()->sendMessage(&message);
-		for (const TNAP::Material* const mat : message.m_materialVector)
+		for (size_t i = 0; i < message.m_materialVector.size(); i++)
 		{
-			outputFile << mat->getName() << " ";
+			if (i < message.m_materialVector.size()-1)
+				outputFile << message.m_materialVector.at(i)->getName() << " "; 
+			else
+				outputFile << message.m_materialVector.at(i)->getName();
 		}
 	}
 
@@ -67,6 +72,14 @@ namespace TNAP {
 		TNAP::getEngine()->sendMessage(&loadMessage);
 		m_modelHandle = loadMessage.m_modelHandle;
 		m_materialHandles = loadMessage.m_materialHandles;
+	}
+
+	void Renderable::setMaterialHandles(const std::vector<size_t>& argMaterialHandles)
+	{
+		m_materialHandles.clear();
+
+		for (const size_t handle : argMaterialHandles)
+			m_materialHandles.push_back(handle);
 	}
 	
 #if USE_IMGUI

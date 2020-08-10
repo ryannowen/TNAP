@@ -8,8 +8,6 @@ namespace TNAP {
 
 	bool Model::loadFromFile(const std::string& argFilePath)
 	{
-		m_filepath = argFilePath;
-
 		// Log loading file
 
 		// Commom post processing steps - may slow load but make mesh better optimised

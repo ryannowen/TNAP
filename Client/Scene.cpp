@@ -1,10 +1,12 @@
 #include "Scene.hpp"
 #include "Entity.hpp"
+#include "Engine.hpp"
 #include "ImGuiInclude.hpp"
 #include "Renderable.hpp"
 #include "Renderer3D.hpp"
 #include "Application.hpp"
 #include "Utilities.hpp"
+#include "GetMaterialHandleMessage.hpp"
 #include <fstream>
 
 namespace TNAP {
@@ -93,66 +95,76 @@ namespace TNAP {
 	void Scene::loadFromFile(const std::string& argFilePath)
 	{
 
+		Entity::setSelected(nullptr);
+
+		// Delete all objects in current scene
 		m_mapEntities.clear();
 		m_entities.clear();
 		m_parentHandles.clear();
 
+		// Load from save file
 		std::ifstream savedScene;
 
 		savedScene.open("Data/SaveLoad/" + argFilePath + ".csv");
 
-		std::string name;
-		std::string entityType;
-		std::string enabled;
-		std::string hasParent;
-		std::string parentHandle;
-		std::string transform;
-		std::string children;
+		std::string info;
 
-		static int test = 0;
+		/*
+		0 std::string name; 
+		1 std::string entityType;
+		2 std::string enabled;
+		3 std::string hasParent;
+		4 std::string parentHandle;
+		5 std::string transform;
+		6 std::string children;
+		7 std::string modelPath;
+		8 std::string materialNames;
+		*/
 
-		while (savedScene.good())
+		while (std::getline(savedScene, info))
 		{
-			test++;
-			std::getline(savedScene, name, ',');
-			std::getline(savedScene, entityType, ',');
-			std::getline(savedScene, enabled, ',');
-			std::getline(savedScene, hasParent, ',');
-			std::getline(savedScene, parentHandle, ',');
-			std::getline(savedScene, transform, ',');
-			std::getline(savedScene, children, ',');
+			// Seperate info
+			std::vector<std::string> entityInfo = TNAP::stringToVector<std::string>(info, ",", [](const std::string& str) { return str; });
 
-			EEntityType type = static_cast<EEntityType>(std::stoi(entityType));
+			EEntityType type = static_cast<EEntityType>(std::stoi(entityInfo.at(1)));
 
 			switch (type)
 			{
 			case EEntityType::eRenderable:
 			{
-				std::string modelPath;
-				std::string materialNames;
-				std::getline(savedScene, modelPath, ',');
-				std::getline(savedScene, materialNames);
+				Renderable* newRenderable = addEntity<Renderable>(std::stoi(entityInfo.at(3)), entityInfo.at(0), entityInfo.at(7));
+				newRenderable->setEnabled(std::stoi(entityInfo.at(2)));
+				newRenderable->setParentHandle(std::stoull(entityInfo.at(4)));
 
-				Renderable* newRenderable = addEntity<Renderable>(std::stoi(hasParent), name, modelPath);
-				newRenderable->setEnabled(std::stoi(enabled));
-				newRenderable->setParentHandle(std::stoull(parentHandle));
-				std::vector<float> transformValues = TNAP::stringToVector<float>(transform, " ", [](const std::string& str) { return std::stof(str); }, 9);
+				std::vector<float> transformValues = TNAP::stringToVector<float>(entityInfo.at(5), " ", [](const std::string& str) { return std::stof(str); }, 9);
 				newRenderable->getTransform().setTranslation(glm::vec3(transformValues.at(0), transformValues.at(1), transformValues.at(2)));
 				newRenderable->getTransform().setRotation(glm::vec3(transformValues.at(3), transformValues.at(4), transformValues.at(5)));
 				newRenderable->getTransform().setScale(glm::vec3(transformValues.at(6), transformValues.at(7), transformValues.at(8)));
-				if ("" != children)
+
+				if ("" != entityInfo.at(6))
 				{
-					std::vector<size_t> childrenHandles = TNAP::stringToVector<size_t>(children, " ", [](const std::string& str) { return std::stof(str); });
+					std::vector<size_t> childrenHandles = TNAP::stringToVector<size_t>(entityInfo.at(6), " ", [](const std::string& str) { return std::stof(str); });
 					newRenderable->setChildren(childrenHandles);
 				}
+				// Materials
+				std::vector<std::string> materials = TNAP::stringToVector<std::string>(entityInfo.at(8), " ", [](const std::string& str) { return str; });
+				std::vector<size_t> materialHandles;
+				for (const std::string& materialName : materials)
+				{
+					GetMaterialHandleMessage message;
+					message.m_materialName = materialName;
+					TNAP::getEngine()->sendMessage(&message);
+					materialHandles.push_back(message.m_materialHandle);
+				}
+				newRenderable->setMaterialHandles(materialHandles);
 			}
+
 			break;
 
 			default:
 				break;
 			}
 		}
-		std::cout << test << std::endl;
 		savedScene.close();
 	}
 

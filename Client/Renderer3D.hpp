@@ -85,6 +85,8 @@ namespace TNAP {
 		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting = false);
 		const bool createMaterial(const std::string& argMaterialName, const TNAP::EMaterialType argMaterialType, const bool argIncrementNameIfExisting = false);
 
+		void saveMaterials();
+
 		void submitModelMessage(TNAP::Message* const argMessage);
 		void generateMaterialMessage(TNAP::Message* const argMessage);
 		void glfwDropCallBackMessage(TNAP::Message* const argMessage);

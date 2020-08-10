@@ -23,6 +23,34 @@ namespace TNAP
 		return vectorToReturn;
 	}
 
+	// argResultingAmountOfStrings = Amount of strings to populate vector with, 
+	// if 0 then then the string will be seperated using argSeperator as many times as possible
+	// if 1 then a vector containing and identical string to the one passed in will be returned
+	inline const std::vector<std::string> stringToStrings(const std::string& argData, const std::string& argSeperator, const size_t argResultingAmountOfStrings = 0)
+	{
+		std::string data{ argData };
+		std::vector<std::string> vectorToReturn;
+
+		vectorToReturn.reserve(argResultingAmountOfStrings);
+		size_t offset{ data.find(argSeperator) };
+
+		for (size_t i = 0; i < argResultingAmountOfStrings-1; i++)
+		{
+			if (std::string::npos != offset)
+			{
+				vectorToReturn.emplace_back(data.substr(0, offset));
+				data.erase(0, offset + 1);
+				offset = data.find(argSeperator);
+			}
+			else
+				break;
+		}
+		if ("" != data)
+			vectorToReturn.emplace_back(data);
+
+		return vectorToReturn;
+	}
+
 	inline const std::string replaceSubStrings(const std::vector<std::string>& argTargetReplacements, const std::string& argReplaceString, const std::string argReplacement)
 	{
 		std::string newString{ argReplaceString };

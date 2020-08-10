@@ -43,11 +43,13 @@ namespace TNAP {
 		Renderable* Gun{ Gunbase->addChild<Renderable>("Gun_0", "AquaPig\\gun.obj") };
 		Gun->getTransform().setTranslation({ 0.0f, 1.506f, 0.644f });
 
-		/*for (int i = 0; i < 100; i++)
+		/*
+		for (int i = 0; i < 100; i++)
 		{
 			Renderable* test{ m_scene->findEntity("Gun_"+std::to_string(i))->addChild<Renderable>("Gun_" + std::to_string(i+1), "AquaPig\\gun.obj") };
 			test->getTransform().setTranslation({ 0.0f, i * 0.2f, 0.0f });
-		}*/
+		}
+		*/
 
 		Renderable* LeftWing{ Hull->addChild<Renderable>("LeftWing", "AquaPig\\wing_left.obj") };
 		LeftWing->getTransform().setTranslation({ 2.231f, 0.272f, -2.663f});

@@ -94,7 +94,10 @@ namespace TNAP {
 		outputFile << m_transform.getScale().x << " " << m_transform.getScale().y << " " << m_transform.getScale().z << ",";
 		for (size_t i = 0; i < m_children.size(); i++)
 		{
-			outputFile << m_children.at(i) << " ";
+			if (i < m_children.size() - 1)
+				outputFile << m_children.at(i) << " ";
+			else
+				outputFile << m_children.at(i);
 		}
 	}
 
@@ -105,6 +108,8 @@ namespace TNAP {
 
 	void Entity::setChildren(const std::vector<size_t>& argChildrenHandles)
 	{
+		m_children.clear();
+
 		for (const size_t handle : argChildrenHandles)
 			m_children.push_back(handle);
 	}
