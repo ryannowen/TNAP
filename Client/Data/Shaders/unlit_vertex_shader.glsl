@@ -14,7 +14,7 @@ out vec2 varying_uv;
 void main(void)
 {	
 	varying_position = vertex_position;
-	varying_normal = vertex_normal;
+	varying_normal = normalize(mat3(aInstanceMatrix) * vertex_normal);
 	varying_uv = vertex_uv;
 
 	gl_Position = combined_xform * aInstanceMatrix * vec4(vertex_position, 1.0);

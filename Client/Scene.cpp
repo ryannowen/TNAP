@@ -261,8 +261,9 @@ namespace TNAP {
 
 		std::swap(m_entities.at(index), m_entities.back()); // Swap the entity to delete with the entity at the back of the vector
 		
+#if USE_IMGUI
 		Entity::setSelected(nullptr);
-
+#endif
 		m_mapEntities.erase(m_entities.back()->getName()); // Erase entity from the map
 		if (!m_entities.back()->getHasParent())
 			m_parentHandles.pop_back();
@@ -411,8 +412,6 @@ namespace TNAP {
 			}
 
 			ImGui::TextColored(ImVec4(0.9f, 0.49f, 0.17f, 1.0f), m_sceneName.c_str());
-
-			Entity::setTreeIndex(0);
 
 			for (int i = 0; i < m_parentHandles.size(); i++)
 				m_entities.at(m_parentHandles.at(i))->imGuiRenderHierarchy();

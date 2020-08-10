@@ -95,6 +95,7 @@
     <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="Helper.cpp" />
     <ClCompile Include="ImageLoader.cpp" />
+    <ClCompile Include="IMGUILoadWindows.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -138,6 +139,7 @@
     <ClInclude Include="Helper.h" />
     <ClInclude Include="ImageLoader.h" />
     <ClInclude Include="ImGuiInclude.hpp" />
+    <ClInclude Include="IMGUILoadWindows.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="LoadModelMessage.hpp" />
     <ClInclude Include="LoadTextureMessage.hpp" />

@@ -6,12 +6,15 @@
 
 #include "System.hpp"
 
+#include "ImGuiInclude.hpp"
+#include "IMGUILoadWindows.hpp"
 #include "ExternalLibraryHeaders.h"
 #include "ImageLoader.h"
 
 #include "Model.hpp"
 #include "Material.hpp"
 #include "FrameBuffer.hpp"
+#include "LoadModelMessage.hpp"
 
 #include "Transform.hpp"
 #include "STextureData.hpp"
@@ -69,9 +72,14 @@ namespace TNAP {
 		GLuint m_currentProgram{ 0 };
 		GLuint batchRenderingBuffer{ 0 };
 		
-		const size_t loadModel(const std::string& argFilePath, const std::string& argModelName = "");
+#if USE_IMGUI
+		
+		std::vector<std::unique_ptr<IMGUILoadBase>> m_loadWindows;
+#endif
+
+		const std::pair<bool, size_t> loadModel(const std::string& argFilePath, const std::string& argModelName = "");
 		void loadShaders();
-		const bool loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath, const std::string& argTextureName = "");
+		const std::pair<bool, size_t> loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath, const std::string& argTextureName = "");
 		void loadMaterials(const std::string& argFilePath);
 		const bool createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
 		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting = false);
@@ -81,19 +89,22 @@ namespace TNAP {
 		void generateMaterialMessage(TNAP::Message* const argMessage);
 		void glfwDropCallBackMessage(TNAP::Message* const argMessage);
 
+		void render();
+
 #if USE_IMGUI
 		void imGuiRenderShelf();
 		void imGuiRenderViewport();
 #endif
+
 	public:
+		static const std::array<std::string, static_cast<int>(TNAP::ETextureType::eCount)> textureTypeNames;
+
 		Renderer3D();
 		~Renderer3D();
 
 		virtual void init() override final;
 		virtual void update() override final;
 		virtual void sendMessage(TNAP::Message* const argMessage) override final;
-
-		void render();
 
 #if USE_IMGUI
 		virtual void imGuiRender() override final;

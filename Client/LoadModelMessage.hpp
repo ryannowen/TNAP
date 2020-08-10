@@ -18,6 +18,7 @@ namespace TNAP
 			m_messageType = EMessageType::eLoadModelMessage;
 		}
 
+		std::string m_modelName{ "" };
 		std::string m_modelFilepath{ "" };
 		size_t m_modelHandle{ 0 };
 		std::vector<size_t> m_materialHandles{ 0 };

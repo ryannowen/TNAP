@@ -94,24 +94,26 @@ namespace Helpers
 			m_currentMovement = -GetRightVector() * worldUnitsPerSecond;
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) // Right
 			m_currentMovement = +GetRightVector() * worldUnitsPerSecond;
-		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // Left		
-			m_currentMovement = -GetUpVector() * worldUnitsPerSecond;
-		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // Right
-			m_currentMovement = +GetUpVector() * worldUnitsPerSecond;
+		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // Up		
+			m_currentMovement = glm::vec3(0, 1, 0) * worldUnitsPerSecond;
+		if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // Down
+			m_currentMovement = glm::vec3(0, -1, 0) * worldUnitsPerSecond;
+
 		// Mouse Input
 		{
 			static int lastState = GLFW_RELEASE;
 			static glm::vec2 initialPos;
 
 			int state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+
 			if (state != lastState)
 			{
-//#if !USE_IMGUI
-				/*if (state == GLFW_PRESS)
+#if !USE_IMGUI
+				if (state == GLFW_PRESS)
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				else
-					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);*/
-//#endif
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+#endif
 
 				lastState = state;
 

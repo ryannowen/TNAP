@@ -7,7 +7,6 @@
 #include "LogMessage.hpp"
 #include "Helper.h"
 
-
 namespace TNAP {
 
 	std::unique_ptr<Application> Application::s_instance{ nullptr };
@@ -40,6 +39,7 @@ namespace TNAP {
 
 		glfwSetWindowUserPointer(m_window, reinterpret_cast<void*>(this));
 
+		glfwSetWindowPos(m_window, 160, 30);
 
 		glfwSetDropCallback(m_window,
 			[](GLFWwindow* argWindow, int argCount, const char** argPaths)

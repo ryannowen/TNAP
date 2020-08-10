@@ -37,7 +37,6 @@ namespace TNAP {
 
 #if USE_IMGUI
 		static Entity* s_selected;
-		static int s_treeIndex;
 		std::string m_namePlaceholder;
 #endif
 
@@ -111,9 +110,7 @@ namespace TNAP {
 		void imGuiRenderHierarchy();
 		virtual void imGuiRenderProperties();
 		inline static Entity* const getSelected() { return s_selected; }
-		inline static const int getTreeIndex() { return s_treeIndex; }
 		inline static void setSelected(Entity* const argSelected) { s_selected = argSelected; }
-		inline static void setTreeIndex(const int argIndex) { s_treeIndex = argIndex; }
 #endif
 	};
 

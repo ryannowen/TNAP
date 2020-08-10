@@ -34,7 +34,7 @@ namespace TNAP {
 		inline GLFWwindow* const getWindow() { return m_window; }
 
 		inline void setWindowSize(const glm::vec2& argWindowSize) { m_windowSize = argWindowSize; }
-		inline const glm::vec2& const getWindowSize() const { return m_windowSize; }
+		inline const glm::vec2& getWindowSize() const { return m_windowSize; }
 	};
 
 	inline Application* const getApplication() { return Application::getInstance(); }

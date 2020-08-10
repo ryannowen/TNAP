@@ -7,7 +7,6 @@ namespace TNAP {
 
 #if USE_IMGUI
 	Entity* Entity::s_selected{ nullptr };
-	int Entity::s_treeIndex{ 0 };
 #endif
 
 	void Entity::updateChildrenParentHandles()
@@ -211,12 +210,10 @@ namespace TNAP {
 		if (0 == m_children.size())
 			node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 
-		bool node_open = ImGui::TreeNodeEx((void*)(intptr_t)s_treeIndex, node_flags, m_name.c_str());
+		bool node_open = ImGui::TreeNodeEx((void*)m_name.c_str(), node_flags, m_name.c_str());
 
 		if (ImGui::IsItemClicked())
 			s_selected = this;
-
-		s_treeIndex++;
 
 		if (node_open)
 		{

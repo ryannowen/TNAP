@@ -64,7 +64,13 @@ namespace TNAP {
 		GetTextureMessage textureMessage({ m_textureType, m_textureHandle });
 		getEngine()->sendMessage(&textureMessage);
 
-		outputFile << "," << std::to_string(static_cast<int>(m_textureType)) << "," << textureMessage.m_textureData->m_filePath;
+		outputFile << "," << std::to_string(static_cast<int>(m_textureType)) << ",";
+		
+		if (textureMessage.m_textureData->m_filePath.empty())
+			outputFile << "EMPTY";
+		else
+			outputFile << textureMessage.m_textureData->m_filePath;
+
 	}
 
 	void UnlitTexture::setData(const std::string& argData)
@@ -78,14 +84,15 @@ namespace TNAP {
 			m_textureType = static_cast<ETextureType>(std::stoi(materialData.at(3)));
 			std::string filepath = materialData.at(4);
 
-			LoadTextureMessage loadMessage(m_textureType, filepath);
-			getEngine()->sendMessage(&loadMessage);
+			if ("EMPTY" != filepath)
+			{
+				LoadTextureMessage loadMessage(m_textureType, filepath);
+				getEngine()->sendMessage(&loadMessage);
 
-			if (loadMessage.m_loadedSuccessfully)
-				m_textureHandle = loadMessage.m_textureHandle;
-			
+				if (loadMessage.m_loadedSuccessfully)
+					m_textureHandle = loadMessage.m_textureHandle;
+			}
 		}
-
 	}
 
 	void UnlitTexture::setTexture(const ETextureType argTextureType, const std::string& argFilePath)
@@ -99,10 +106,7 @@ namespace TNAP {
 		{
 			ImGui::Text(("Program Handle: " + std::to_string(m_programHandle)).c_str());
 
-			ImGui::ColorEdit4((m_name + "Colour Tint").c_str(), &m_colourTint.x, ImGuiColorEditFlags_::ImGuiColorEditFlags_NoLabel);
-			ImGui::SameLine();
-			ImGui::Text("Colour Tint");
-
+			ImGui::ColorEdit4(("Colour Tint##ColourTintPicker" + m_name).c_str(), &m_colourTint.x);
 			ImGui::Text("Albedo");
 			{
 				GetTextureMessage textureMessage({ m_textureType, m_textureHandle });
@@ -152,9 +156,7 @@ namespace TNAP {
 			}
 
 
-			ImGui::ColorEdit3((m_name + "Emission Colour").c_str(), &m_emissionColour.x, ImGuiColorEditFlags_::ImGuiColorEditFlags_NoLabel);
-			ImGui::SameLine();
-			ImGui::Text("Emission Colour");
+			ImGui::ColorEdit3(("Emission Colour##EmissionColourPicker" + m_name).c_str(), &m_emissionColour.x);
 
 			ImGui::InputFloat("Emission Intesity", &m_emissionIntensity);
 		}

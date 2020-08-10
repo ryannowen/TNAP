@@ -98,10 +98,13 @@ namespace TNAP {
 		{
 			static size_t materialIndex{ 0 };
 			static std::string materialName{ "" };
+			static std::string replaceMaterialName{ "" };
 
 			if (ImGui::CollapsingHeader("Material Generation"))
 			{
-				if (ImGui::BeginCombo("Replace Material", materialName.c_str()))
+				ImGui::InputText("New Material Name", &materialName);
+
+				if (ImGui::BeginCombo("Replace Material", replaceMaterialName.c_str()))
 				{
 					GetMaterialMessage getMatMessage;
 					getMatMessage.m_materialHandle = &m_materialHandles;
@@ -111,7 +114,7 @@ namespace TNAP {
 					{
 						if (ImGui::Selectable(getMatMessage.m_materialVector.at(i)->getName().c_str()))
 						{
-							materialName = getMatMessage.m_materialVector.at(i)->getName().c_str();
+							replaceMaterialName = getMatMessage.m_materialVector.at(i)->getName().c_str();
 							materialIndex = i;
 						}
 					}
@@ -148,10 +151,14 @@ namespace TNAP {
 				else if (materialIndex < 0)
 					materialIndex = 0;
 
-				if (ImGui::Button("Generate New Material", ImVec2(ImGui::GetContentRegionAvailWidth(), 20)) && !materialName.empty())
+				if (ImGui::Button("Generate New Material", ImVec2(ImGui::GetContentRegionAvailWidth(), 20)) && !replaceMaterialName.empty())
 				{
-					GenerateMaterialMessage genMessage(materialMessage.m_materialVector.at(materialIndex)->getName(), m_materialHandles.at(materialIndex), materialType);
+					if (materialName.empty())
+						materialName = materialMessage.m_materialVector.at(materialIndex)->getName();
+
+					GenerateMaterialMessage genMessage(materialName, m_materialHandles.at(materialIndex), materialType);
 					TNAP::getEngine()->sendMessage(&genMessage);
+					replaceMaterialName.clear();
 					materialName.clear();
 
 				}
@@ -170,6 +177,8 @@ namespace TNAP {
 							const size_t data{ *static_cast<size_t*>(payload->Data) };
 
 							m_materialHandles.at(i) = data;
+
+
 						}
 
 						ImGui::EndDragDropTarget();

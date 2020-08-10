@@ -13,13 +13,20 @@ namespace TNAP {
 	class LoadTextureMessage : public TNAP::Message
 	{
 	public:
-		LoadTextureMessage(const TNAP::ETextureType argTextureType, const std::string& argFilePath)
-			: TNAP::Message(),
-			m_loadInfo(argTextureType, argFilePath)
+		LoadTextureMessage()
+			: TNAP::Message()
 		{
 			m_messageType = EMessageType::eLoadTextureMessage;
 		}
 
+		LoadTextureMessage(const TNAP::ETextureType argTextureType, const std::string& argFilePath, const std::string& argName = "")
+			: TNAP::Message(),
+			m_loadInfo(argTextureType, argFilePath), m_textureName(argName)
+		{
+			m_messageType = EMessageType::eLoadTextureMessage;
+		}
+
+		std::string m_textureName{ "" };
 		std::pair<TNAP::ETextureType, std::string> m_loadInfo;
 
 		bool m_loadedSuccessfully{ false };

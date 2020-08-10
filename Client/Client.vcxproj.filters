@@ -156,6 +156,9 @@
     <ClCompile Include="Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IMGUILoadWindows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h">
@@ -297,6 +300,9 @@
       <Filter>Header Files\Messages</Filter>
     </ClInclude>
     <ClInclude Include="Utilities.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IMGUILoadWindows.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
