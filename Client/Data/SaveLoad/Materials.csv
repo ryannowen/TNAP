@@ -1,1 +1,13 @@
-
+DefaultMaterial,Unlit,1 1 1 1,1 1 1,0
+ErrorMesh.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+Cube.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+Sphere.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+Cylinder.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+Plane.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+Cone.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+hull.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+gun_base.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+gun.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+wing_left.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+propeller.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,0,EMPTY
+InvertTest,UnlitTexture,1 1 1 1,1 1 1,0,0,aqua_pig_2K.png

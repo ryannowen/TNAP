@@ -73,7 +73,7 @@ namespace TNAP {
 		GLuint batchRenderingBuffer{ 0 };
 		
 #if USE_IMGUI
-		
+		bool m_viewportSelected{ false };
 		std::vector<std::unique_ptr<IMGUILoadBase>> m_loadWindows;
 #endif
 

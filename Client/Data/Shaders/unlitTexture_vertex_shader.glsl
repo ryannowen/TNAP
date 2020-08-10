@@ -13,7 +13,7 @@ out vec2 varying_uv;
 
 void main(void)
 {	
-	varying_position = vertex_position;
+	varying_position = vec3(aInstanceMatrix * vec4(vertex_position, 1));
 	varying_normal = normalize(mat3(aInstanceMatrix) * vertex_normal);
 	varying_uv = vertex_uv;
 
