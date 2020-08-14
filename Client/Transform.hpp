@@ -26,6 +26,8 @@ namespace TNAP {
 		inline const glm::vec3& getRotation() const { return m_rotation; }
 		inline glm::vec3& getRotation() { return m_rotation; }
 
+		inline void rotate(const glm::vec3& argRotation) { m_rotation += argRotation; }
+
 		inline void setScale(const glm::vec3& argScale) { m_scale = argScale; }
 		inline const glm::vec3& getScale() const { return m_scale; }
 		inline glm::vec3& getScale() { return m_scale; }

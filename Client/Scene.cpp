@@ -37,6 +37,15 @@ namespace TNAP {
 			}
 		}
 
+		// Rotate all entities
+		for (const size_t entityHandle : m_parentHandles)
+		{
+			if (m_entities.at(entityHandle)->getEnabled())
+			{
+				m_entities.at(entityHandle)->getTransform().rotate({1,1,1});
+			}
+		}
+
 		if (m_randomCreationDeletion)
 		{
 			int numberToCreate = rand() % 10;
@@ -79,13 +88,14 @@ namespace TNAP {
 
 	void Scene::saveScene()
 	{
+		// TODO : Save recursive from parent handles
+
 		std::ofstream outputFile;
 		outputFile.open("Data/SaveLoad/" + m_sceneName + ".csv");
 
 		for (const std::shared_ptr<Entity>& entity : m_entities)
 		{
 			entity->saveData(outputFile);
-			outputFile << std::endl;
 		}
 
 		outputFile.close();
@@ -134,7 +144,11 @@ namespace TNAP {
 			{
 				Renderable* newRenderable = addEntity<Renderable>(std::stoi(entityInfo.at(3)), entityInfo.at(0), entityInfo.at(7));
 				newRenderable->setEnabled(std::stoi(entityInfo.at(2)));
-				newRenderable->setParentHandle(std::stoull(entityInfo.at(4)));
+				if (std::stoi(entityInfo.at(3)))
+					newRenderable->setParentHandle(std::stoull(entityInfo.at(4)));
+
+				//if (!std::stoi(entityInfo.at(3))) // If the laoded entity doesnt have a parent
+					//m_parentHandles.at(std::stoull(entityInfo.at(4))) = newRenderable->getHandle(); // Update the handle in m_parentHandles at its parent handle
 
 				std::vector<float> transformValues = TNAP::stringToVector<float>(entityInfo.at(5), " ", [](const std::string& str) { return std::stof(str); }, 9);
 				newRenderable->getTransform().setTranslation(glm::vec3(transformValues.at(0), transformValues.at(1), transformValues.at(2)));
@@ -162,6 +176,15 @@ namespace TNAP {
 			break;
 
 			default:
+				Entity* newEntity = addEntity<Entity>(std::stoi(entityInfo.at(3)), entityInfo.at(0));
+				if (std::stoi(entityInfo.at(3)))
+					newEntity->setParentHandle(std::stoull(entityInfo.at(4)));
+				if (entityInfo.size() >= 7 && "" != entityInfo.at(6))
+				{
+					std::vector<size_t> childrenHandles = TNAP::stringToVector<size_t>(entityInfo.at(6), " ", [](const std::string& str) { return std::stof(str); });
+					newEntity->setChildren(childrenHandles);
+				}
+
 				break;
 			}
 		}
@@ -440,8 +463,14 @@ namespace TNAP {
 
 			ImGui::TextColored(ImVec4(0.9f, 0.49f, 0.17f, 1.0f), m_sceneName.c_str());
 
-			for (int i = 0; i < m_parentHandles.size(); i++)
-				m_entities.at(m_parentHandles.at(i))->imGuiRenderHierarchy();
+			for (std::shared_ptr<Entity>& e : m_entities)
+			{
+				if (!e->getHasParent())
+					e->imGuiRenderHierarchy();
+			}
+
+			//for (int i = 0; i < m_parentHandles.size(); i++)
+				//m_entities.at(m_parentHandles.at(i))->imGuiRenderHierarchy();
 		}
 		ImGui::End();
 

@@ -32,7 +32,22 @@ namespace TNAP {
 		if (nullptr == m_scene)
 			m_scene = std::make_unique<Scene>("Our First Scene");
 
-		m_scene->loadFromFile("Our First Scene");
+		int size = 10;
+
+		for (int x = 0; x < size; x++)
+		{
+			for (int y = 0; y < size; y++)
+			{
+				for (int z = 0; z < size; z++)
+				{
+					m_scene->addEntity<Renderable>(false, "Apple"+std::to_string(x) + std::to_string(y) + std::to_string(z), "Apple\\apple.obj");
+					m_scene->findEntity("Apple" + std::to_string(x) + std::to_string(y) + std::to_string(z))->getTransform().setScale({ 10, 10, 10 });
+					m_scene->findEntity("Apple" + std::to_string(x) + std::to_string(y) + std::to_string(z))->getTransform().setTranslation({ x*3, y*3, z*3 });
+				}
+			}
+		}
+
+		//m_scene->loadFromFile("Our First Scene");
 
 		/*m_scene->addEntity<Renderable>(false, "BirdPlane", "Primitives\\Plane.fbx");
 		m_scene->addEntity<Renderable>(false, "4", "Primitives\\Cube.fbx");

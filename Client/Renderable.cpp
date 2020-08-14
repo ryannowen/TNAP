@@ -63,6 +63,8 @@ namespace TNAP {
 			else
 				outputFile << message.m_materialVector.at(i)->getName();
 		}
+		if (getEntityType() == EEntityType::eRenderable)
+			outputFile << std::endl;
 	}
 
 	void Renderable::loadModel(const std::string& argFilepath)

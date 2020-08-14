@@ -63,12 +63,14 @@ namespace TNAP {
 				if (updateNameInSceneMap(argName))
 				{
 					m_name = argName;
+					m_namePlaceholder = m_name;
 					return true;
 				}
 			}
 			if ("" == m_name)
 			{
 				m_name = argName;
+				m_namePlaceholder = m_name;
 				return true;
 			}
 			return false;
