@@ -1,8 +1,8 @@
-New Entity,1,1,0,0,0 0 -100 0 0 0 100 100 100,,Primitives/Plane.fbx,BirdPlane
-New Entity_1,1,1,0,1,-100 0 0 0 90 0 100 100 100,,Primitives/Plane.fbx,BirdPlane
-New Entity_2,1,1,0,2,0 0 100 0 180 0 100 100 100,,Primitives/Plane.fbx,BirdPlane
-New Entity_3,1,1,0,3,100 0 0 0 -90 0 100 100 1,,Primitives/Plane.fbx,BirdPlane
-New Entity_4,1,1,0,4,0 -100 0 -90 0 0 100 100 100,,Primitives/Plane.fbx,BirdPlane
-New Entity_5,1,1,0,5,0 100 0 90 0 0 100 100 100,,Primitives/Plane.fbx,BirdPlane
-Creature,1,1,0,6,0 0 0 0 0 0 15 15 15,,creature-evolution-2/EVOLUTION_02_POSED.fbx,EVOLUTION_02_POSED.fbx_0 EVOLUTION_02_POSED.fbx_1
-New Entity_6,1,1,0,7,46.96 -15 0 -27.4 -2.1 0 40 40 40,,creature-evolution-2/EVOLUTION_02_POSED.fbx,EVOLUTION_02_POSED.fbx_0 EVOLUTION_02_POSED.fbx_1
+Hull,1,0,0,0,0 0 0 0 0 0 1 1 1,,AquaPig/hull.obj,hull.obj_1
+Floor,1,1,0,2,0 -20 0 0 0 0 20 1 20,,Primitives/Cube.fbx,hull.obj_1
+Wall,1,1,0,3,0 0 -20 0 0 0 20 20 1,,Primitives/Cube.fbx,hull.obj_1
+Slope,1,1,0,4,0 -10 -10 45 0 0 20 1 20,,Primitives/Cube.fbx,hull.obj_1
+First Light,0,1,0,4,0 0 0 -37.36 0 0 1 1 1,
+Wall_2,1,1,0,5,20 0 0 0 0 0 1 20 20,,Primitives/Cube.fbx,hull.obj_1
+Wall_3,1,1,0,6,-20 0 0 0 0 0 1 20 20,,Primitives/Cube.fbx,hull.obj_1
+Wall_4,1,1,0,7,0 0 20 0 0 0 20 20 1,,Primitives/Cube.fbx,hull.obj_1

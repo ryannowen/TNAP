@@ -16,6 +16,7 @@ namespace TNAP {
 		~Transform();
 
 		Transform calculateTransform(const Transform& argTransform) const;
+		const glm::vec3 getForwardAxis() const;
 
 		inline void setTranslation(const glm::vec3& argTranslation) { m_translation = argTranslation; }
 		inline const glm::vec3& getTranslation() const { return m_translation; }

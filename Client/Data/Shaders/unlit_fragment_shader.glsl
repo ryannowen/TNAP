@@ -16,12 +16,32 @@ struct SMaterial
 	float m_emissionIntensity;
 };
 
+struct SSceneData
+{
+	vec3 m_ambientColour;
+	float m_ambientIntensity;
+	float m_exposure;
+	float m_gamma;
+};
+
 uniform SMaterial material;
+uniform SSceneData sceneData;
 
 void main(void)
 {
 	//fragment_colour = vec4(varying_normal, 1.0);
 	//fragment_colour = vec4(0, 1, 0, 1);
 
-	fragment_colour = material.m_colourTint + ((texture(material.m_emissionTexture, varying_uv) * vec4(material.m_emissionColour, 1)) * material.m_emissionIntensity);
+	vec4 finalResult = vec4(0);
+
+	finalResult = material.m_colourTint + ((texture(material.m_emissionTexture, varying_uv) * vec4(material.m_emissionColour, 1)) * material.m_emissionIntensity);
+
+	finalResult += vec4(sceneData.m_ambientColour, 1) * sceneData.m_ambientIntensity;
+
+	// exposure tone mapping
+	finalResult.rgb = vec3(1.0) - exp(-finalResult.rgb * sceneData.m_exposure);
+	// gamma correction 
+	finalResult.rgb = pow(finalResult.rgb, vec3(1.0 / sceneData.m_gamma));
+
+	fragment_colour = finalResult;
 }

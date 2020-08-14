@@ -12,6 +12,7 @@ namespace TNAP
 			eGetTextureMessage,
 			eLoadTextureMessage,
 			eSubmitModelMessage,
+			eSubmitLightDataMessage,
 			eGetMaterialMessage,
 			eGenerateMaterialMessage,
 			eLogMessage,

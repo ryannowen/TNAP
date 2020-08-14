@@ -94,9 +94,9 @@ namespace TNAP {
 
 	void Scene::loadFromFile(const std::string& argFilePath)
 	{
-
+#if USE_IMGUI
 		Entity::setSelected(nullptr);
-
+#endif
 		// Delete all objects in current scene
 		m_mapEntities.clear();
 		m_entities.clear();
@@ -282,6 +282,21 @@ namespace TNAP {
 		m_entities.pop_back();
 	}
 
+	void Scene::sendShaderData(const GLuint argProgram) const
+	{
+		GLuint ambientColour_id = glGetUniformLocation(argProgram, "sceneData.m_ambientColour");
+		glUniform3fv(ambientColour_id, 1, glm::value_ptr(m_ambientColour));
+
+		GLuint ambientIntensity_id = glGetUniformLocation(argProgram, "sceneData.m_ambientIntensity");
+		glUniform1f(ambientIntensity_id, m_ambientIntensity);
+
+		GLuint exposure_id = glGetUniformLocation(argProgram, "sceneData.m_exposure");
+		glUniform1f(exposure_id, m_exposure);
+
+		GLuint gamma_id = glGetUniformLocation(argProgram, "sceneData.m_gamma");
+		glUniform1f(gamma_id, m_gamma);
+	}
+
 	void Scene::sendMessage(TNAP::Message* const argMessage)
 	{
 	}
@@ -436,6 +451,17 @@ namespace TNAP {
 				Entity::getSelected()->imGuiRenderProperties();
 		}
 		ImGui::End();
+
+		ImGui::Begin("Scene Properties");
+		{
+			ImGui::ColorPicker3("Ambient Colour", &m_ambientColour.x);
+			ImGui::DragFloat("Ambient Intensity", &m_ambientIntensity, 0.1f);
+			ImGui::Separator();
+			ImGui::DragFloat("Scene Exposure", &m_exposure, 0.1f);
+			ImGui::DragFloat("Scene Gamma", &m_gamma, 0.1f);
+		}
+		ImGui::End();
+
 	}
 #endif
 

@@ -11,7 +11,7 @@ namespace TNAP {
 	class PBR : public TNAP::Material
 	{
 	private:
-		std::array<size_t, 6> m_textureHandles;
+		std::array<size_t, static_cast<int>(TNAP::ETextureType::eCount)> m_textureHandles;
 
 		float m_defaultMetallic{ 0 };
 		float m_defaultRoughness{ 0 };

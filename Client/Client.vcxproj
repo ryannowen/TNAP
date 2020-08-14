@@ -156,6 +156,7 @@
     <ClInclude Include="SceneManager.hpp" />
     <ClInclude Include="SpotLight.hpp" />
     <ClInclude Include="STextureData.hpp" />
+    <ClInclude Include="SubmitLightDataMessage.hpp" />
     <ClInclude Include="SubmitModelMessage.hpp" />
     <ClInclude Include="TNAPImGui.hpp" />
     <ClInclude Include="Mesh.h" />

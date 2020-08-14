@@ -12,11 +12,15 @@
 
 #include "Mesh.h"
 #include "Simulation.h"
+#include "Light.hpp"
+#include "PointLight.hpp"
+#include "SpotLight.hpp"
 
 #include "GLFWCallBacks.hpp"
 #include "GetTextureMessage.hpp"
 #include "LoadTextureMessage.hpp"
 #include "SubmitModelMessage.hpp"
+#include "SubmitLightDataMessage.hpp"
 #include "GetMaterialMessage.hpp"
 #include "LogMessage.hpp"
 #include "GenerateMaterialMessage.hpp"
@@ -120,6 +124,7 @@ namespace TNAP {
 
 		std::string name;
 		std::string type;
+		std::string useLighting;
 		std::string vert;
 		std::string frag;
 		
@@ -127,9 +132,10 @@ namespace TNAP {
 		{
 			std::getline(savedShaders, name, ',');
 			std::getline(savedShaders, type, ',');
+			std::getline(savedShaders, useLighting, ',');
 			std::getline(savedShaders, vert, ',');
 			std::getline(savedShaders, frag, '\n');
-			createShader(static_cast<EMaterialType>(std::stoi(type)), name, vert, frag);
+			createShader(static_cast<EMaterialType>(std::stoi(type)), name, std::stoi(useLighting), vert, frag);
 		}
 
 		savedShaders.close();
@@ -228,7 +234,7 @@ namespace TNAP {
 		savedMaterials.close();
 	}
 
-	const bool Renderer3D::createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
+	const bool Renderer3D::createShader(const EMaterialType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
 	{
 		if (argShaderName.empty() || argVertexShaderPath.empty() || argFragmentShaderPath.empty())
 			return false;
@@ -261,7 +267,7 @@ namespace TNAP {
 		if (!Helpers::LinkProgramShaders(program))
 			return false;
 
-		SProgram newProgram(program, argType, argShaderName, argVertexShaderPath, argFragmentShaderPath);
+		SProgram newProgram(program, argType, argShaderName, argUseLighting, argVertexShaderPath, argFragmentShaderPath);
 
 		m_programs.emplace_back(newProgram);
 		m_mapPrograms.insert({ argShaderName, m_programs.size() - 1 });
@@ -328,6 +334,7 @@ namespace TNAP {
 
 		m_materials.back()->m_programHandle = m_mapPrograms.at(argShaderName);
 		m_materials.back()->m_name = materialName;
+		m_materials.back()->init();
 
 		return true;
 	}
@@ -537,6 +544,8 @@ namespace TNAP {
 
 		Helpers::CheckForGLError();
 
+		
+
 		/// Creates viewport Projection Matrix
 		float aspectRatio{ m_windowFrameBuffer.getSize().x / m_windowFrameBuffer.getSize().y };
 		float nearPlane{ 1.0f }, farPlane{ 12000.0f };
@@ -579,6 +588,18 @@ namespace TNAP {
 						m_currentProgram = program;
 					}
 
+					if (m_programs.at(mat->getProgramHandle()).m_useLighting)
+					{
+						for (const std::unique_ptr<SLightData>& lightData : m_nextLights)
+							lightData->sendLightData(m_currentProgram);
+
+						SLightData::sendAmountOfLights(m_currentProgram);
+						SPointLightData::sendAmountOfLights(m_currentProgram);
+						SSpotLightData::sendAmountOfLights(m_currentProgram);
+					}
+
+					getSceneManager()->getCurrentScene()->sendShaderData(m_currentProgram);
+
 					/// Create camera ID and then Sends camera forward direction data to shader as Uniform
 					const GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
 					glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
@@ -618,15 +639,14 @@ namespace TNAP {
 
 					glBindVertexArray(0);
 				}
-
 			}
-
 		}
 
 #if USE_IMGUI
 		m_windowFrameBuffer.unbind();
 #endif
 
+		m_nextLights.clear();
 		m_batchRenders.clear();
 
 		Helpers::CheckForGLError();
@@ -1141,6 +1161,14 @@ namespace TNAP {
 			const auto& materialFind{ m_mapMaterials.find(getMaterialHandleMessage->m_materialName) };
 			if (materialFind != m_mapMaterials.end())
 				getMaterialHandleMessage->m_materialHandle = m_mapMaterials.at(getMaterialHandleMessage->m_materialName);
+		}
+		break;
+
+		case Message::EMessageType::eSubmitLightDataMessage:
+		{
+			SubmitLightDataMessage* const lightDataMessage{ static_cast<SubmitLightDataMessage*>(argMessage) };
+
+			m_nextLights.emplace_back(std::move(lightDataMessage->m_data));
 		}
 		break;
 

@@ -46,7 +46,7 @@ namespace TNAP {
 
 		/// Sends Emission Sample to shader
 		GLuint emissionTexture_id = glGetUniformLocation(argProgram, "material.m_emissionTexture");
-		glUniform1i(emissionTexture_id, 0);
+		glUniform1i(emissionTexture_id, 1);
 
 		GLuint emissionColour_id = glGetUniformLocation(argProgram, "material.m_emissionColour");
 		glUniform3fv(emissionColour_id, 1, glm::value_ptr(m_emissionColour));
@@ -147,8 +147,7 @@ namespace TNAP {
 					{
 						const std::pair<ETextureType, size_t> data{ *static_cast<const std::pair<ETextureType, size_t>*>(payload->Data) };
 
-						if (ETextureType::eEmission == data.first)
-							m_emissionTextureHandle = data.second;
+						m_emissionTextureHandle = data.second;
 					}
 
 					ImGui::EndDragDropTarget();

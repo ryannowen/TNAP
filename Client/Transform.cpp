@@ -1,4 +1,5 @@
 #include "Transform.hpp"
+
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -21,10 +22,18 @@ namespace TNAP {
 		return t;
 	}
 
-	const glm::mat4 Transform::getMatrix() const
+	const glm::vec3 Transform::getForwardAxis() const
 	{
+		glm::quat q(glm::radians(m_rotation));
+		glm::mat4 rotationMatrix = glm::toMat4(q);
 
-		
+		glm::vec4 forward{ glm::inverse(rotationMatrix) * glm::vec4(0, 0, -1, 1) };
+
+		return glm::vec3(forward);
+	}
+
+	const glm::mat4 Transform::getMatrix() const
+	{		
 		/*
 		glm::mat4 modelTransform(1);
 

@@ -305,5 +305,8 @@
     <ClInclude Include="IMGUILoadWindows.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SubmitLightDataMessage.hpp">
+      <Filter>Header Files\Messages</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

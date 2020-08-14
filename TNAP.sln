@@ -21,6 +21,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnlitTexture", "UnlitTextur
 		Client\Data\Shaders\unlitTexture_vertex_shader.glsl = Client\Data\Shaders\unlitTexture_vertex_shader.glsl
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PBR", "PBR", "{A925AD65-2D8E-4160-BECB-4D272A67616E}"
+	ProjectSection(SolutionItems) = preProject
+		Client\Data\Shaders\PBR_fragment_shader.glsl = Client\Data\Shaders\PBR_fragment_shader.glsl
+		Client\Data\Shaders\PBR_vertex_shader.glsl = Client\Data\Shaders\PBR_vertex_shader.glsl
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -42,6 +48,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{14EC4241-DECC-46B5-AEAE-86C00BFBF815} = {D21B0186-629D-4AC1-A413-4277A86739ED}
 		{4D5548A8-4833-43DA-9F82-FC0EEBD19470} = {D21B0186-629D-4AC1-A413-4277A86739ED}
+		{A925AD65-2D8E-4160-BECB-4D272A67616E} = {D21B0186-629D-4AC1-A413-4277A86739ED}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5D504319-1AAA-4F9B-9F93-93BA8946B845}

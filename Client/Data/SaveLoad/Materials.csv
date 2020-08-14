@@ -14,3 +14,4 @@ EVOLUTION_02_POSED.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,0,creature-evolution-2/Def
 EVOLUTION_02_POSED.fbx_1,UnlitTexture,0.75 0.0551471 0.0551471 1,1 1 1,0,0,EMPTY
 BirdPlane,UnlitTexture,1 1 1 1,1 1 1,0,0,birdplane.png
 TestMaterial,UnlitTexture,1 1 1 1,1 1 1,0,0,desert-trooper-rigged/Helmet_Base_Color.jpg
+hull.obj_1,PBR,1 1 1 1,1 1 1,1

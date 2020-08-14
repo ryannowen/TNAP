@@ -23,6 +23,7 @@ namespace TNAP {
 
 	class Renderable;
 	class Light;
+	struct SLightData;
 
 	enum class ETextureType
 	{
@@ -40,10 +41,11 @@ namespace TNAP {
 		GLuint m_program;
 		EMaterialType m_type;
 		std::string m_name;
+		bool m_useLighting{ false };
 		std::string m_vertexShader;
 		std::string m_fragmentShader;
-		SProgram(const GLuint argProgram, const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
-		: m_program(argProgram), m_type(argType), m_name(argShaderName), m_vertexShader(argVertexShaderPath), m_fragmentShader(argFragmentShaderPath)
+		SProgram(const GLuint argProgram, const EMaterialType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
+		: m_program(argProgram), m_type(argType), m_name(argShaderName), m_useLighting(argUseLighting), m_vertexShader(argVertexShaderPath), m_fragmentShader(argFragmentShaderPath)
 		{}
 	};
 
@@ -56,32 +58,32 @@ namespace TNAP {
 		std::vector<TNAP::Model> m_models;
 
 		std::unordered_map<TNAP::ETextureType, std::unordered_map<std::string, size_t>> m_mapTextures;
-		std::vector<std::vector<STextureData>> m_textures;
+		std::vector<std::vector<TNAP::STextureData>> m_textures;
 
 		std::unordered_map<std::string, size_t> m_mapMaterials;
 		std::vector<std::unique_ptr<TNAP::Material>> m_materials;
 
 		std::unordered_map<std::string, size_t> m_mapPrograms;
-		std::vector<SProgram> m_programs;
+		std::vector<TNAP::SProgram> m_programs;
 
 		// Map<ModelHandle, Vector<Pair<Vector<ModelTransform>, Vector<MaterialHandles>>>>
 		std::unordered_map<size_t, std::vector<std::pair<std::vector<glm::mat4>, std::vector<size_t>>>> m_batchRenders;
 
-		std::vector<TNAP::Light*> m_nextLights;
+		std::vector<std::unique_ptr<TNAP::SLightData>> m_nextLights;
 
 		GLuint m_currentProgram{ 0 };
 		GLuint batchRenderingBuffer{ 0 };
 		
 #if USE_IMGUI
 		bool m_viewportSelected{ false };
-		std::vector<std::unique_ptr<IMGUILoadBase>> m_loadWindows;
+		std::vector<std::unique_ptr<TNAP::IMGUILoadBase>> m_loadWindows;
 #endif
 
 		const std::pair<bool, size_t> loadModel(const std::string& argFilePath, const std::string& argModelName = "");
 		void loadShaders();
 		const std::pair<bool, size_t> loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath, const std::string& argTextureName = "");
 		void loadMaterials(const std::string& argFilePath);
-		const bool createShader(const EMaterialType argType, const std::string& argShaderName, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
+		const bool createShader(const EMaterialType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
 		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting = false);
 		const bool createMaterial(const std::string& argMaterialName, const TNAP::EMaterialType argMaterialType, const bool argIncrementNameIfExisting = false);
 
