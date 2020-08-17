@@ -1,10 +1,12 @@
 #pragma once
-#include "Transform.hpp"
-#include "SceneManager.hpp"
-#include "Scene.hpp"
+
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+#include "Transform.hpp"
+#include "SceneManager.hpp"
+#include "Scene.hpp"
 
 namespace TNAP {
 
@@ -55,30 +57,7 @@ namespace TNAP {
 
 		inline virtual const EEntityType getEntityType() const { return EEntityType::eEntity; }
 
-		inline bool setName(const std::string& argName) 
-		{ 
-			// Entity doesnt have a name yet
-			if ("" != argName && "" != m_name)
-			{
-				if (updateNameInSceneMap(argName))
-				{
-					m_name = argName;
-#if USE_IMGUI
-					m_namePlaceholder = m_name;
-#endif
-					return true;
-				}
-			}
-			if ("" == m_name)
-			{
-				m_name = argName;
-#if USE_IMGUI
-				m_namePlaceholder = m_name;
-#endif
-				return true;
-			}
-			return false;
-		}
+		inline bool setName(const std::string& argName);
 		inline const std::string& getName() const { return m_name; }
 
 		bool updateNameInSceneMap(const std::string& argNewName);
@@ -88,6 +67,7 @@ namespace TNAP {
 
 		inline void setHasParent(const bool argValue) { m_hasParent = argValue; }
 		inline const bool getHasParent() const { return m_hasParent; }
+
 		inline void setParentHandle(const size_t argHandle) { m_parentHandle = argHandle; }
 		inline const size_t getParentHandle() const { return m_parentHandle; }
 

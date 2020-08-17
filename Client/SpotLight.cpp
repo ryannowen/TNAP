@@ -1,5 +1,7 @@
 #include "SpotLight.hpp"
 
+#include <fstream>
+
 #include "Engine.hpp"
 #include "SubmitLightDataMessage.hpp"
 
@@ -31,6 +33,18 @@ namespace TNAP {
 		lightDataMessage.m_data = std::move(lightData);
 
 		getEngine()->sendMessage(&lightDataMessage);
+
+		Entity::update(parentTransform);
+	}
+
+	void SpotLight::saveData(std::ofstream& outputFile)
+	{
+		PointLight::saveData(outputFile);
+
+		outputFile << "," << m_fov;
+
+		if (getEntityType() == EEntityType::eSpotLight)
+			outputFile << std::endl;
 	}
 
 #if USE_IMGUI

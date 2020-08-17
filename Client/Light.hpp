@@ -51,6 +51,8 @@ namespace TNAP {
 		Light();
 		~Light();
 		virtual void update(const glm::mat4& parentTransform) override;
+		virtual void saveData(std::ofstream& outputFile) override;
+		inline virtual const EEntityType getEntityType() const { return EEntityType::eLight; }
 
 		inline void setColour(const glm::vec3& argColour) { m_colour = argColour; }
 		inline const glm::vec3& getColour() const { return m_colour; }

@@ -1,5 +1,7 @@
 #include "PointLight.hpp"
 
+#include <fstream>
+
 #include "Engine.hpp"
 #include "SubmitLightDataMessage.hpp"
 
@@ -30,6 +32,18 @@ namespace TNAP {
 		lightDataMessage.m_data = std::move(lightData);
 
 		getEngine()->sendMessage(&lightDataMessage);
+
+		Entity::update(parentTransform);
+	}
+
+	void PointLight::saveData(std::ofstream& outputFile)
+	{
+		Light::saveData(outputFile);
+
+		outputFile << "," << m_range;
+
+		if (getEntityType() == EEntityType::ePointLight)
+			outputFile << std::endl;
 	}
 
 #if USE_IMGUI

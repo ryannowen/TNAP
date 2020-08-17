@@ -174,7 +174,8 @@ namespace TNAP {
 			logMessage.m_message = "[Texture] " + filePath + " is already loaded";
 			logMessage.m_logType = LogMessage::ELogType::eInfo;
 			TNAP::getEngine()->sendMessage(&logMessage);
-			return std::pair<bool, size_t>(false, 0);;
+			size_t handle = m_mapTextures.at(argType).find(textureName)->second;
+			return std::pair<bool, size_t>(true, handle);
 		}
 
 		std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
@@ -185,7 +186,7 @@ namespace TNAP {
 			logMessage.m_message = "[Texture] " + filePath + " could not load";
 			logMessage.m_logType = LogMessage::ELogType::eWarning;
 			TNAP::getEngine()->sendMessage(&logMessage);
-			return std::pair<bool, size_t>(false, 0);;
+			return std::pair<bool, size_t>(false, 0);
 		}
 
 		// Log Loaded Texture
@@ -385,7 +386,9 @@ namespace TNAP {
 		if (submitModel->m_modelHandle >= m_models.size())
 			return;
 
-		if (m_batchRenders.find(submitModel->m_modelHandle) == m_batchRenders.end())
+		const auto& batch = m_batchRenders.find(submitModel->m_modelHandle);
+
+		if (batch == m_batchRenders.end())
 		{
 			// New Model
 			std::vector<std::pair< std::vector<glm::mat4>, std::vector<size_t> >> temp

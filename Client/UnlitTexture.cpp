@@ -77,12 +77,12 @@ namespace TNAP {
 	{
 		Material::setData(argData);
 
-		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 3);
+		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 6);
 
 		// Texture Path
 		{
-			m_textureType = static_cast<ETextureType>(std::stoi(materialData.at(3)));
-			std::string filepath = materialData.at(4);
+			m_textureType = static_cast<ETextureType>(std::stoi(materialData.at(4)));
+			std::string filepath = materialData.at(5);
 
 			if ("EMPTY" != filepath)
 			{

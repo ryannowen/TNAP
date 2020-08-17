@@ -48,13 +48,27 @@ void TNAP::Material::saveData(std::ofstream& outputFile, const std::string& argS
 	outputFile << m_name << ",";
 	outputFile << argShaderName << ",";
 	outputFile << m_colourTint.r << " " << m_colourTint.g << " " << m_colourTint.b << " " << m_colourTint.a << ",";
-	outputFile << m_emissionColour.r << " " << m_emissionColour.g << " " << m_emissionColour.b << "," << m_emissionIntensity;
+	outputFile << m_emissionColour.r << " " << m_emissionColour.g << " " << m_emissionColour.b << "," << m_emissionIntensity << ",";
+
+	GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
+	getEngine()->sendMessage(&textureMessage);
+
+	if (textureMessage.m_textureData->m_filePath.empty())
+		outputFile << "EMPTY";
+	else
+		outputFile << textureMessage.m_textureData->m_filePath;
 }
 
 void TNAP::Material::setData(const std::string& argData)
 {
-	std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 3);
+	std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 4);
 	
+	/*
+	0 Colour tint
+	1 Emission colour
+	2 Emission intensity
+	*/
+
 	// Colour Tint
 	{
 		std::vector<float> colourTint = stringToVector<float>(materialData.at(0), " ", [](const std::string& str) { return std::stof(str); }, 4);
@@ -69,6 +83,20 @@ void TNAP::Material::setData(const std::string& argData)
 
 	// Emission Intensity
 	m_emissionIntensity = std::stof(materialData.at(2));
+
+	// Emission Texture
+	{
+		std::string filepath = materialData.at(3);
+
+		if ("EMPTY" != filepath)
+		{
+			LoadTextureMessage loadMessage(ETextureType::eEmission, filepath);
+			getEngine()->sendMessage(&loadMessage);
+
+			if (loadMessage.m_loadedSuccessfully)
+				m_emissionTextureHandle = loadMessage.m_textureHandle;
+		}
+	}
 }
 
 void TNAP::Material::setEmissionTexture(const std::string& argFilePath)

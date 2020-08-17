@@ -1,7 +1,8 @@
 #include "Logger.hpp"
-#include "LogMessage.hpp"
 
 #include <iostream>
+
+#include "LogMessage.hpp"
 
 namespace TNAP
 {

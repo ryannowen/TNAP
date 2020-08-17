@@ -68,7 +68,7 @@ namespace TNAP {
 
 		if (!created && glfwGetKey(Application::getInstance()->getWindow(), GLFW_KEY_M))
 		{
-			m_scene->addEntity<SpotLight>(false, "First Light");
+			m_scene->addEntity<PointLight>(false, "First Light");
 			created = true;
 		}
 	}

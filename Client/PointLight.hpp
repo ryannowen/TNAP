@@ -50,6 +50,8 @@ namespace TNAP {
 		~PointLight();
 
 		virtual void update(const glm::mat4& parentTransform) override;
+		virtual void saveData(std::ofstream& outputFile) override;
+		inline virtual const EEntityType getEntityType() const { return EEntityType::ePointLight; }
 
 		inline void setRange(const float argRange) { m_range = argRange; }
 		inline const float getRange() const { return m_range; }
