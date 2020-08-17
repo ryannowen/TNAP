@@ -222,7 +222,7 @@ namespace TNAP {
 
 			ImGui::ColorEdit3(("Emission Colour##EmissionColourPicker" + m_name).c_str(), &m_emissionColour.x);
 
-			ImGui::InputFloat("Emission Intesity", &m_emissionIntensity);
+			ImGui::DragFloat("Emission Intesity", &m_emissionIntensity);
 		}
 	}
 #endif

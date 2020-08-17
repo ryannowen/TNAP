@@ -27,8 +27,6 @@ namespace TNAP {
 		float m_exposure{ 1 };
 		float m_gamma{ 1 };
 
-		bool m_randomCreationDeletion{ false };
-
 	public:
 		Scene(const std::string& argName);
 		~Scene();

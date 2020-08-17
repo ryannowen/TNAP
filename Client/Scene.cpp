@@ -42,51 +42,6 @@ namespace TNAP {
 				m_entities.at(entityHandle)->update(glm::mat4(1));
 			}
 		}
-
-		/*for (const std::shared_ptr<Entity>& e : m_entities)
-		{
-			if (e->getEnabled())
-				e->getTransform().rotate({ 1, 1, 1 });
-		}*/
-
-		if (m_randomCreationDeletion)
-		{
-			int numberToCreate = rand() % 10;
-			int numberToDelete = rand() % 10;
-
-			for (int i = 0; i < numberToCreate; i++)
-			{
-				if (i < 5)
-				{
-					Renderable* e{ addEntity<Renderable>(false, "NewRandom", "Primitives\\Cube.fbx") };
-					e->getTransform().setTranslation({ rand() % 40 - 20, rand() % 40 - 20, rand() % 40 - 20 });
-				}
-				else
-				{
-					if (m_entities.size() > 0)
-					{
-						size_t index = rand() % (m_entities.size());
-						Renderable* c{ m_entities.at(index)->addChild<Renderable>("NewChild", "Primitives\\Cube.fbx") };
-						c->getTransform().setTranslation({ rand() % 40 - 20, rand() % 40 - 20, rand() % 40 - 20 });
-					}
-				}
-			}
-
-			for (int i = 0; i < numberToDelete; i++)
-			{
-				if (m_entities.size() > 0)
-					destroyEntity(rand() % m_entities.size());
-			}
-		}
-
-		/*
-		for (const std::shared_ptr<Entity>& entity : m_entities)
-		{
-			if (entity->getEnabled())
-				entity->update(m_entities[entity->getParentHandle()]->getLocalTransform().getMatrix());
-		}
-		*/
-
 	}
 
 	void Scene::saveScene()
@@ -415,8 +370,6 @@ namespace TNAP {
 		static bool showHierarchy{ true };
 		ImGui::Begin("Hierarchy", &showHierarchy, ImGuiWindowFlags_MenuBar);
 		{
-			ImGui::Checkbox("Random", &m_randomCreationDeletion);
-
 			if (ImGui::BeginMenuBar())
 			{
 				if (ImGui::BeginMenu("Create"))
@@ -530,15 +483,24 @@ namespace TNAP {
 					{
 						if (ImGui::Button("Directional"))
 						{
-							addEntity<Light>(false, "New Light");
+							if (nullptr == Entity::getSelected())
+								addEntity<Light>(false, "New Light");
+							else
+								Entity::getSelected()->addChild<Light>("New Light");
 						}
 						if (ImGui::Button("Point"))
 						{
-							addEntity<PointLight>(false, "New Point Light");
+							if (nullptr == Entity::getSelected())
+								addEntity<PointLight>(false, "New Light");
+							else
+								Entity::getSelected()->addChild<PointLight>("New Point Light");
 						}
 						if (ImGui::Button("Spot"))
 						{
-							addEntity<SpotLight>(false, "New Spot Light");
+							if (nullptr == Entity::getSelected())
+								addEntity<SpotLight>(false, "New Light");
+							else
+								Entity::getSelected()->addChild<SpotLight>("New Spot Light");
 						}
 
 						ImGui::EndMenu();
