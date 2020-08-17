@@ -202,12 +202,28 @@ namespace TNAP {
 					newMesh->elements.push_back(aimesh->mFaces[face].mIndices[triInd]);
 			}
 
+			if (aimesh->HasTangentsAndBitangents())
+			{
+				for (size_t v = 0; v < aimesh->mNumVertices; v++)
+				{
+					const glm::vec3 newT = *(glm::vec3*) & aimesh->mTangents[v];
+					const glm::vec3 newBT = *(glm::vec3*) & aimesh->mBitangents[v];
+
+					newMesh->tangents.push_back(newT);
+					newMesh->bitTangents.push_back(newBT);
+
+				}
+
+				std::cout << (newMesh->name + " has tangents") << std::endl;
+			}
+
 			// Material index
 			newMesh->materialIndex = aimesh->mMaterialIndex;
 		}
 
-		/*if (hasBones)
-			EsOutput("Ignoring: One or more mesh have bones");
+		if (hasBones)
+			std::cout << "test";
+			/*EsOutput("Ignoring: One or more mesh have bones");
 		if (hasColourChannels)
 			EsOutput("Ignoring: One or more mesh has colour channels");
 		if (hasMMoreThanOneUVChannel)
@@ -232,37 +248,52 @@ namespace TNAP {
 	void Model::bindMesh(Helpers::Mesh* const argMesh)
 	{
 		/// Reference to Objects
-		GLuint VAO, verticesVBO, uvVBO, normalsVBO, elementsEBO;
+		GLuint VAO, verticesVBO, uvVBO, normalsVBO, tangentsVBO, bitTangentsVBO, elementsEBO;
 
 		/// Generates VAO
 		glGenVertexArrays(1, &VAO);
 		glBindVertexArray(VAO);
 
 		/// Generate objects and Bind them with data
+		/// Sends Vertex Positions
 		glGenBuffers(1, &verticesVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * argMesh->vertices.size(), argMesh->vertices.data(), GL_STATIC_DRAW);
 
-		/// Sends Vertex Positions
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
-
+		/// Sends Normals
 		glGenBuffers(1, &normalsVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, normalsVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * argMesh->normals.size(), argMesh->normals.data(), GL_STATIC_DRAW);
 
-		/// Sends Normals
 		glEnableVertexAttribArray(1);
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
+		/// Sends uvs
 		glGenBuffers(1, &uvVBO);
 		glBindBuffer(GL_ARRAY_BUFFER, uvVBO);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * argMesh->uvCoords.size(), argMesh->uvCoords.data(), GL_STATIC_DRAW);
 
-		/// Sends uvs
 		glEnableVertexAttribArray(2);
 		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		/// Sends Tangents
+		glGenBuffers(1, &tangentsVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, tangentsVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * argMesh->tangents.size(), argMesh->tangents.data(), GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+		/// Sends BitTangents
+		glGenBuffers(1, &bitTangentsVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, bitTangentsVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * argMesh->bitTangents.size(), argMesh->bitTangents.data(), GL_STATIC_DRAW);
+
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 		/// Generates Element Buffer and Binds it
 		glGenBuffers(1, &elementsEBO);
