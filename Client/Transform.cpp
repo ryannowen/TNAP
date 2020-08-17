@@ -27,7 +27,7 @@ namespace TNAP {
 		glm::quat q(glm::radians(m_rotation));
 		glm::mat4 rotationMatrix = glm::toMat4(q);
 
-		glm::vec4 forward{ glm::inverse(rotationMatrix) * glm::vec4(0, 0, -1, 1) };
+		glm::vec4 forward{ glm::transpose(rotationMatrix) * glm::vec4(0, 0, 1, 1) };
 
 		return glm::vec3(forward);
 	}

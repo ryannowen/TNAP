@@ -71,7 +71,7 @@ uniform SSceneData sceneData;
 
 in vec3 varying_position;
 in vec2 varying_uv;
-in vec3 varying_normal;
+//in vec3 varying_normal;
 
 in vec3 tangentViewPos;
 in vec3 tangentFragPos;
@@ -82,34 +82,34 @@ out vec4 fragment_colour;
 
 const float calculateAttenuation(const vec3 argPosition, const float argRange)
 {
-	float light_distance = distance(argPosition, varying_position);
+	float light_distance = distance(argPosition, tangentFragPos);
 	return (1.0 - smoothstep(0, argRange, light_distance));
 }
 
-const vec3 calculateBasicLight(const vec3 argDirection, const vec3 argColour, const float argIntensity)
+const vec3 calculateBasicLight(const vec3 argNormal, const vec3 argDirection, const vec3 argColour, const float argIntensity)
 {
-	vec3 lightDirection = normalize(-argDirection);
+	vec3 lightDirection = normalize(argDirection);
 
-	vec3 diffuse_intensity = max(vec3(0.0), dot(lightDirection, normalize(varying_normal)));
+	vec3 diffuse_intensity = max(vec3(0.0), dot(lightDirection, normalize(argNormal)));
 	diffuse_intensity *= max(vec3(0.1), argColour) * max(0.01, argIntensity);
 
 	return diffuse_intensity;
 }
 
-const vec3 calculatePointLight(const vec3 argDirection, const vec3 argColour, const float argIntensity, const vec3 argPosition, const float argRange)
+const vec3 calculatePointLight(const vec3 argNormal, const vec3 argDirection, const vec3 argColour, const float argIntensity, const vec3 argPosition, const float argRange)
 {
-	vec3 diffuse_intensity = calculateBasicLight(argDirection, argColour, argIntensity);
+	vec3 diffuse_intensity = calculateBasicLight(argNormal, argPosition - tangentFragPos, argColour, argIntensity);
 	float attenuation = calculateAttenuation(argPosition, argRange);
 
-	return (diffuse_intensity * attenuation);
+	return (diffuse_intensity * (attenuation * attenuation));
 }
 
-const vec3 calculateSpotLight(const vec3 argDirection, const vec3 argColour, const float argIntensity, const vec3 argPosition, const float argRange, const float argFOV)
+const vec3 calculateSpotLight(const vec3 argNormal, const vec3 argDirection, const vec3 argColour, const float argIntensity, const vec3 argPosition, const float argRange, const float argFOV)
 {
-	vec3 diffuse_intensity = calculatePointLight(argDirection, argColour, argIntensity, argPosition, argRange);
+	vec3 diffuse_intensity = calculatePointLight(argNormal, vec3(0), argColour, argIntensity, argPosition, argRange);
 	float attenuation = calculateAttenuation(argPosition, argRange);
 
-	vec3 lightDirection = normalize(-argDirection);
+	vec3 lightDirection = normalize(argPosition - tangentFragPos);
 	attenuation *= smoothstep(cos(0.5 * radians(argFOV)), 1, dot(-lightDirection, normalize(argDirection)));
 
 	return (diffuse_intensity * attenuation);
@@ -128,22 +128,25 @@ const vec4 applyHDR(vec4 argApplicant)
 void main(void)
 {
 	vec4 finalResult = vec4(0, 0, 0, 1);
+	vec3 normal = texture(material.m_normalTexture, varying_uv).rgb;
+
+	normal = normalize(normal * 2 - 1);
 
 	// Apply Basic Lights (Directional)
 	for (uint i = uint(0); ((i < amountOfLightData) && (i < BASIC_LIGHT_AMOUNT)); i++)
-		finalResult += vec4(calculateBasicLight(lightData[i].m_direction, lightData[i].m_colour, lightData[i].m_intensity), 0);
+		finalResult += vec4(calculateBasicLight(normal, -(varying_TBN * lightData[i].m_direction), lightData[i].m_colour, lightData[i].m_intensity), 0);
 
 	// Apply Point Lights
 	for (uint i = uint(0); ((i < amountOfPointLightData) && (i < POINT_LIGHT_AMOUNT)); i++)
-		finalResult += vec4(calculatePointLight(vec3(0), pointLightData[i].m_colour, pointLightData[i].m_intensity, pointLightData[i].m_position, pointLightData[i].m_range), 0);
+		finalResult += vec4(calculatePointLight(normal, vec3(0), pointLightData[i].m_colour, pointLightData[i].m_intensity, varying_TBN * pointLightData[i].m_position, pointLightData[i].m_range), 0);
 	
 	// Apply Spot Lights
 	for (uint i = uint(0); ((i < amountOfSpotLightData) && (i < SPOT_LIGHT_AMOUNT)); i++)
-		finalResult += vec4(calculateSpotLight(spotLightData[i].m_direction, spotLightData[i].m_colour, spotLightData[i].m_intensity, spotLightData[i].m_position, spotLightData[i].m_range, spotLightData[i].m_fov), 0);
+		finalResult += vec4(calculateSpotLight(normal, vec3(0), spotLightData[i].m_colour, spotLightData[i].m_intensity, varying_TBN * spotLightData[i].m_position, spotLightData[i].m_range, spotLightData[i].m_fov), 0);
 
 	// Add Textures
 	finalResult *= (texture(material.m_texture, varying_uv) * material.m_colourTint) + ((texture(material.m_emissionTexture, varying_uv) * vec4(material.m_emissionColour, 1)) * material.m_emissionIntensity);
-
+	
 	// Add Ambient
 	finalResult += vec4(sceneData.m_ambientColour * sceneData.m_ambientIntensity, 0);
 

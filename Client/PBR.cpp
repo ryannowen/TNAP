@@ -18,52 +18,56 @@ namespace TNAP {
 	void PBR::init()
 	{
 		m_textureHandles.fill(0);
-		m_textureTypes.fill(ETextureType::eAlbedo);
+
+		for (int i = 0; i < static_cast<int>(ETextureType::eCount) - 1; i++)
+			m_textureTypes.at(i) = static_cast<ETextureType>(i);
 	}
 
 	void PBR::sendShaderData(const GLuint argProgram)
 	{
 		static std::array<std::string, static_cast<int>(ETextureType::eCount) - 1> m_textureNames
 		{
-			"m_texture",
-			"m_normalTexture",
-			"m_metallicTexture",
-			"m_roughnessTexture",
-			"m_AOTexture"
+			"material.m_texture",
+			"material.m_normalTexture",
+			"material.m_metallicTexture",
+			"material.m_roughnessTexture",
+			"material.m_AOTexture"
 		};
-
-		// Send all PBR textures
-		for (int i = 0; i < m_textureHandles.size(); i++)
-		{
-			GetTextureMessage textureMessage({ m_textureTypes.at(i), m_textureHandles.at(i) });
-			getEngine()->sendMessage(&textureMessage);
-
-			glActiveTexture(GL_TEXTURE0 + i);
-			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureData->m_textureBinding);
-
-			Helpers::CheckForGLError();
-
-			/// Sends Metallic Texture Sample to shader
-			GLuint texture_id = glGetUniformLocation(argProgram, m_textureNames.at(i).c_str());
-			glUniform1i(texture_id, i);
-
-			Helpers::CheckForGLError();
-		}
 
 		// Send Emission texture (From base Material)
 		{
 			GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
 			getEngine()->sendMessage(&textureMessage);
 
-			glActiveTexture(GL_TEXTURE2);
+			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureData->m_textureBinding);
 
 			Helpers::CheckForGLError();
-		}
+		
+			/// Sends Emission Sample to shader
+			GLuint emissionTexture_id = glGetUniformLocation(argProgram, "material.m_emissionTexture");
+			glUniform1i(emissionTexture_id, 0);
 
-		/// Sends Emission Sample to shader
-		GLuint emissionTexture_id = glGetUniformLocation(argProgram, "material.m_emissionTexture");
-		glUniform1i(emissionTexture_id, 2);
+			Helpers::CheckForGLError();
+
+		}
+		// Send all PBR textures
+		for (int i = 0; i < m_textureHandles.size(); i++)
+		{
+			GetTextureMessage textureMessage({ m_textureTypes.at(i), m_textureHandles.at(i) });
+			getEngine()->sendMessage(&textureMessage);
+
+			glActiveTexture(GL_TEXTURE0 + i + 1);
+			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureData->m_textureBinding);
+
+			Helpers::CheckForGLError();
+
+			/// Sends Texture Sample to shader
+			GLuint texture_id = glGetUniformLocation(argProgram, m_textureNames.at(i).c_str());
+			glUniform1i(texture_id, i + 1);
+
+			Helpers::CheckForGLError();
+		}
 
 		// -------- END OF TEXTURES
 

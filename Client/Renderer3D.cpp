@@ -1017,22 +1017,44 @@ namespace TNAP {
 		glGenTextures(1, &whiteText);
 		glBindTexture(GL_TEXTURE_2D, whiteText);
 
-		static GLbyte pixels[4]{ 255, 255, 255, 255 };
+		static GLbyte whitePixels[4]{ 255, 255, 255, 255 };
 
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<void*>(pixels));
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<void*>(whitePixels));
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		Helpers::CheckForGLError();
 
+		GLuint normalText{ 0 };
+		glGenTextures(1, &normalText);
+		glBindTexture(GL_TEXTURE_2D, normalText);
 
-		for (auto& textType : m_textures)
+		static GLbyte normalPixels[4]{ 127, 127, 255, 255 };
+
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, static_cast<void*>(normalPixels));
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		Helpers::CheckForGLError();
+
+		// std::vector<TNAP::STextureData>
+		for (int i = 0; i < m_textures.size(); i++)
 		{
 			std::unique_ptr<Helpers::ImageLoader> texture{ std::make_unique<Helpers::ImageLoader>() };
-			texture->SetData(1, 1, &pixels[0]);
+			if (static_cast<int>(ETextureType::eNormal) == i)
+			{
+				texture->SetData(1, 1, &normalPixels[0]);
 
-			textType.push_back(STextureData(std::move(texture), whiteText, ""));
+				m_textures.at(i).push_back(STextureData(std::move(texture), normalText, ""));
+			}
+			else
+			{
+				texture->SetData(1, 1, &whitePixels[0]);
+
+				m_textures.at(i).push_back(STextureData(std::move(texture), whiteText, ""));
+			}
 		}
 
 		loadShaders();
