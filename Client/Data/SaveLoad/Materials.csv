@@ -16,3 +16,4 @@ BirdPlane,UnlitTexture,1 1 1 1,1 1 1,0,0,birdplane.png
 TestMaterial,UnlitTexture,1 1 1 1,1 1 1,0,0,desert-trooper-rigged/Helmet_Base_Color.jpg
 hull.obj_1,PBR,1 1 1 1,1 1 1,1
 apple.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,0,Apple/apple.jpg
+PBR,PBR,1 1 1 1,1 1 1,0

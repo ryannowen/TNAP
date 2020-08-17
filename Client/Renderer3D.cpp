@@ -544,8 +544,6 @@ namespace TNAP {
 
 		Helpers::CheckForGLError();
 
-		
-
 		/// Creates viewport Projection Matrix
 		float aspectRatio{ m_windowFrameBuffer.getSize().x / m_windowFrameBuffer.getSize().y };
 		float nearPlane{ 1.0f }, farPlane{ 12000.0f };
@@ -604,6 +602,9 @@ namespace TNAP {
 					const GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
 					glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
 
+					const GLuint camera_position_id = glGetUniformLocation(program, "camera_position");
+					glUniform3fv(camera_position_id, 1, glm::value_ptr(Simulation::m_camera->GetPosition()));
+
 					/// Create combined xform ID and then Sends Combined Xform data to shader as Uniform
 					const GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
 					glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
@@ -616,19 +617,19 @@ namespace TNAP {
 					glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_DYNAMIC_DRAW);
 
 					// Set attribute pointers for matrix (4 times vec4)
-					glEnableVertexAttribArray(3);
-					glVertexAttribPointer(3, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
-					glEnableVertexAttribArray(4);
-					glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
 					glEnableVertexAttribArray(5);
-					glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+					glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
 					glEnableVertexAttribArray(6);
-					glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+					glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+					glEnableVertexAttribArray(7);
+					glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+					glEnableVertexAttribArray(8);
+					glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
 
-					glVertexAttribDivisor(3, 1);
-					glVertexAttribDivisor(4, 1);
 					glVertexAttribDivisor(5, 1);
 					glVertexAttribDivisor(6, 1);
+					glVertexAttribDivisor(7, 1);
+					glVertexAttribDivisor(8, 1);
 
 					if (batch.first.size() > 1) // Batch Draw
 						glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, 0, batch.first.size());

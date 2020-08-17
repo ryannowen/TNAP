@@ -63,14 +63,18 @@ namespace TNAP {
 				if (updateNameInSceneMap(argName))
 				{
 					m_name = argName;
+#if USE_IMGUI
 					m_namePlaceholder = m_name;
+#endif
 					return true;
 				}
 			}
 			if ("" == m_name)
 			{
 				m_name = argName;
+#if USE_IMGUI
 				m_namePlaceholder = m_name;
+#endif
 				return true;
 			}
 			return false;

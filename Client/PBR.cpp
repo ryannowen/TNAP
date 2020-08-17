@@ -1,5 +1,6 @@
 #include "PBR.hpp"
 
+#include <array>
 
 #include "ImGuiInclude.hpp"
 #include "Engine.hpp"
@@ -19,37 +20,52 @@ namespace TNAP {
 
 	void PBR::sendShaderData(const GLuint argProgram)
 	{
+		static std::array<std::string, static_cast<int>(ETextureType::eCount) - 1> m_textureNames
 		{
+			"m_texture",
+			"m_normalTexture",
+			"m_metallicTexture",
+			"m_roughnessTexture",
+			"m_AOTexture"
+		};
 
-			GetTextureMessage textureMessage({ TNAP::ETextureType::eAlbedo, m_textureHandles.at(0)});
+		// Send all PBR textures
+		for (int i = 0; i < m_textureHandles.size(); i++)
+		{
+			GetTextureMessage textureMessage({ static_cast<TNAP::ETextureType>(i), m_textureHandles.at(i) });
 			getEngine()->sendMessage(&textureMessage);
 
-			glActiveTexture(GL_TEXTURE0);
+			glActiveTexture(GL_TEXTURE0 + i);
 			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureData->m_textureBinding);
+
+			Helpers::CheckForGLError();
+
+			/// Sends Metallic Texture Sample to shader
+			GLuint texture_id = glGetUniformLocation(argProgram, m_textureNames.at(i).c_str());
+			glUniform1i(texture_id, i);
 
 			Helpers::CheckForGLError();
 		}
 
+		// Send Emission texture (From base Material)
 		{
 			GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
 			getEngine()->sendMessage(&textureMessage);
 
-			glActiveTexture(GL_TEXTURE1);
+			glActiveTexture(GL_TEXTURE2);
 			glBindTexture(GL_TEXTURE_2D, textureMessage.m_textureData->m_textureBinding);
 
 			Helpers::CheckForGLError();
 		}
 
-		GLuint colourTint_id = glGetUniformLocation(argProgram, "material.m_colourTint");
-		glUniform4fv(colourTint_id, 1, glm::value_ptr(m_colourTint));
-
-		/// Sends Texture Sample to shader
-		GLuint texture_id = glGetUniformLocation(argProgram, "material.m_texture");
-		glUniform1i(texture_id, 0);
-
 		/// Sends Emission Sample to shader
 		GLuint emissionTexture_id = glGetUniformLocation(argProgram, "material.m_emissionTexture");
-		glUniform1i(emissionTexture_id, 1);
+		glUniform1i(emissionTexture_id, 2);
+
+		// -------- END OF TEXTURES
+
+		GLuint colourTint_id = glGetUniformLocation(argProgram, "material.m_colourTint");
+		glUniform4fv(colourTint_id, 1, glm::value_ptr(m_colourTint));
 
 		GLuint emissionColour_id = glGetUniformLocation(argProgram, "material.m_emissionColour");
 		glUniform3fv(emissionColour_id, 1, glm::value_ptr(m_emissionColour));

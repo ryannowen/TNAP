@@ -37,15 +37,6 @@ namespace TNAP {
 			}
 		}
 
-		// Rotate all entities
-		for (const size_t entityHandle : m_parentHandles)
-		{
-			if (m_entities.at(entityHandle)->getEnabled())
-			{
-				m_entities.at(entityHandle)->getTransform().rotate({1,1,1});
-			}
-		}
-
 		if (m_randomCreationDeletion)
 		{
 			int numberToCreate = rand() % 10;
