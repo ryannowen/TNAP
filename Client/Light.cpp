@@ -1,5 +1,7 @@
 #include "Light.hpp"
 
+#include <fstream>
+
 #include "Engine.hpp"
 #include "SubmitLightDataMessage.hpp"
 
@@ -28,6 +30,19 @@ namespace TNAP {
 		lightDataMessage.m_data = std::move(lightData);
 
 		getEngine()->sendMessage(&lightDataMessage);
+
+		Entity::update(parentTransform);
+	}
+
+	void Light::saveData(std::ofstream& outputFile)
+	{
+		Entity::saveData(outputFile);
+
+		outputFile << "," << m_colour.x << " " << m_colour.y << " " << m_colour.z << ",";
+		outputFile << m_intensity;
+
+		if (getEntityType() == EEntityType::eLight)
+			outputFile << std::endl;
 	}
 
 #if USE_IMGUI

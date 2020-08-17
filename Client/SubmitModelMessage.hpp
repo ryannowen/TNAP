@@ -1,7 +1,10 @@
 #pragma once
+
 #include "Message.hpp"
+
 #include "ExternalLibraryHeaders.h"
 #include "Transform.hpp"
+
 #include <vector>
 
 namespace TNAP

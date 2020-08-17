@@ -1,7 +1,9 @@
 #include "Entity.hpp"
-#include "ImGuiInclude.hpp"
+
 #include <memory>
 #include <fstream>
+
+#include "ImGuiInclude.hpp"
 
 namespace TNAP {
 
@@ -68,18 +70,8 @@ namespace TNAP {
 		for (const size_t entityHandle : m_children)
 		{
 			if (TNAP::getSceneManager()->getCurrentScene()->findEntity(entityHandle)->getEnabled())
-			{
 				TNAP::getSceneManager()->getCurrentScene()->findEntity(entityHandle)->update(parentTransform * getTransform().getMatrix());
-			}
 		}
-
-		/*
-		for (const std::shared_ptr<Entity>& entity : m_children)
-		{
-			if (entity->getEnabled())
-				entity->update(parentTransform * getTransform().getMatrix());
-		}
-		*/
 	}
 
 	void Entity::saveData(std::ofstream& outputFile)
@@ -103,6 +95,31 @@ namespace TNAP {
 			outputFile << std::endl;
 	}
 
+	inline bool Entity::setName(const std::string& argName)
+	{
+		// Entity doesnt have a name yet
+		if ("" != argName && "" != m_name)
+		{
+			if (updateNameInSceneMap(argName))
+			{
+				m_name = argName;
+#if USE_IMGUI
+				m_namePlaceholder = m_name;
+#endif
+				return true;
+			}
+		}
+		if ("" == m_name)
+		{
+			m_name = argName;
+#if USE_IMGUI
+			m_namePlaceholder = m_name;
+#endif
+			return true;
+		}
+		return false;
+	}
+
 	bool Entity::updateNameInSceneMap(const std::string& argNewName)
 	{
 		return TNAP::getSceneManager()->getCurrentScene()->updateEntityInMap(m_name, argNewName, m_handle);
@@ -121,9 +138,7 @@ namespace TNAP {
 		for (size_t i = 0; i < m_children.size(); i++)
 		{
 			if (argHandle == m_children.at(i))
-			{
 				return TNAP::getSceneManager()->getCurrentScene()->findEntity(argHandle);
-			}
 		}
 	}
 
@@ -132,24 +147,21 @@ namespace TNAP {
 		for (size_t i = 0; i < m_children.size(); i++)
 		{
 			if (TNAP::getSceneManager()->getCurrentScene()->findEntity(argName)->getHandle() == m_children.at(i))
-			{
 				return TNAP::getSceneManager()->getCurrentScene()->findEntity(argName);
-			}
 		}
 	}
 
 	TNAP::Entity* const Entity::findChildRecursive(const std::string& argName)
 	{
-		
-		// If entity to find is a child of the current entity
+		// Search for child in current entity
 		for (size_t i = 0; i < m_children.size(); i++)
 		{
+			// If entity to find is a child of the current entity	
 			if (TNAP::getSceneManager()->getCurrentScene()->findEntity(argName)->getHandle() == m_children.at(i))
-			{
 				return TNAP::getSceneManager()->getCurrentScene()->findEntity(argName);
-			}
 		}
 
+		// Search fo child in children
 		for (size_t i = 0; i < m_children.size(); i++)
 		{
 			Entity* entity = TNAP::getSceneManager()->getCurrentScene()->findEntity(m_children.at(i))->findChildRecursive(argName);
@@ -167,27 +179,7 @@ namespace TNAP {
 
 	void Entity::destroyChild(const std::string& argName)
 	{
-		/*
-		// Invalid entity name
-		if (m_mapChildEntities.find(argName) == m_mapChildEntities.end())
-			return;
-
-		// Get index of entity to be deleted
-		size_t entityIndex = m_mapChildEntities.at(argName);
-
-		// Swap entity to be deleted and the
-		// entity at the back of the vector
-		std::swap(m_children[entityIndex], m_children.back());
-
-		// Update entity handle
-		m_mapChildEntities.at(m_children[entityIndex]->getName()) = entityIndex;
-		m_children[entityIndex]->setHandle(entityIndex);
-
-		// Erase entity name and handle from map,
-		// Pop entity from back of vector
-		m_mapChildEntities.erase(argName);
-		m_children.pop_back();
-		*/
+		
 	}
 
 	void Entity::destroyChild(const size_t argHandle)

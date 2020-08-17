@@ -3,6 +3,7 @@
 #include "Message.hpp"
 
 #include <memory>
+
 #include "Light.hpp"
 
 namespace TNAP

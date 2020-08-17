@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Material.hpp"
 
 #include <array>
@@ -11,6 +12,7 @@ namespace TNAP {
 	class PBR : public TNAP::Material
 	{
 	private:
+		std::array<ETextureType, static_cast<int>(TNAP::ETextureType::eCount) - 1> m_textureTypes;
 		std::array<size_t, static_cast<int>(TNAP::ETextureType::eCount) - 1> m_textureHandles;
 
 		float m_defaultMetallic{ 0 };
@@ -23,9 +25,15 @@ namespace TNAP {
 		virtual void sendShaderData(const GLuint argProgram) override final;
 		inline virtual const EMaterialType getMaterialType() const override final { return EMaterialType::ePBR; }
 
+		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName);
+		virtual void setData(const std::string& argData) override;
+
 		void setTexture(const ETextureType argType, const std::string& argFilePath);
 		inline void setMetallicDefaultValue(const float argMetallicValue) { m_defaultMetallic = argMetallicValue; }
 		inline void setRoughnessDefaultValue(const float argRoughnessValue) { m_defaultRoughness = argRoughnessValue; }
+
+		inline void setTextureTypes(const std::vector<ETextureType>& argTextureTypes);
+		inline void setTextureHandles(const std::vector<size_t>& argTextureHandles);
 
 #if USE_IMGUI
 		virtual void imGuiRender() override final;

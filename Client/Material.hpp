@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ExternalLibraryHeaders.h"
+
 #include <functional>
 
 namespace TNAP {
@@ -35,6 +36,7 @@ namespace TNAP {
 		virtual void init();
 		virtual void sendShaderData(const GLuint argProgram);
 		inline virtual const EMaterialType getMaterialType() const { return EMaterialType::eUnlit; }
+
 		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName);
 		virtual void setData(const std::string& argData);
 

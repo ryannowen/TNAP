@@ -2,6 +2,7 @@
 
 #include "PointLight.hpp"
 #include "ImGuiInclude.hpp"
+
 namespace TNAP {
 
 	struct SSpotLightData : public SPointLightData
@@ -56,6 +57,8 @@ namespace TNAP {
 		~SpotLight();
 
 		virtual void update(const glm::mat4& parentTransform) override;
+		virtual void saveData(std::ofstream& outputFile) override;
+		inline virtual const EEntityType getEntityType() const { return EEntityType::eSpotLight; }
 
 		inline void setFov(const float argFov) { m_fov = argFov; }
 		inline const float getFov() const { return m_fov; }

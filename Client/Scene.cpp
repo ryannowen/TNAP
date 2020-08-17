@@ -1,4 +1,7 @@
 #include "Scene.hpp"
+
+#include <fstream>
+
 #include "Entity.hpp"
 #include "Engine.hpp"
 #include "ImGuiInclude.hpp"
@@ -7,7 +10,10 @@
 #include "Application.hpp"
 #include "Utilities.hpp"
 #include "GetMaterialHandleMessage.hpp"
-#include <fstream>
+
+#include "Light.hpp"
+#include "PointLight.hpp"
+#include "SpotLight.hpp"
 
 namespace TNAP {
 
@@ -37,14 +43,11 @@ namespace TNAP {
 			}
 		}
 
-		// Rotate all entities
-		for (const size_t entityHandle : m_parentHandles)
+		/*for (const std::shared_ptr<Entity>& e : m_entities)
 		{
-			if (m_entities.at(entityHandle)->getEnabled())
-			{
-				m_entities.at(entityHandle)->getTransform().rotate({1,1,1});
-			}
-		}
+			if (e->getEnabled())
+				e->getTransform().rotate({ 1, 1, 1 });
+		}*/
 
 		if (m_randomCreationDeletion)
 		{
@@ -91,12 +94,22 @@ namespace TNAP {
 		// TODO : Save recursive from parent handles
 
 		std::ofstream outputFile;
+		// Save scene contents
 		outputFile.open("Data/SaveLoad/" + m_sceneName + ".csv");
 
 		for (const std::shared_ptr<Entity>& entity : m_entities)
 		{
 			entity->saveData(outputFile);
 		}
+
+		outputFile.close();
+
+		// Save scene properties
+		outputFile.open("Data/SaveLoad/" + m_sceneName + " Properties.csv");
+
+		outputFile << m_ambientColour.x << " " << m_ambientColour.y << " " << m_ambientColour.z << ",";
+		outputFile << m_ambientIntensity << "," << m_exposure << "," << m_gamma;
+		outputFile << std::endl;
 
 		outputFile.close();
 
@@ -114,22 +127,59 @@ namespace TNAP {
 
 		// Load from save file
 		std::ifstream savedScene;
-
-		savedScene.open("Data/SaveLoad/" + argFilePath + ".csv");
-
 		std::string info;
 
+
+		// Load scene properties
 		/*
-		0 std::string name; 
-		1 std::string entityType;
-		2 std::string enabled;
-		3 std::string hasParent;
-		4 std::string parentHandle;
-		5 std::string transform;
-		6 std::string children;
-		7 std::string modelPath;
-		8 std::string materialNames;
+		0 Ambient colour
+		1 Ambient intensity
+		2 exposure
+		3 gamma
 		*/
+		savedScene.open("Data/SaveLoad/" + argFilePath + " Properties.csv");
+
+		while (std::getline(savedScene, info))
+		{
+			// Seperate info
+			std::vector<std::string> sceneInfo = TNAP::stringToVector<std::string>(info, ",", [](const std::string& str) { return str; });
+
+			// Ambient colour
+			std::vector<float> ambientColour = TNAP::stringToVector<float>(sceneInfo.at(0), " ", [](const std::string& str) { return std::stof(str); }, 3);
+			m_ambientColour = glm::vec3(ambientColour.at(0), ambientColour.at(1), ambientColour.at(2));
+
+			// Ambient intensity
+			m_ambientIntensity = std::stof(sceneInfo.at(1));
+
+			// Exposure
+			m_exposure = std::stof(sceneInfo.at(2));
+
+			// Gamma
+			m_gamma = std::stof(sceneInfo.at(3));
+		}
+
+		savedScene.close();
+		info.clear();
+
+		// Load scene contents
+		/*
+		0 name;
+		1 entityType;
+		2 enabled;
+		3 hasParent;
+		4 parentHandle;
+		5 transform;
+		6 children;
+
+		7 modelPath;
+		8 materialNames;
+
+		7 light colour
+		8 light intensity
+		9 light range
+		10 light fov
+		*/
+		savedScene.open("Data/SaveLoad/" + argFilePath + ".csv");
 
 		while (std::getline(savedScene, info))
 		{
@@ -143,23 +193,7 @@ namespace TNAP {
 			case EEntityType::eRenderable:
 			{
 				Renderable* newRenderable = addEntity<Renderable>(std::stoi(entityInfo.at(3)), entityInfo.at(0), entityInfo.at(7));
-				newRenderable->setEnabled(std::stoi(entityInfo.at(2)));
-				if (std::stoi(entityInfo.at(3)))
-					newRenderable->setParentHandle(std::stoull(entityInfo.at(4)));
 
-				//if (!std::stoi(entityInfo.at(3))) // If the laoded entity doesnt have a parent
-					//m_parentHandles.at(std::stoull(entityInfo.at(4))) = newRenderable->getHandle(); // Update the handle in m_parentHandles at its parent handle
-
-				std::vector<float> transformValues = TNAP::stringToVector<float>(entityInfo.at(5), " ", [](const std::string& str) { return std::stof(str); }, 9);
-				newRenderable->getTransform().setTranslation(glm::vec3(transformValues.at(0), transformValues.at(1), transformValues.at(2)));
-				newRenderable->getTransform().setRotation(glm::vec3(transformValues.at(3), transformValues.at(4), transformValues.at(5)));
-				newRenderable->getTransform().setScale(glm::vec3(transformValues.at(6), transformValues.at(7), transformValues.at(8)));
-
-				if ("" != entityInfo.at(6))
-				{
-					std::vector<size_t> childrenHandles = TNAP::stringToVector<size_t>(entityInfo.at(6), " ", [](const std::string& str) { return std::stof(str); });
-					newRenderable->setChildren(childrenHandles);
-				}
 				// Materials
 				std::vector<std::string> materials = TNAP::stringToVector<std::string>(entityInfo.at(8), " ", [](const std::string& str) { return str; });
 				std::vector<size_t> materialHandles;
@@ -172,22 +206,73 @@ namespace TNAP {
 				}
 				newRenderable->setMaterialHandles(materialHandles);
 			}
+			break;
 
+			case EEntityType::eLight:
+			{
+				Light* newLight = addEntity<Light>(std::stoi(entityInfo.at(3)), entityInfo.at(0));
+				
+				std::vector<float> lightColour = TNAP::stringToVector<float>(entityInfo.at(7), " ", [](const std::string& str) { return std::stof(str); }, 3);
+				newLight->setColour({lightColour.at(0), lightColour.at(1), lightColour.at(2)});
+
+				newLight->setIntensity(std::stof(entityInfo.at(8)));
+			}
+			break;
+
+			case EEntityType::ePointLight:
+			{
+				PointLight* newLight = addEntity<PointLight>(std::stoi(entityInfo.at(3)), entityInfo.at(0));
+
+				std::vector<float> lightColour = TNAP::stringToVector<float>(entityInfo.at(7), " ", [](const std::string& str) { return std::stof(str); }, 3);
+				newLight->setColour({ lightColour.at(0), lightColour.at(1), lightColour.at(2) });
+
+				newLight->setIntensity(std::stof(entityInfo.at(8)));
+
+				newLight->setRange(std::stof(entityInfo.at(9)));
+			}
+			break;
+
+			case EEntityType::eSpotLight:
+			{
+				SpotLight* newLight = addEntity<SpotLight>(std::stoi(entityInfo.at(3)), entityInfo.at(0));
+
+				std::vector<float> lightColour = TNAP::stringToVector<float>(entityInfo.at(7), " ", [](const std::string& str) { return std::stof(str); }, 3);
+				newLight->setColour({ lightColour.at(0), lightColour.at(1), lightColour.at(2) });
+
+				newLight->setIntensity(std::stof(entityInfo.at(8)));
+
+				newLight->setRange(std::stof(entityInfo.at(9)));
+
+				newLight->setFov(std::stof(entityInfo.at(10)));
+			}
 			break;
 
 			default:
 				Entity* newEntity = addEntity<Entity>(std::stoi(entityInfo.at(3)), entityInfo.at(0));
-				if (std::stoi(entityInfo.at(3)))
-					newEntity->setParentHandle(std::stoull(entityInfo.at(4)));
-				if (entityInfo.size() >= 7 && "" != entityInfo.at(6))
-				{
-					std::vector<size_t> childrenHandles = TNAP::stringToVector<size_t>(entityInfo.at(6), " ", [](const std::string& str) { return std::stof(str); });
-					newEntity->setChildren(childrenHandles);
-				}
-
 				break;
 			}
+
+			// Is Enabled
+			m_entities.back()->setEnabled(std::stoi(entityInfo.at(2)));
+
+			// Parent Handle
+			if (std::stoi(entityInfo.at(3)))
+				m_entities.back()->setParentHandle(std::stoull(entityInfo.at(4)));
+
+			// Transform
+			std::vector<float> transformValues = TNAP::stringToVector<float>(entityInfo.at(5), " ", [](const std::string& str) { return std::stof(str); }, 9);
+			m_entities.back()->getTransform().setTranslation(glm::vec3(transformValues.at(0), transformValues.at(1), transformValues.at(2)));
+			m_entities.back()->getTransform().setRotation(glm::vec3(transformValues.at(3), transformValues.at(4), transformValues.at(5)));
+			m_entities.back()->getTransform().setScale(glm::vec3(transformValues.at(6), transformValues.at(7), transformValues.at(8)));
+
+			// Children
+			if (entityInfo.size() >= 7 && "" != entityInfo.at(6))
+			{
+				std::vector<size_t> childrenHandles = TNAP::stringToVector<size_t>(entityInfo.at(6), " ", [](const std::string& str) { return std::stof(str); });
+				m_entities.back()->setChildren(childrenHandles);
+			}
 		}
+
 		savedScene.close();
 	}
 
@@ -438,6 +523,27 @@ namespace TNAP {
 						ImGui::EndMenu();
 					}
 
+					ImGui::Separator();
+
+					// Create Lights
+					if (ImGui::BeginMenu("Lights"))
+					{
+						if (ImGui::Button("Directional"))
+						{
+							addEntity<Light>(false, "New Light");
+						}
+						if (ImGui::Button("Point"))
+						{
+							addEntity<PointLight>(false, "New Point Light");
+						}
+						if (ImGui::Button("Spot"))
+						{
+							addEntity<SpotLight>(false, "New Spot Light");
+						}
+
+						ImGui::EndMenu();
+					}
+
 					ImGui::EndMenu();
 				}
 				else
@@ -468,9 +574,6 @@ namespace TNAP {
 				if (!e->getHasParent())
 					e->imGuiRenderHierarchy();
 			}
-
-			//for (int i = 0; i < m_parentHandles.size(); i++)
-				//m_entities.at(m_parentHandles.at(i))->imGuiRenderHierarchy();
 		}
 		ImGui::End();
 

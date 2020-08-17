@@ -1,4 +1,7 @@
 #include "Renderable.hpp"
+
+#include <fstream>
+
 #include "Engine.hpp"
 #include "SubmitModelMessage.hpp"
 #include "GetMaterialMessage.hpp"
@@ -6,7 +9,6 @@
 #include "GenerateMaterialMessage.hpp"
 #include "GetModelInfoMessage.hpp"
 #include "Material.hpp"
-#include <fstream>
 
 namespace TNAP {
 

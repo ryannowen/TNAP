@@ -1,8 +1,9 @@
 #pragma once
 
+#include "System.hpp"
+
 #include <vector>
 
-#include "System.hpp"
 #include "ImGuiInclude.hpp"
 
 namespace TNAP
