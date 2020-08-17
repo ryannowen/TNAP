@@ -34,9 +34,9 @@ namespace TNAP {
 
 		m_scene->loadFromFile("Our First Scene");
 
-		m_scene->addEntity<Light>(false, "LIGHT");
+		//m_scene->addEntity<Light>(false, "LIGHT");
 
-		//m_scene->addEntity<PointLight>(false, "LIGHT");
+		m_scene->addEntity<PointLight>(false, "LIGHT");
 		//m_scene->addEntity<SpotLight>(false, "LIGHT");
 
 		/*//Renderable* Hull{ m_scene->addEntity<Renderable>(false, "Hull", "AquaPig\\hull.obj") };

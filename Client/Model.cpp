@@ -11,7 +11,9 @@ namespace TNAP {
 		// Log loading file
 
 		// Commom post processing steps - may slow load but make mesh better optimised
-		unsigned int ppsteps = aiProcess_CalcTangentSpace | // calculate tangents and bitangents if possible
+		unsigned int ppsteps = 
+			//aiProcess_FlipUVs |
+			aiProcess_CalcTangentSpace | // calculate tangents and bitangents if possible
 			aiProcess_JoinIdenticalVertices |				// join identical vertices/ optimize indexing
 			aiProcess_ValidateDataStructure |				// perform a full validation of the loader's output
 			aiProcess_ImproveCacheLocality |				// improve the cache locality of the output vertices
@@ -206,8 +208,8 @@ namespace TNAP {
 			{
 				for (size_t v = 0; v < aimesh->mNumVertices; v++)
 				{
-					const glm::vec3 newT = *(glm::vec3*) & aimesh->mTangents[v];
-					const glm::vec3 newBT = *(glm::vec3*) & aimesh->mBitangents[v];
+					glm::vec3 newT = *(glm::vec3*) & aimesh->mTangents[v];
+					glm::vec3 newBT = *(glm::vec3*) & aimesh->mBitangents[v];
 
 					newMesh->tangents.push_back(newT);
 					newMesh->bitTangents.push_back(newBT);
