@@ -127,15 +127,15 @@ namespace TNAP {
 	{
 		Material::setData(argData);
 
-		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 6);
+		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 8);
 
 		{
 			// Texture types
-			std::vector<ETextureType> textureTypes = stringToVector<ETextureType>(materialData.at(4), " ", [](const std::string& str) { return static_cast<ETextureType>(std::stoi(str)); }, 5);
+			std::vector<ETextureType> textureTypes = stringToVector<ETextureType>(materialData.at(6), " ", [](const std::string& str) { return static_cast<ETextureType>(std::stoi(str)); }, 5);
 			setTextureTypes(textureTypes);
 
 			// Texture handles
-			std::vector<std::string> textureFilepaths = stringToVector<std::string>(materialData.at(5), "|", [](const std::string& str) { return str; }, 5);
+			std::vector<std::string> textureFilepaths = stringToVector<std::string>(materialData.at(7), "|", [](const std::string& str) { return str; }, 5);
 			for (int i = 0; i < textureFilepaths.size(); i++)
 			{
 				if (i < m_textureHandles.size())
@@ -177,6 +177,9 @@ namespace TNAP {
 			ImGui::Text(("Program Handle: " + std::to_string(m_programHandle)).c_str());
 
 			ImGui::ColorEdit4(("Colour Tint##ColourTintPicker" + m_name).c_str(), &m_colourTint.x);
+
+			ImGui::Checkbox(("Use Transparency##" + m_name).c_str(), &m_useTransparency);
+			ImGui::Checkbox(("Double Sided##" + m_name).c_str(), &m_doubleSided);
 
 			for (int i = 0; i < m_textureHandles.size(); i++)
 			{
@@ -226,7 +229,7 @@ namespace TNAP {
 
 			ImGui::ColorEdit3(("Emission Colour##EmissionColourPicker" + m_name).c_str(), &m_emissionColour.x);
 
-			ImGui::DragFloat("Emission Intesity", &m_emissionIntensity);
+			ImGui::DragFloat(("Emission Intesity##"+m_name).c_str(), &m_emissionIntensity);
 		}
 	}
 #endif

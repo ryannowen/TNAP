@@ -95,7 +95,7 @@ namespace TNAP {
 			outputFile << std::endl;
 	}
 
-	inline bool Entity::setName(const std::string& argName)
+	bool Entity::setName(const std::string& argName)
 	{
 		// Entity doesnt have a name yet
 		if ("" != argName && "" != m_name)
@@ -117,6 +117,7 @@ namespace TNAP {
 #endif
 			return true;
 		}
+		
 		return false;
 	}
 

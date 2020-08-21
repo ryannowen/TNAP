@@ -57,11 +57,13 @@ void TNAP::Material::saveData(std::ofstream& outputFile, const std::string& argS
 		outputFile << "EMPTY";
 	else
 		outputFile << textureMessage.m_textureData->m_filePath;
+
+	outputFile << "," << m_useTransparency << "," << m_doubleSided;
 }
 
 void TNAP::Material::setData(const std::string& argData)
 {
-	std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 4);
+	std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 6);
 	
 	/*
 	0 Colour tint
@@ -97,6 +99,9 @@ void TNAP::Material::setData(const std::string& argData)
 				m_emissionTextureHandle = loadMessage.m_textureHandle;
 		}
 	}
+
+	m_useTransparency = std::stoi(materialData.at(4));
+	m_doubleSided = std::stoi(materialData.at(5));
 }
 
 void TNAP::Material::setEmissionTexture(const std::string& argFilePath)
@@ -110,7 +115,10 @@ void TNAP::Material::imGuiRender()
 	{
 		ImGui::Text(("Program Handle: " + std::to_string(m_programHandle)).c_str());
 
-		ImGui::ColorEdit4("Colour Tint", &m_colourTint.x);
+		ImGui::ColorEdit4(("Colour Tint##ColourTintPicker" + m_name).c_str(), &m_colourTint.x);
+
+		ImGui::Checkbox(("Use Transparency##" + m_name).c_str(), &m_useTransparency);
+		ImGui::Checkbox(("Double Sided##" + m_name).c_str(), &m_doubleSided);
 
 		{
 			GetTextureMessage textureMessage({ ETextureType::eEmission, m_emissionTextureHandle });
@@ -137,8 +145,8 @@ void TNAP::Material::imGuiRender()
 		ImGui::SameLine();
 		ImGui::Text("Emission");
 
-		ImGui::ColorEdit3("Emission Colour", &m_emissionColour.x);
-		ImGui::InputFloat("Emission Intesity", &m_emissionIntensity);
+		ImGui::ColorEdit3(("Emission Colour##EmissionColourPicker" + m_name).c_str(), &m_emissionColour.x);
+		ImGui::DragFloat(("Emission Intesity##" + m_name).c_str(), &m_emissionIntensity);
 	}
 }
 #endif

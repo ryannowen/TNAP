@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <algorithm>
 
 #include "ExternalLibraryHeaders.h"
 #include "Engine.hpp"
@@ -386,6 +387,7 @@ namespace TNAP {
 		if (submitModel->m_modelHandle >= m_models.size())
 			return;
 
+		/*
 		const auto& batch = m_batchRenders.find(submitModel->m_modelHandle);
 
 		if (batch == m_batchRenders.end())
@@ -427,7 +429,75 @@ namespace TNAP {
 					std::vector<glm::mat4> { submitModel->m_transform }, std::vector<size_t> { *submitModel->m_materialHandle }
 				));
 			}
+		} // E.W.
+		*/
+
+
+
+		for (size_t i = 0; i < submitModel->m_materialHandle->size(); i++)
+		{
+			Material* mat{ m_materials.at(submitModel->m_materialHandle->at(i)).get() };
+
+			// Check if program batch exists
+			{
+				const auto& programBatch{ m_batchRenders.find(mat->getProgramHandle()) };
+				if (programBatch == m_batchRenders.end())
+				{
+					// Program does not exist
+					m_batchRenders[mat->getProgramHandle()] = ModelBatch();
+				}
+				assert(m_batchRenders.find(mat->getProgramHandle()) != m_batchRenders.end()); // Somehow failed to create program batch
+			}
+			
+			
+			//static_assert(std::is_base_of<Entity, EntityType>::value, "addChild: Trying to create entity from non-entity type!");
+			// Proram does exist
+			{
+				const auto& programBatch{ m_batchRenders.find(mat->getProgramHandle()) };
+				const auto& modelBatch{ programBatch->second.find(submitModel->m_modelHandle) };
+				if (modelBatch == programBatch->second.end())
+				{
+					// Model does not exist
+					programBatch->second[submitModel->m_modelHandle] = { MeshBatch(), MeshBatch() };
+				}
+				assert(programBatch->second.find(submitModel->m_modelHandle) != programBatch->second.end()); // Somehow failed to create model batch
+			}
+
+			// Model does exist
+			{
+				const auto& programBatch{ m_batchRenders.find(mat->getProgramHandle()) };
+				const auto& modelBatch{ programBatch->second.find(submitModel->m_modelHandle) };
+				MeshBatch& meshBatch{ mat->getUseTransparency() ? modelBatch->second.second : modelBatch->second.first };
+				if (meshBatch.find(i) == meshBatch.end())
+				{
+					// Mesh does not exist
+					// MeshData(std::vector<glm::mat4>(), submitModel->m_materialHandle->at(i))
+					meshBatch.insert({ i, std::vector<MeshData>() });
+					//meshBatch.at(i).back().second = submitModel->m_materialHandle->at(i);
+				}
+				assert(meshBatch.find(i) != meshBatch.end()); // Somehow failed to create mesh batch
+				// Mesh does exist
+				bool foundMaterial{ false };
+				for (MeshData& meshData : meshBatch.at(i))
+				{
+					if (submitModel->m_materialHandle->at(i) == meshData.second)
+					{
+						meshData.first.emplace_back(submitModel->m_transform);
+						foundMaterial = true;
+						break;
+					}
+				}
+				if (!foundMaterial)
+				{
+					MeshData newData;
+					newData.first.emplace_back(submitModel->m_transform);
+					newData.second = submitModel->m_materialHandle->at(i);
+					meshBatch.at(i).emplace_back(newData);
+				}
+			}
+	
 		}
+
 	}
 
 	void Renderer3D::generateMaterialMessage(TNAP::Message* const argMessage)
@@ -509,7 +579,7 @@ namespace TNAP {
 	{
 		// Configure pipeline settings
 		glEnable(GL_DEPTH_TEST);
-		glEnable(GL_CULL_FACE);
+		//glEnable(GL_CULL_FACE);
 
 		// Uncomment to render in wireframe (can be useful when debugging)
 		static bool polyMode{ false };
@@ -541,6 +611,13 @@ namespace TNAP {
 #endif
 		glViewport(0, 0, static_cast<GLsizei>(m_windowFrameBuffer.getSize().x), static_cast<GLsizei>(m_windowFrameBuffer.getSize().y));
 
+		static bool depthMaskEnabled{ false };
+		if (!depthMaskEnabled)
+		{
+			depthMaskEnabled = true;
+			glDepthMask(true);
+		}
+
 		// Clear FRAME buffers from previous frame
 		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -556,95 +633,164 @@ namespace TNAP {
 		glm::mat4 view_xform{ glm::lookAt(Simulation::m_camera->GetPosition(), Simulation::m_camera->GetPosition() + Simulation::m_camera->GetLookVector(), Simulation::m_camera->GetUpVector()) };
 		glm::mat4 combined_xform{ projection_xform * view_xform };
 
-		for (const auto& modelBatch : m_batchRenders)
+		// First loop = opaque			second = transparent
+		for (int i = 0; i < 2; i++)
 		{
-			if (modelBatch.first >= m_models.size())
-				continue;
-
-			const Model* const model{ &m_models.at(modelBatch.first) };
-
-			// Transforms, MaterialHandles
-			for (const std::pair<std::vector<glm::mat4>, std::vector<size_t>>& batch : modelBatch.second)
+			if (i)
 			{
-				if (batch.first.size() <= 0)
-					continue;
+				depthMaskEnabled = false;
+				glDepthMask(false);
+				glEnable(GL_BLEND);
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			}
+			else
+			{
+				glDisable(GL_BLEND);
+			}
 
-				const std::vector<std::unique_ptr<Helpers::Mesh>>& meshes{ model->getMeshVector() };
-
-				for (const std::unique_ptr<Helpers::Mesh>& mesh : meshes)
+			for (const auto& programBatch : m_batchRenders)
+			{
+				const GLuint program{ m_programs.at(programBatch.first).m_program };
+				if (program != m_currentProgram)
 				{
-					/// Uses Shaders from our program
-					Material* mat{ nullptr };
+					glUseProgram(program);
+					m_currentProgram = program;
+				}
 
-					if (mesh->materialIndex >= batch.second.size())
-						mat = m_materials.at(0).get();
-					else
-						mat = m_materials.at(batch.second.at(mesh->materialIndex)).get();
+				if (m_programs.at(programBatch.first).m_useLighting)
+				{
+					for (const std::unique_ptr<SLightData>& lightData : m_nextLights)
+						lightData->sendLightData(m_currentProgram);
 
-					const GLuint program{ m_programs[mat->getProgramHandle()].m_program };
+					SLightData::sendAmountOfLights(m_currentProgram);
+					SPointLightData::sendAmountOfLights(m_currentProgram);
+					SSpotLightData::sendAmountOfLights(m_currentProgram);
+				}
 
-					if (program != m_currentProgram)
+				getSceneManager()->getCurrentScene()->sendShaderData(m_currentProgram);
+
+				/// Create camera ID and then Sends camera forward direction data to shader as Uniform
+				const GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
+				glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
+
+				const GLuint camera_position_id = glGetUniformLocation(program, "camera_position");
+				glUniform3fv(camera_position_id, 1, glm::value_ptr(Simulation::m_camera->GetPosition()));
+
+				/// Create combined xform ID and then Sends Combined Xform data to shader as Uniform
+				const GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
+				glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
+
+
+
+				for (const auto& modelBatch : programBatch.second)
+				{
+
+					if (modelBatch.first >= m_models.size())
+						continue;
+
+					const Model* const model{ &m_models.at(modelBatch.first) };
+
+					const MeshBatch& otBatch{ i ? modelBatch.second.second : modelBatch.second.first }; // ot = opaque / transparent
+
+					const std::vector<std::unique_ptr<Helpers::Mesh>>& meshes{ model->getMeshVector() };
+
+					for (const auto& meshBatch : otBatch)
 					{
-						glUseProgram(program);
-						m_currentProgram = program;
+
+						/// Uses Shaders from our program
+						Material* mat{ nullptr };
+
+						Helpers::Mesh* mesh = meshes.at(meshBatch.first).get();
+
+						for (MeshData meshData : meshBatch.second)
+						{
+
+							// Sort transparnt objects
+							if (i)
+							{
+								glm::vec3 camPos = Simulation::m_camera->GetPosition();
+								const auto sortL{ [&camPos](const glm::mat4& argFirst, const glm::mat4& argSecond)
+								{
+									return glm::length(camPos - glm::vec3(argFirst[0][3], argFirst[1][3], argFirst[2][3])) <
+										glm::length(camPos - glm::vec3(argSecond[0][3], argSecond[1][3], argSecond[2][3]));
+								} };
+								std::sort(meshData.first.begin(), meshData.first.end(), sortL);
+								/*while (true)
+								{
+									bool hasSwapped{ false };
+									for (size_t j = 0; j < meshData.first.size() - 1; j++)
+									{
+										if (sortL(meshData.first.at(j), meshData.first.at(j + 1)))
+										{
+											std::swap(meshData.first.at(j), meshData.first.at(j + 1));
+											hasSwapped = true;
+										}
+									}
+									if (!hasSwapped)
+										break;
+								}*/
+							}
+
+							if (meshData.second >= m_materials.size())
+								mat = m_materials.at(0).get();
+							else
+								mat = m_materials.at(meshData.second).get();
+
+							if (mat->getDoubleSided())
+								glDisable(GL_CULL_FACE);
+							else
+								glEnable(GL_CULL_FACE);
+
+							glBindVertexArray(mesh->VAO);
+
+							mat->sendShaderData(m_currentProgram);
+
+							const size_t meshBatchSize{ meshData.first.size() };
+
+							glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
+							glBufferData(GL_ARRAY_BUFFER, meshBatchSize * sizeof(glm::mat4), &meshData.first.at(0), GL_DYNAMIC_DRAW);
+
+							// Set attribute pointers for matrix (4 times vec4)
+							glEnableVertexAttribArray(5);
+							glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+							glEnableVertexAttribArray(6);
+							glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+							glEnableVertexAttribArray(7);
+							glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+							glEnableVertexAttribArray(8);
+							glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+							glVertexAttribDivisor(5, 1);
+							glVertexAttribDivisor(6, 1);
+							glVertexAttribDivisor(7, 1);
+							glVertexAttribDivisor(8, 1);
+
+							if (meshBatchSize > 1) // Batch Draw
+								glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, 0, meshBatchSize);
+							else // Normal Draw
+								glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, (void*)0);
+
+							Helpers::CheckForGLError();
+
+							glBindVertexArray(0);
+						}
 					}
-
-					if (m_programs.at(mat->getProgramHandle()).m_useLighting)
-					{
-						for (const std::unique_ptr<SLightData>& lightData : m_nextLights)
-							lightData->sendLightData(m_currentProgram);
-
-						SLightData::sendAmountOfLights(m_currentProgram);
-						SPointLightData::sendAmountOfLights(m_currentProgram);
-						SSpotLightData::sendAmountOfLights(m_currentProgram);
-					}
-
-					getSceneManager()->getCurrentScene()->sendShaderData(m_currentProgram);
-
-					/// Create camera ID and then Sends camera forward direction data to shader as Uniform
-					const GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
-					glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
-
-					const GLuint camera_position_id = glGetUniformLocation(program, "camera_position");
-					glUniform3fv(camera_position_id, 1, glm::value_ptr(Simulation::m_camera->GetPosition()));
-
-					/// Create combined xform ID and then Sends Combined Xform data to shader as Uniform
-					const GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
-					glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
-
-					glBindVertexArray(mesh->VAO);
-
-					mat->sendShaderData(m_currentProgram);
-
-					glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
-					glBufferData(GL_ARRAY_BUFFER, batch.first.size() * sizeof(glm::mat4), &batch.first.at(0), GL_DYNAMIC_DRAW);
-
-					// Set attribute pointers for matrix (4 times vec4)
-					glEnableVertexAttribArray(5);
-					glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
-					glEnableVertexAttribArray(6);
-					glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
-					glEnableVertexAttribArray(7);
-					glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
-					glEnableVertexAttribArray(8);
-					glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
-
-					glVertexAttribDivisor(5, 1);
-					glVertexAttribDivisor(6, 1);
-					glVertexAttribDivisor(7, 1);
-					glVertexAttribDivisor(8, 1);
-
-					if (batch.first.size() > 1) // Batch Draw
-						glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, 0, batch.first.size());
-					else // Normal Draw
-						glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, (void*)0);
-
-					Helpers::CheckForGLError();
-
-					glBindVertexArray(0);
 				}
 			}
 		}
+
+
+
+		/*
+
+		for (const auto& modelBatch : m_batchRenders)
+		{
+			
+
+			// Transforms, MaterialHandles
+			
+		}
+		*/
 
 #if USE_IMGUI
 		m_windowFrameBuffer.unbind();

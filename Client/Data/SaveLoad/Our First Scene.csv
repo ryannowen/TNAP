@@ -1,6 +1,8 @@
-New Entity,1,1,0,0,0 0 0 0 0 0 1 1 1,,Primitives/Cube.fbx,Cube.fbx_0
-New Entity_1,1,1,0,1,-4.15 0 0 0 0 0 1 1 1,,Primitives/Sphere.fbx,PBR2
+Red Cube,1,1,0,0,0 0 0 0 0 0 1 1 1,,Primitives/Cube.fbx,Cube.fbx_0
+White Sphere,1,1,0,1,-4.15 0 0 0 0 0 1 1 1,,Primitives/Sphere.fbx,PBR2_0
 New Entity_2,1,1,0,2,-2.54 3.7 0 0 0 0 1 1 1,,Primitives/Sphere.fbx,PBR
 Golem,1,1,0,3,-10.45 3.7 0 -90 0 0 50 50 50,,fire-elemental/ostatni test1.fbx,PBR
-New Light,2,1,0,4,0 0 0 0 0 0 1 1 1,,1 1 1,1
-New Entity_3,1,1,0,5,3.48 0 0 0 0 0 1 1 1,,Primitives/Cube.fbx,Cube.fbx_1
+New Light,2,1,0,4,0 0 0 0 100.5 0 1 1 1,,1 1 1,0.1
+New Entity_3,1,1,0,5,4.17 0 2.22 0 0 0 1 1 1,,Primitives/Cube.fbx,Cube.fbx_2
+Green Cube,1,1,0,6,-2.52 0 4.08 0 0 0 1 1 1,,Primitives/Cube.fbx,Cube.fbx_4
+New Entity_5,1,0,0,7,-5 0 0 0 0 0 1 1 1,,Primitives/Cube.fbx,Cube.fbx_3

@@ -1,22 +1,26 @@
-DefaultMaterial,Unlit,1 1 1 1,1 1 1,0,EMPTY
-Cube.fbx_0,UnlitTexture,1 1 1 1,0.43401 0.735294 0.382065,2,three-eyed-demon/Third_Eyex_Albedo.jpg,0,Editor/MissingTexture.jpg
-Sphere.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-Cylinder.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-Plane.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-Cone.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-hull.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-gun_base.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-gun.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-wing_left.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-propeller.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-EVOLUTION_02_POSED.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,creature-evolution-2/Default Material1_Flattened_Diffuse.png
-EVOLUTION_02_POSED.fbx_1,UnlitTexture,0.75 0.0551471 0.0551471 1,1 1 1,0,EMPTY,0,EMPTY
-BirdPlane,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,birdplane.png
-TestMaterial,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,desert-trooper-rigged/Helmet_Base_Color.jpg
-hull.obj_1,PBR,1 1 1 1,1 1 1,0,EMPTY,0 0 0 0 0,EMPTY|EMPTY|EMPTY|EMPTY|EMPTY
-apple.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,Apple/apple.jpg
-PBR,PBR,1 1 1 1,1 1 1,0,EMPTY,0 0 0 0 0,EMPTY|EMPTY|EMPTY|EMPTY|EMPTY
-PBR2,PBR,1 1 1 1,1 1 1,0,EMPTY,0 0 0 0 0,Editor/MissingTexture.jpg|Editor/MatTexture.png|Phoenix/Tex_Ride_FengHuang_01b_D_A.tga.png|Editor/MissingTexture.jpg|AR/AssaultRifleModel_Albedo.tga
-ostatni test1.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-ErrorMesh.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,EMPTY
-Cube.fbx_1,PBR,1 1 1 1,1 1 1,0,EMPTY,0 0 0 0 0,EMPTY|EMPTY|EMPTY|EMPTY|EMPTY
+DefaultMaterial,Unlit,1 1 1 1,1 1 1,0,EMPTY,0,0,,
+Cube.fbx_0,UnlitTexture,1 0 0 1,0.999991 1 0.99999,0,EMPTY,0,0,0,EMPTY
+Sphere.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+Cylinder.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+Plane.fbx_0,UnlitTexture,1 1 1 0.466667,1 1 1,0,EMPTY,0,0,0,Editor/MissingTexture.jpg
+Cone.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+hull.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+gun_base.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+gun.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+wing_left.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+propeller.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+EVOLUTION_02_POSED.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,creature-evolution-2/Default Material1_Flattened_Diffuse.png
+EVOLUTION_02_POSED.fbx_1,UnlitTexture,0.75 0.0551471 0.0551471 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+BirdPlane,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,birdplane.png
+TestMaterial,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,desert-trooper-rigged/Helmet_Base_Color.jpg
+hull.obj_1,PBR,1 1 1 1,1 1 1,0,EMPTY,0,0,0 0 0 0 0,EMPTY|EMPTY|EMPTY|EMPTY|EMPTY
+apple.obj_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,Apple/apple.jpg
+PBR,PBR,1 1 1 1,1 1 1,76,fire-elemental/emission.png,0,0,0 1 0 0 0,fire-elemental/diffuse fire_elemntal.png|fire-elemental/normal fire_elemental.png|EMPTY|EMPTY|EMPTY
+PBR2,PBR,1 1 1 1,1 1 1,0,EMPTY,0,0,0 1 0 0 0,Editor/MissingTexture.jpg|EMPTY|Phoenix/Tex_Ride_FengHuang_01b_D_A.tga.png|Editor/MissingTexture.jpg|AR/AssaultRifleModel_Albedo.tga
+ostatni test1.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+ErrorMesh.fbx_0,UnlitTexture,1 1 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+Cube.fbx_1,PBR,1 1 1 1,1 1 1,0,EMPTY,0,0,0 1 0 0 0,aqua_pig_2K.png|EMPTY|EMPTY|EMPTY|EMPTY
+Cube.fbx_2,UnlitTexture,1 1 1 0.623529,1 1 1,0,EMPTY,0,0,0,EMPTY
+PBR2_0,UnlitTexture,0 0.0892904 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
+Cube.fbx_3,UnlitTexture,1 1 1 0.819608,1 1 1,0,EMPTY,0,0,0,EMPTY
+Cube.fbx_4,UnlitTexture,1 1 1 0.0980392,1 1 1,0.1,three-eyed-demon/Third_Eyex_Albedo.jpg,1,0,0,Editor/MissingTexture.jpg

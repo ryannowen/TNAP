@@ -30,6 +30,9 @@ namespace TNAP {
 		glm::vec3 m_emissionColour{ 1 };
 		float m_emissionIntensity{ 0 };
 		
+		bool m_useTransparency{ false };
+		bool m_doubleSided{ false };
+
 	public:
 		Material();
 
@@ -54,6 +57,12 @@ namespace TNAP {
 		inline const glm::vec4& getColourTint() const { return m_colourTint; }
 		inline const glm::vec3& getEmissionColour() const { return m_emissionColour; }
 		inline const float getEmissionIntensity() const { return m_emissionIntensity; }
+
+		inline void setUseTransparency(const bool argUseTransparency) { m_useTransparency = argUseTransparency; }
+		inline const bool getUseTransparency() const { return m_useTransparency; }
+
+		inline void setDoubleSided(const bool argDoubleSided) { m_doubleSided = argDoubleSided; }
+		inline const bool getDoubleSided() const { return m_doubleSided; }
 
 #if USE_IMGUI
 		virtual void imGuiRender();

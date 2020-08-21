@@ -57,7 +57,7 @@ namespace TNAP {
 
 		inline virtual const EEntityType getEntityType() const { return EEntityType::eEntity; }
 
-		inline bool setName(const std::string& argName);
+		bool setName(const std::string& argName);
 		inline const std::string& getName() const { return m_name; }
 
 		bool updateNameInSceneMap(const std::string& argNewName);

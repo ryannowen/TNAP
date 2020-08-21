@@ -77,12 +77,12 @@ namespace TNAP {
 	{
 		Material::setData(argData);
 
-		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 6);
+		std::vector<std::string> materialData = stringToVector<std::string>(argData, ",", [](const std::string& str) { return str; }, 8);
 
 		// Texture Path
 		{
-			m_textureType = static_cast<ETextureType>(std::stoi(materialData.at(4)));
-			std::string filepath = materialData.at(5);
+			m_textureType = static_cast<ETextureType>(std::stoi(materialData.at(6)));
+			std::string filepath = materialData.at(7);
 
 			if ("EMPTY" != filepath)
 			{
@@ -107,6 +107,10 @@ namespace TNAP {
 			ImGui::Text(("Program Handle: " + std::to_string(m_programHandle)).c_str());
 
 			ImGui::ColorEdit4(("Colour Tint##ColourTintPicker" + m_name).c_str(), &m_colourTint.x);
+
+			ImGui::Checkbox(("Use Transparency##" + m_name).c_str(), &m_useTransparency);
+			ImGui::Checkbox(("Double Sided##" + m_name).c_str(), &m_doubleSided);
+
 			ImGui::Text("Albedo");
 			{
 				GetTextureMessage textureMessage({ m_textureType, m_textureHandle });
@@ -157,7 +161,7 @@ namespace TNAP {
 
 			ImGui::ColorEdit3(("Emission Colour##EmissionColourPicker" + m_name).c_str(), &m_emissionColour.x);
 
-			ImGui::InputFloat("Emission Intesity", &m_emissionIntensity);
+			ImGui::DragFloat(("Emission Intesity##" + m_name).c_str(), &m_emissionIntensity);
 		}
 	}
 #endif

@@ -67,7 +67,21 @@ namespace TNAP {
 		std::vector<TNAP::SProgram> m_programs;
 
 		// Map<ModelHandle, Vector<Pair<Vector<ModelTransform>, Vector<MaterialHandles>>>>
-		std::unordered_map<size_t, std::vector<std::pair<std::vector<glm::mat4>, std::vector<size_t>>>> m_batchRenders;
+		//std::unordered_map<size_t, std::vector<std::pair<std::vector<glm::mat4>, std::vector<size_t>>>> m_batchRenders;
+
+		//map<size_t, map<size_t, pair<map<size_t, pair<vector<mat4>, size_t>>, map<size_t, pair<vector<mat4>, size_t>>>>>
+
+		// Transforms and Material Handle
+		using MeshData = std::pair<std::vector<glm::mat4>, size_t>;
+		// Mesh indices
+		using MeshBatch = std::unordered_map<size_t, std::vector<MeshData>>;
+		// Model handle
+		using ModelBatch = std::unordered_map<size_t, std::pair<MeshBatch, MeshBatch>>;
+		// Program handle
+		using ProgramBatch = std::unordered_map<size_t, ModelBatch>;
+
+		ProgramBatch m_batchRenders;
+
 
 		std::vector<std::unique_ptr<TNAP::SLightData>> m_nextLights;
 

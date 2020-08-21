@@ -32,9 +32,6 @@ namespace TNAP {
 
 	void Scene::update()
 	{
-
-		//Transform transform;
-
 		for (const size_t entityHandle : m_parentHandles)
 		{
 			if (m_entities.at(entityHandle)->getEnabled())
