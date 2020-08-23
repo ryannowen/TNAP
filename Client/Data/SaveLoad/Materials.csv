@@ -24,5 +24,5 @@ Cube.fbx_2,UnlitTexture,1 1 1 0.623529,1 1 1,0,EMPTY,0,0,0,EMPTY
 PBR2_0,UnlitTexture,0 0.0892904 1 1,1 1 1,0,EMPTY,0,0,0,EMPTY
 Cube.fbx_3,UnlitTexture,1 1 1 0.819608,1 1 1,0,EMPTY,0,0,0,EMPTY
 Cube.fbx_4,UnlitTexture,1 1 1 0.0980392,1 1 1,0.1,three-eyed-demon/Third_Eyex_Albedo.jpg,1,0,0,Editor/MissingTexture.jpg
-AR.fbx_0,PBR,1 1 1 1,1 1 1,0,EMPTY,0,0,0 1 2 3 4,AR/AssaultRifleModel_Albedo.tga|AR/AssaultRifleModel_Normal.tga|EMPTY|EMPTY|EMPTY
+AR.fbx_0,PBR,1 1 1 1,1 1 1,0,EMPTY,0,0,0 1 2 3 4,AR/AssaultRifleModel_Albedo.tga|AR/AssaultRifleModel_Normal.tga|EMPTY|EMPTY|AR/AssaultRifleModel_AO.tga
 AR.fbx_1,PBR,1 1 1 1,1 1 1,0,EMPTY,0,0,0 1 2 3 4,EMPTY|EMPTY|EMPTY|EMPTY|EMPTY

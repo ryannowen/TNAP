@@ -13,7 +13,7 @@ namespace TNAP {
 		// Commom post processing steps - may slow load but make mesh better optimised
 		unsigned int ppsteps = 
 			//aiProcess_FlipUVs |
-			aiProcess_CalcTangentSpace | // calculate tangents and bitangents if possible
+			aiProcess_CalcTangentSpace |					// calculate tangents and bitangents if possible
 			aiProcess_JoinIdenticalVertices |				// join identical vertices/ optimize indexing
 			aiProcess_ValidateDataStructure |				// perform a full validation of the loader's output
 			aiProcess_ImproveCacheLocality |				// improve the cache locality of the output vertices
@@ -250,52 +250,64 @@ namespace TNAP {
 	void Model::bindMesh(Helpers::Mesh* const argMesh, const GLuint argBatchBuffer)
 	{
 		/// Reference to Objects
-		GLuint VAO, verticesVBO, uvVBO, normalsVBO, tangentsVBO, bitTangentsVBO, elementsEBO;
+		GLuint VAO, meshVBO, elementsEBO;
+
+		size_t verticesSize{ sizeof(glm::vec3) * argMesh->vertices.size() };
+		size_t normalsSize{ sizeof(glm::vec3) * argMesh->normals.size() };
+		size_t uvCoordsSize{ sizeof(glm::vec2) * argMesh->uvCoords.size() };
+		size_t tangentsSize{ sizeof(glm::vec3) * argMesh->tangents.size() };
+		size_t bitTangentsSize{ sizeof(glm::vec3) * argMesh->bitTangents.size() };
+		size_t elementsSize{ sizeof(GLuint) * argMesh->elements.size() };
 
 		/// Generates VAO
 		glGenVertexArrays(1, &VAO);
 		glBindVertexArray(VAO);
 
-		/// Generate objects and Bind them with data
-		/// Sends Vertex Positions
-		glGenBuffers(1, &verticesVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * argMesh->vertices.size(), argMesh->vertices.data(), GL_STATIC_DRAW);
+		glGenBuffers(1, &meshVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, meshVBO);
+		glBufferData(
+			GL_ARRAY_BUFFER,
+			verticesSize + normalsSize + uvCoordsSize + tangentsSize + bitTangentsSize,
+			NULL,
+			GL_STATIC_DRAW
+		);
+
+		// Vertices
+		glBufferSubData(GL_ARRAY_BUFFER, 0, verticesSize, argMesh->vertices.data());
+
+		// Normals
+		glBufferSubData(GL_ARRAY_BUFFER, verticesSize, normalsSize, argMesh->normals.data());
+
+		// Uv Coords
+		glBufferSubData(GL_ARRAY_BUFFER, verticesSize + normalsSize, uvCoordsSize, argMesh->uvCoords.data());
+
+		// Tangents 
+		glBufferSubData(GL_ARRAY_BUFFER, verticesSize + normalsSize + uvCoordsSize, tangentsSize, argMesh->tangents.data());
+
+		// Bit Tangents
+		glBufferSubData(GL_ARRAY_BUFFER, verticesSize + normalsSize + uvCoordsSize + tangentsSize, bitTangentsSize, argMesh->bitTangents.data());
+
 
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 
-		/// Sends Normals
-		glGenBuffers(1, &normalsVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, normalsVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * argMesh->normals.size(), argMesh->normals.data(), GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)(verticesSize));
 
-		/// Sends uvs
-		glGenBuffers(1, &uvVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, uvVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec2) * argMesh->uvCoords.size(), argMesh->uvCoords.data(), GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(2);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2), (void*)(verticesSize + normalsSize));
 
-		/// Sends Tangents
-		glGenBuffers(1, &tangentsVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, tangentsVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * argMesh->tangents.size(), argMesh->tangents.data(), GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(3);
-		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)(verticesSize + normalsSize + uvCoordsSize));
 
-		/// Sends BitTangents
-		glGenBuffers(1, &bitTangentsVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, bitTangentsVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * argMesh->bitTangents.size(), argMesh->bitTangents.data(), GL_STATIC_DRAW);
 
 		glEnableVertexAttribArray(4);
-		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)(verticesSize + normalsSize + uvCoordsSize + tangentsSize));
+
+
 
 
 		// Set attribute pointers for matrix (4 times vec4)
@@ -313,6 +325,9 @@ namespace TNAP {
 		glVertexAttribDivisor(6, 1);
 		glVertexAttribDivisor(7, 1);
 		glVertexAttribDivisor(8, 1);
+
+
+
 
 		/// Generates Element Buffer and Binds it
 		glGenBuffers(1, &elementsEBO);

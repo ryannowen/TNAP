@@ -22,10 +22,10 @@ namespace TNAP {
 		std::vector<size_t> m_parentHandles;
 
 		glm::vec3 m_ambientColour{ 1,1,1 };
-		float m_ambientIntensity{ 1 };
+		float m_ambientIntensity{ 0 };
 
 		float m_exposure{ 1 };
-		float m_gamma{ 1 };
+		float m_gamma{ 2.2 };
 
 	public:
 		Scene(const std::string& argName);
