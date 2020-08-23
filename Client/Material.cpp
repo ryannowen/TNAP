@@ -17,7 +17,7 @@ void TNAP::Material::init()
 {
 }
 
-void TNAP::Material::sendShaderData(const GLuint argProgram)
+void TNAP::Material::sendShaderData(const GLuint argProgram) const
 {
 	GetTextureMessage textureMessage({ TNAP::ETextureType::eEmission, m_emissionTextureHandle });
 	getEngine()->sendMessage(&textureMessage);
@@ -43,7 +43,7 @@ void TNAP::Material::sendShaderData(const GLuint argProgram)
 	Helpers::CheckForGLError();
 }
 
-void TNAP::Material::saveData(std::ofstream& outputFile, const std::string& argShaderName)
+void TNAP::Material::saveData(std::ofstream& outputFile, const std::string& argShaderName) const
 {
 	outputFile << m_name << ",";
 	outputFile << argShaderName << ",";

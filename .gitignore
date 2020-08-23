@@ -26,6 +26,8 @@ Client/x64/
 bld/
 [Ll]og/
 [Ll]ogs/
+x64/Release/Data/
+x64/Debug/Data/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

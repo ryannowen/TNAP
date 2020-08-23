@@ -77,7 +77,7 @@ namespace TNAP {
 
 		m_models.emplace_back(TNAP::Model());
 
-		if (!m_models.back().loadFromFile("Data/Models/" + filePath))
+		if (!m_models.back().loadFromFile("Data/Models/" + filePath, m_batchRenderingBuffer))
 		{
 			logMessage.m_message = "[Model] " + filePath + " could not load, returning handle 0";
 			logMessage.m_logType = LogMessage::ELogType::eWarning;
@@ -448,8 +448,8 @@ namespace TNAP {
 				}
 				assert(m_batchRenders.find(mat->getProgramHandle()) != m_batchRenders.end()); // Somehow failed to create program batch
 			}
-			
-			
+
+
 			//static_assert(std::is_base_of<Entity, EntityType>::value, "addChild: Trying to create entity from non-entity type!");
 			// Proram does exist
 			{
@@ -460,6 +460,7 @@ namespace TNAP {
 					// Model does not exist
 					programBatch->second[submitModel->m_modelHandle] = { MeshBatch(), MeshBatch() };
 				}
+
 				assert(programBatch->second.find(submitModel->m_modelHandle) != programBatch->second.end()); // Somehow failed to create model batch
 			}
 
@@ -468,21 +469,27 @@ namespace TNAP {
 				const auto& programBatch{ m_batchRenders.find(mat->getProgramHandle()) };
 				const auto& modelBatch{ programBatch->second.find(submitModel->m_modelHandle) };
 				MeshBatch& meshBatch{ mat->getUseTransparency() ? modelBatch->second.second : modelBatch->second.first };
-				if (meshBatch.find(i) == meshBatch.end())
+
+				// Add Transform to previously created meshBatch
+				if (i == 0)
+					meshBatch.first.emplace_back(submitModel->m_transform);
+
+				if (meshBatch.second.find(i) == meshBatch.second.end())
 				{
 					// Mesh does not exist
 					// MeshData(std::vector<glm::mat4>(), submitModel->m_materialHandle->at(i))
-					meshBatch.insert({ i, std::vector<MeshData>() });
+					meshBatch.second.insert({ i, std::vector<MeshData>() });
 					//meshBatch.at(i).back().second = submitModel->m_materialHandle->at(i);
 				}
-				assert(meshBatch.find(i) != meshBatch.end()); // Somehow failed to create mesh batch
+
+				assert(meshBatch.second.find(i) != meshBatch.second.end()); // Somehow failed to create mesh batch
+
 				// Mesh does exist
 				bool foundMaterial{ false };
-				for (MeshData& meshData : meshBatch.at(i))
+				for (MeshData& meshData : meshBatch.second.at(i))
 				{
-					if (submitModel->m_materialHandle->at(i) == meshData.second)
+					if (submitModel->m_materialHandle->at(i) == meshData)
 					{
-						meshData.first.emplace_back(submitModel->m_transform);
 						foundMaterial = true;
 						break;
 					}
@@ -490,12 +497,11 @@ namespace TNAP {
 				if (!foundMaterial)
 				{
 					MeshData newData;
-					newData.first.emplace_back(submitModel->m_transform);
-					newData.second = submitModel->m_materialHandle->at(i);
-					meshBatch.at(i).emplace_back(newData);
+					newData = submitModel->m_materialHandle->at(i);
+					meshBatch.second.at(i).emplace_back(newData);
 				}
 			}
-	
+
 		}
 
 	}
@@ -680,11 +686,8 @@ namespace TNAP {
 				const GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
 				glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
 
-
-
 				for (const auto& modelBatch : programBatch.second)
 				{
-
 					if (modelBatch.first >= m_models.size())
 						continue;
 
@@ -692,49 +695,67 @@ namespace TNAP {
 
 					const MeshBatch& otBatch{ i ? modelBatch.second.second : modelBatch.second.first }; // ot = opaque / transparent
 
+					// Sort transparnt objects
+					if (i)
+					{
+						/*glm::vec3 camPos = Simulation::m_camera->GetPosition();
+						const auto sortL{ [&camPos](const glm::mat4& argFirst, const glm::mat4& argSecond)
+						{
+							return glm::length(camPos - glm::vec3(argFirst[0][3], argFirst[1][3], argFirst[2][3])) <
+								glm::length(camPos - glm::vec3(argSecond[0][3], argSecond[1][3], argSecond[2][3]));
+						} };
+						std::sort(otBatch.first.begin(), otBatch.first.end(), sortL);*/
+					}
+
 					const std::vector<std::unique_ptr<Helpers::Mesh>>& meshes{ model->getMeshVector() };
 
-					for (const auto& meshBatch : otBatch)
-					{
+					const size_t meshBatchSize{ otBatch.first.size() };
 
+					if (meshBatchSize > 0)
+					{
+						Helpers::CheckForGLError();
+
+						glBindBuffer(GL_ARRAY_BUFFER, m_batchRenderingBuffer);
+						glBufferData(GL_ARRAY_BUFFER, meshBatchSize * sizeof(glm::mat4), &otBatch.first.at(0), GL_DYNAMIC_DRAW);
+						//glBufferSubData(GL_ARRAY_BUFFER, 0, meshBatchSize * sizeof(glm::mat4), &otBatch.first.at(0));
+						//glBufferData(GL_ARRAY_BUFFER, meshBatchSize * sizeof(glm::mat4), NULL, GL_DYNAMIC_DRAW);
+						Helpers::CheckForGLError();
+						//void* ptr = glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+						//void* ptr = glMapBufferRange(GL_ARRAY_BUFFER, 0, meshBatchSize * sizeof(glm::mat4), GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+
+						//assert(NULL != ptr);
+						//	
+						//// now copy data into memory
+						//Helpers::CheckForGLError();
+						//std::memcpy(ptr, &otBatch.first.at(0), meshBatchSize * sizeof(glm::mat4));
+
+						//// make sure to tell OpenGL we're done with the pointer
+						///*if (!glUnmapBuffer(GL_ARRAY_BUFFER))
+						//	continue;*/
+
+						//Helpers::CheckForGLError();
+
+						//glUnmapBuffer(GL_ARRAY_BUFFER);
+						glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+						Helpers::CheckForGLError();
+					}
+					else 
+						continue;
+
+					for (const auto& meshBatch : otBatch.second)
+					{
 						/// Uses Shaders from our program
 						Material* mat{ nullptr };
 
 						Helpers::Mesh* mesh = meshes.at(meshBatch.first).get();
 
-						for (MeshData meshData : meshBatch.second)
+						for (const MeshData& meshData : meshBatch.second)
 						{
-
-							// Sort transparnt objects
-							if (i)
-							{
-								glm::vec3 camPos = Simulation::m_camera->GetPosition();
-								const auto sortL{ [&camPos](const glm::mat4& argFirst, const glm::mat4& argSecond)
-								{
-									return glm::length(camPos - glm::vec3(argFirst[0][3], argFirst[1][3], argFirst[2][3])) <
-										glm::length(camPos - glm::vec3(argSecond[0][3], argSecond[1][3], argSecond[2][3]));
-								} };
-								std::sort(meshData.first.begin(), meshData.first.end(), sortL);
-								/*while (true)
-								{
-									bool hasSwapped{ false };
-									for (size_t j = 0; j < meshData.first.size() - 1; j++)
-									{
-										if (sortL(meshData.first.at(j), meshData.first.at(j + 1)))
-										{
-											std::swap(meshData.first.at(j), meshData.first.at(j + 1));
-											hasSwapped = true;
-										}
-									}
-									if (!hasSwapped)
-										break;
-								}*/
-							}
-
-							if (meshData.second >= m_materials.size())
+							if (meshData >= m_materials.size())
 								mat = m_materials.at(0).get();
 							else
-								mat = m_materials.at(meshData.second).get();
+								mat = m_materials.at(meshData).get();
 
 							if (mat->getDoubleSided())
 								glDisable(GL_CULL_FACE);
@@ -744,26 +765,6 @@ namespace TNAP {
 							glBindVertexArray(mesh->VAO);
 
 							mat->sendShaderData(m_currentProgram);
-
-							const size_t meshBatchSize{ meshData.first.size() };
-
-							glBindBuffer(GL_ARRAY_BUFFER, batchRenderingBuffer);
-							glBufferData(GL_ARRAY_BUFFER, meshBatchSize * sizeof(glm::mat4), &meshData.first.at(0), GL_DYNAMIC_DRAW);
-
-							// Set attribute pointers for matrix (4 times vec4)
-							glEnableVertexAttribArray(5);
-							glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
-							glEnableVertexAttribArray(6);
-							glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
-							glEnableVertexAttribArray(7);
-							glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
-							glEnableVertexAttribArray(8);
-							glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
-
-							glVertexAttribDivisor(5, 1);
-							glVertexAttribDivisor(6, 1);
-							glVertexAttribDivisor(7, 1);
-							glVertexAttribDivisor(8, 1);
 
 							if (meshBatchSize > 1) // Batch Draw
 								glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, 0, meshBatchSize);
@@ -778,19 +779,6 @@ namespace TNAP {
 				}
 			}
 		}
-
-
-
-		/*
-
-		for (const auto& modelBatch : m_batchRenders)
-		{
-			
-
-			// Transforms, MaterialHandles
-			
-		}
-		*/
 
 #if USE_IMGUI
 		m_windowFrameBuffer.unbind();
@@ -1157,7 +1145,7 @@ namespace TNAP {
 
 		Helpers::CheckForGLError();
 		
-		glGenBuffers(1, &batchRenderingBuffer);
+		glGenBuffers(1, &m_batchRenderingBuffer);
 
 		GLuint whiteText{ 0 };
 		glGenTextures(1, &whiteText);

@@ -71,14 +71,15 @@ namespace TNAP {
 
 		//map<size_t, map<size_t, pair<map<size_t, pair<vector<mat4>, size_t>>, map<size_t, pair<vector<mat4>, size_t>>>>>
 
-		// Transforms and Material Handle
-		using MeshData = std::pair<std::vector<glm::mat4>, size_t>;
-		// Mesh indices
-		using MeshBatch = std::unordered_map<size_t, std::vector<MeshData>>;
+		// Material Handle
+		using MeshData = size_t;
+		// Transforms and Mesh indices
+		using MeshBatch = std::pair<std::vector<glm::mat4>, std::unordered_map<size_t, std::vector<MeshData>>>;
 		// Model handle
 		using ModelBatch = std::unordered_map<size_t, std::pair<MeshBatch, MeshBatch>>;
 		// Program handle
 		using ProgramBatch = std::unordered_map<size_t, ModelBatch>;
+
 
 		ProgramBatch m_batchRenders;
 
@@ -86,7 +87,7 @@ namespace TNAP {
 		std::vector<std::unique_ptr<TNAP::SLightData>> m_nextLights;
 
 		GLuint m_currentProgram{ 0 };
-		GLuint batchRenderingBuffer{ 0 };
+		GLuint m_batchRenderingBuffer{ 0 };
 		
 #if USE_IMGUI
 		bool m_viewportSelected{ false };

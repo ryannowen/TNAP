@@ -15,7 +15,7 @@ namespace TNAP {
 	{
 	}
 
-	void UnlitTexture::sendShaderData(const GLuint argProgram)
+	void UnlitTexture::sendShaderData(const GLuint argProgram) const
 	{
 		{
 			GetTextureMessage textureMessage({ m_textureType, m_textureHandle });
@@ -57,7 +57,7 @@ namespace TNAP {
 		Helpers::CheckForGLError();
 	}
 
-	void UnlitTexture::saveData(std::ofstream& outputFile, const std::string& argShaderName)
+	void UnlitTexture::saveData(std::ofstream& outputFile, const std::string& argShaderName) const
 	{
 		Material::saveData(outputFile, argShaderName);
 

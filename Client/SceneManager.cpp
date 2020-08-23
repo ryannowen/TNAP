@@ -32,9 +32,25 @@ namespace TNAP {
 		if (nullptr == m_scene)
 			m_scene = std::make_unique<Scene>("Our First Scene");
 
-		m_scene->loadFromFile("Our First Scene");
+		//m_scene->loadFromFile("Our First Scene");
 
-		//m_scene->addEntity<Light>(false, "LIGHT");
+		int size{ 20 };
+		for (int x = 0; x < size; x++)
+		{
+			for (int y = 0; y < size; y++)
+			{
+				for (int z = 0; z < size; z++)
+				{
+					Renderable* newGun{ m_scene->addEntity<Renderable>(false, "Gun_" + std::to_string(x * 10) + std::to_string(y * 10) + std::to_string(z * 10), "AR.fbx") };
+					newGun->getTransform().setScale(glm::vec3(0.1));
+					newGun->getTransform().setTranslation({ x * 10, y * 10, z * 10 });
+					newGun->getTransform().setRotation({ rand() % 360, rand() % 360, rand() % 360 });
+				}
+			}
+		}
+
+		Light* const light{ m_scene->addEntity<Light>(false, "LIGHT") };
+		light->getTransform().setRotation(glm::vec3(0, -90, 0));
 
 		//m_scene->addEntity<PointLight>(false, "LIGHT");
 		//m_scene->addEntity<SpotLight>(false, "LIGHT");

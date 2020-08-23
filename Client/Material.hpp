@@ -37,10 +37,10 @@ namespace TNAP {
 		Material();
 
 		virtual void init();
-		virtual void sendShaderData(const GLuint argProgram);
+		virtual void sendShaderData(const GLuint argProgram) const;
 		inline virtual const EMaterialType getMaterialType() const { return EMaterialType::eUnlit; }
 
-		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName);
+		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName) const;
 		virtual void setData(const std::string& argData);
 
 		inline void setColourTint(const glm::vec4& argColour) { m_colourTint = argColour; }

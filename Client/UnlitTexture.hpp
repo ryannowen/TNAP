@@ -14,10 +14,10 @@ namespace TNAP {
 	public:
 		UnlitTexture();
 
-		virtual void sendShaderData(const GLuint argProgram) override;
+		virtual void sendShaderData(const GLuint argProgram) const override;
 		inline virtual const EMaterialType getMaterialType() const override { return EMaterialType::eUnlitTexture; }
 
-		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName) override;
+		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName) const override;
 		virtual void setData(const std::string& argData) override;
 
 		void setTexture(const ETextureType argTextureType, const std::string& argFilePath);

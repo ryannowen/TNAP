@@ -6,7 +6,7 @@ namespace TNAP {
 	{
 	}
 
-	bool Model::loadFromFile(const std::string& argFilePath)
+	bool Model::loadFromFile(const std::string& argFilePath, const GLuint argBatchBuffer)
 	{
 		// Log loading file
 
@@ -53,7 +53,7 @@ namespace TNAP {
 		// Might need to remove later
 		for (std::unique_ptr<Helpers::Mesh>& mesh : m_meshes)
 		{
-			bindMesh(mesh.get());
+			bindMesh(mesh.get(), argBatchBuffer);
 
 			bool isUnique = true;
 			for (const size_t matIndex : m_uniqueMaterialIndices)
@@ -247,7 +247,7 @@ namespace TNAP {
 		}*/
 	}
 
-	void Model::bindMesh(Helpers::Mesh* const argMesh)
+	void Model::bindMesh(Helpers::Mesh* const argMesh, const GLuint argBatchBuffer)
 	{
 		/// Reference to Objects
 		GLuint VAO, verticesVBO, uvVBO, normalsVBO, tangentsVBO, bitTangentsVBO, elementsEBO;
@@ -296,6 +296,23 @@ namespace TNAP {
 
 		glEnableVertexAttribArray(4);
 		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+
+		// Set attribute pointers for matrix (4 times vec4)
+		glBindBuffer(GL_ARRAY_BUFFER, argBatchBuffer);
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)0);
+		glEnableVertexAttribArray(6);
+		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(sizeof(glm::vec4)));
+		glEnableVertexAttribArray(7);
+		glVertexAttribPointer(7, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(2 * sizeof(glm::vec4)));
+		glEnableVertexAttribArray(8);
+		glVertexAttribPointer(8, 4, GL_FLOAT, GL_FALSE, sizeof(glm::mat4), (void*)(3 * sizeof(glm::vec4)));
+
+		glVertexAttribDivisor(5, 1);
+		glVertexAttribDivisor(6, 1);
+		glVertexAttribDivisor(7, 1);
+		glVertexAttribDivisor(8, 1);
 
 		/// Generates Element Buffer and Binds it
 		glGenBuffers(1, &elementsEBO);

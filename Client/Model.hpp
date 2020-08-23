@@ -19,9 +19,9 @@ namespace TNAP {
 	public:
 		Model();
 
-		bool loadFromFile(const std::string& argFilePath);
+		bool loadFromFile(const std::string& argFilePath, const GLuint argBatchBuffer);
 		void populateModelData(const aiScene* const argScene);
-		void bindMesh(Helpers::Mesh* const argMesh);
+		void bindMesh(Helpers::Mesh* const argMesh, const GLuint argBatchBuffer);
 		inline const size_t getUniqueMaterialIndicesCount() const { return m_uniqueMaterialIndices.size(); }
 
 		inline void addDefaultMaterialHandle(const size_t argHandle) { m_defaultMaterialHandles.emplace_back(argHandle); }

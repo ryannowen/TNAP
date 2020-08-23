@@ -23,7 +23,7 @@ namespace TNAP {
 			m_textureTypes.at(i) = static_cast<ETextureType>(i);
 	}
 
-	void PBR::sendShaderData(const GLuint argProgram)
+	void PBR::sendShaderData(const GLuint argProgram) const
 	{
 		static std::array<std::string, static_cast<int>(ETextureType::eCount) - 1> m_textureNames
 		{
@@ -83,7 +83,7 @@ namespace TNAP {
 		Helpers::CheckForGLError();
 	}
 
-	void PBR::saveData(std::ofstream& outputFile, const std::string& argShaderName)
+	void PBR::saveData(std::ofstream& outputFile, const std::string& argShaderName) const
 	{
 		Material::saveData(outputFile, argShaderName);
 
