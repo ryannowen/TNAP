@@ -23,7 +23,7 @@ namespace TNAP {
 
 		virtual void init() override final;
 		virtual void sendShaderData(const GLuint argProgram) const override final;
-		inline virtual const EMaterialType getMaterialType() const override final { return EMaterialType::ePBR; }
+		inline virtual const EShaderType getShaderType() const override final { return EShaderType::ePBR; }
 
 		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName) const;
 		virtual void setData(const std::string& argData) override;

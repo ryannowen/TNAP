@@ -69,13 +69,7 @@ namespace TNAP {
 
 	void Scene::loadFromFile(const std::string& argFilePath)
 	{
-#if USE_IMGUI
-		Entity::setSelected(nullptr);
-#endif
-		// Delete all objects in current scene
-		m_mapEntities.clear();
-		m_entities.clear();
-		m_parentHandles.clear();
+		clearScene();
 
 		// Load from save file
 		std::ifstream savedScene;
@@ -226,6 +220,17 @@ namespace TNAP {
 		}
 
 		savedScene.close();
+	}
+
+	void Scene::clearScene()
+	{
+#if USE_IMGUI
+		Entity::setSelected(nullptr);
+#endif
+		// Delete all objects in current scene
+		m_mapEntities.clear();
+		m_entities.clear();
+		m_parentHandles.clear();
 	}
 
 	TNAP::Entity* const Scene::findEntity(const std::string& argName)
@@ -512,6 +517,13 @@ namespace TNAP {
 						if (ImGui::IsMouseClicked(0))
 							Entity::setSelected(nullptr);
 					}
+				}
+
+				ImGui::SameLine();
+
+				if (ImGui::Button("Clear Scene"))
+				{
+					clearScene();
 				}
 
 				if (glfwGetKey(TNAP::getApplication()->getWindow(), GLFW_KEY_DELETE) == GLFW_PRESS)

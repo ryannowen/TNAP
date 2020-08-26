@@ -25,6 +25,15 @@ namespace TNAP {
 	class Light;
 	struct SLightData;
 
+	enum class ERenderPass
+	{
+		eEarlyDepthTest
+		, eOpaqueRender
+		, eTransparentRender
+		//eLighting
+		, eCount
+	};
+
 	enum class ETextureType
 	{
 		eAlbedo,
@@ -36,15 +45,15 @@ namespace TNAP {
 		eCount
 	};
 
-	struct SProgram
+	struct SProgramData
 	{
 		GLuint m_program;
-		EMaterialType m_type;
+		EShaderType m_type;
 		std::string m_name;
 		bool m_useLighting{ false };
 		std::string m_vertexShader;
 		std::string m_fragmentShader;
-		SProgram(const GLuint argProgram, const EMaterialType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
+		SProgramData(const GLuint argProgram, const EShaderType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
 		: m_program(argProgram), m_type(argType), m_name(argShaderName), m_useLighting(argUseLighting), m_vertexShader(argVertexShaderPath), m_fragmentShader(argFragmentShaderPath)
 		{}
 	};
@@ -52,7 +61,8 @@ namespace TNAP {
 	class Renderer3D : public TNAP::System
 	{
 	private:
-		TNAP::FrameBuffer m_windowFrameBuffer;
+		TNAP::FrameBuffer m_earlyDepthTestFrameBuffer;
+		TNAP::FrameBuffer m_geometryFrameBuffer;
 
 		std::unordered_map<std::string, size_t> m_mapModels;
 		std::vector<TNAP::Model> m_models;
@@ -64,7 +74,7 @@ namespace TNAP {
 		std::vector<std::unique_ptr<TNAP::Material>> m_materials;
 
 		std::unordered_map<std::string, size_t> m_mapPrograms;
-		std::vector<TNAP::SProgram> m_programs;
+		std::vector<TNAP::SProgramData> m_programs;
 
 		// Map<ModelHandle, Vector<Pair<Vector<ModelTransform>, Vector<MaterialHandles>>>>
 		//std::unordered_map<size_t, std::vector<std::pair<std::vector<glm::mat4>, std::vector<size_t>>>> m_batchRenders;
@@ -98,9 +108,12 @@ namespace TNAP {
 		void loadShaders();
 		const std::pair<bool, size_t> loadTexture(const TNAP::ETextureType argType, const std::string& argFilePath, const std::string& argTextureName = "");
 		void loadMaterials(const std::string& argFilePath);
-		const bool createShader(const EMaterialType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
+		const bool createProgram(const TNAP::EShaderType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath);
+		const bool createShader(const GLuint argProgram, const GLenum argShaderType, const std::string& argShaderPath);
 		const bool createMaterial(const std::string& argMaterialName, const std::string& argShaderName, const bool argIncrementNameIfExisting = false);
-		const bool createMaterial(const std::string& argMaterialName, const TNAP::EMaterialType argMaterialType, const bool argIncrementNameIfExisting = false);
+		const bool createMaterial(const std::string& argMaterialName, const TNAP::EShaderType argShaderType, const bool argIncrementNameIfExisting = false);
+
+		const std::pair<bool, size_t> getProgramHandle(const TNAP::EShaderType argType);
 
 		void saveMaterials();
 

@@ -1,4 +1,6 @@
-#version 330
+#version 430
+
+//layout(early_fragment_tests) in;
 
 struct SLightData
 {
@@ -51,6 +53,9 @@ struct SSceneData
 	float m_gamma;
 };
 
+uniform sampler2D depthMap;
+uniform vec2 viewportSize;
+
 uniform SMaterial material;
 
 // Light Arrays
@@ -69,7 +74,7 @@ uniform uint amountOfSpotLightData;
 
 uniform SSceneData sceneData;
 
-in vec3 varying_position;
+//in vec3 varying_position;
 in vec2 varying_uv;
 //in vec3 varying_normal;
 
@@ -127,6 +132,13 @@ const vec4 applyHDR(vec4 argApplicant)
 
 void main(void)
 {
+	vec2 fragCoord = gl_FragCoord.xy / viewportSize;
+
+	//vec3 depth = texture(depthStencil, fragCoord).rrr;
+	float depth = texture(depthMap, fragCoord).r;
+	if (gl_FragCoord.z > depth)
+		discard;
+
 	vec4 finalResult = vec4(0, 0, 0, 1);
 	vec3 normal = texture(material.m_normalTexture, varying_uv).rgb;
 

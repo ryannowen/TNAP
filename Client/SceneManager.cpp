@@ -32,9 +32,9 @@ namespace TNAP {
 		if (nullptr == m_scene)
 			m_scene = std::make_unique<Scene>("Our First Scene");
 
-		m_scene->loadFromFile("Our First Scene");
-
-		/*int size{ 20 };
+		//m_scene->loadFromFile("Our First Scene");
+		
+		int size{ 5 };
 		for (int x = 0; x < size; x++)
 		{
 			for (int y = 0; y < size; y++)
@@ -47,7 +47,7 @@ namespace TNAP {
 					newGun->getTransform().setRotation({ rand() % 360, rand() % 360, rand() % 360 });
 				}
 			}
-		}*/
+		}
 
 		Light* const light{ m_scene->addEntity<Light>(false, "LIGHT") };
 		light->getTransform().setRotation(glm::vec3(0, -90, 0));

@@ -36,6 +36,8 @@ namespace TNAP {
 		void saveScene();
 		void loadFromFile(const std::string& argFilePath);
 
+		void clearScene();
+
 		template<class EntityType, typename... Args>
 		inline EntityType* const addEntity(const bool argIsChild, const std::string& argName, const Args&... args);
 

@@ -148,23 +148,23 @@ namespace TNAP {
 				}
 
 				static std::string materialTypeName{ "Unlit" };
-				static TNAP::EMaterialType materialType{ TNAP::EMaterialType::eUnlit };
+				static TNAP::EShaderType materialType{ TNAP::EShaderType::eUnlit };
 				if (ImGui::BeginCombo("Material Type", materialTypeName.c_str()))
 				{
 					if (ImGui::Selectable("Unlit"))
 					{
 						materialTypeName = "Unlit";
-						materialType = TNAP::EMaterialType::eUnlit;
+						materialType = TNAP::EShaderType::eUnlit;
 					}
 					if (ImGui::Selectable("UnlitTexture"))
 					{
 						materialTypeName = "UnlitTexture";
-						materialType = TNAP::EMaterialType::eUnlitTexture;
+						materialType = TNAP::EShaderType::eUnlitTexture;
 					}
 					if (ImGui::Selectable("PBR"))
 					{
 						materialTypeName = "PBR";
-						materialType = TNAP::EMaterialType::ePBR;
+						materialType = TNAP::EShaderType::ePBR;
 					}
 
 					ImGui::EndCombo();

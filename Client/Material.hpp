@@ -6,12 +6,13 @@
 
 namespace TNAP {
 
-	enum class EMaterialType
+	enum class EShaderType
 	{
 		eUnlit,
 		eUnlitTexture,
 		ePBR,
-		eCount
+		eCount,
+		eEarlyDepthTest
 	};
 
 	class Material
@@ -38,7 +39,7 @@ namespace TNAP {
 
 		virtual void init();
 		virtual void sendShaderData(const GLuint argProgram) const;
-		inline virtual const EMaterialType getMaterialType() const { return EMaterialType::eUnlit; }
+		inline virtual const EShaderType getShaderType() const { return EShaderType::eUnlit; }
 
 		virtual void saveData(std::ofstream& outputFile, const std::string& argShaderName) const;
 		virtual void setData(const std::string& argData);

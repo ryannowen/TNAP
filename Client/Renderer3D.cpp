@@ -102,7 +102,7 @@ namespace TNAP {
 				continue;
 			}
 
-			createMaterial(name, EMaterialType::eUnlitTexture, false);
+			createMaterial(name, EShaderType::eUnlitTexture, false);
 
 			const auto& mapIndex{ m_mapMaterials.find(name) };
 			
@@ -136,7 +136,7 @@ namespace TNAP {
 			std::getline(savedShaders, useLighting, ',');
 			std::getline(savedShaders, vert, ',');
 			std::getline(savedShaders, frag, '\n');
-			createShader(static_cast<EMaterialType>(std::stoi(type)), name, std::stoi(useLighting), vert, frag);
+			createProgram(static_cast<EShaderType>(std::stoi(type)), name, std::stoi(useLighting), vert, frag);
 		}
 
 		savedShaders.close();
@@ -236,9 +236,9 @@ namespace TNAP {
 		savedMaterials.close();
 	}
 
-	const bool Renderer3D::createShader(const EMaterialType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
+	const bool Renderer3D::createProgram(const TNAP::EShaderType argType, const std::string& argShaderName, const bool argUseLighting, const std::string& argVertexShaderPath, const std::string& argFragmentShaderPath)
 	{
-		if (argShaderName.empty() || argVertexShaderPath.empty() || argFragmentShaderPath.empty())
+		if (argShaderName.empty())
 			return false;
 
 		// Check if Shader is already created
@@ -247,32 +247,42 @@ namespace TNAP {
 
 		const GLuint program = glCreateProgram();
 
+		bool createdVertex{ createShader(program, GL_VERTEX_SHADER, argVertexShaderPath) };
+		bool createdFragment{ createShader(program, GL_FRAGMENT_SHADER, argFragmentShaderPath) };
 		// Load and create vertex and fragment shaders
-		const GLuint vertex_shader{ Helpers::LoadAndCompileShader(GL_VERTEX_SHADER, argVertexShaderPath) };
-		const GLuint fragment_shader{ Helpers::LoadAndCompileShader(GL_FRAGMENT_SHADER, argFragmentShaderPath) };
 
-		if ((0 == vertex_shader) || (0 == fragment_shader))
+		if (false == createdVertex && false == createdFragment)
 		{
 			glDeleteProgram(program);
 			return false;
 		}
 
-		// Attach the vertex shader & fragment shader to this program (copies them)
-		glAttachShader(program, vertex_shader);
-		glAttachShader(program, fragment_shader);
-
-		// Done with the originals of these as we have made copies
-		glDeleteShader(vertex_shader);
-		glDeleteShader(fragment_shader);
-
 		// Link the shaders, checking for errors
 		if (!Helpers::LinkProgramShaders(program))
 			return false;
 
-		SProgram newProgram(program, argType, argShaderName, argUseLighting, argVertexShaderPath, argFragmentShaderPath);
-
-		m_programs.emplace_back(newProgram);
+		m_programs.emplace_back(SProgramData(program, argType, argShaderName, argUseLighting, argVertexShaderPath, argFragmentShaderPath));
 		m_mapPrograms.insert({ argShaderName, m_programs.size() - 1 });
+
+		return true;
+	}
+
+	const bool Renderer3D::createShader(const GLuint argProgram, const GLenum argShaderType, const std::string& argShaderPath)
+	{
+		if ("EMPTY" == argShaderPath || argShaderPath.empty() || 0 == argProgram)
+			return false;
+
+		const GLuint shader{ Helpers::LoadAndCompileShader(argShaderType, argShaderPath) };
+
+		if ((0 == shader))
+		{
+			return false;
+		}
+
+		glAttachShader(argProgram, shader);
+
+		glDeleteShader(shader);
+		Helpers::CheckForGLError();
 
 		return true;
 	}
@@ -312,20 +322,20 @@ namespace TNAP {
 
 		switch (m_programs.at(m_mapPrograms.at(argShaderName)).m_type)
 		{
-		case EMaterialType::eUnlitTexture:
+		case EShaderType::eUnlitTexture:
 		{
 			m_materials.emplace_back(std::make_unique<UnlitTexture>());
 		}
 		break;
 
-		case EMaterialType::ePBR:
+		case EShaderType::ePBR:
 		{
 			m_materials.emplace_back(std::make_unique<PBR>());
 		}
 		break;
 
 		default:
-		case EMaterialType::eUnlit:
+		case EShaderType::eUnlit:
 		{
 			m_materials.emplace_back(std::make_unique<Material>());
 		}
@@ -341,24 +351,24 @@ namespace TNAP {
 		return true;
 	}
 
-	const bool Renderer3D::createMaterial(const std::string& argMaterialName, const TNAP::EMaterialType argMaterialType, const bool argIncrementNameIfExisting)
+	const bool Renderer3D::createMaterial(const std::string& argMaterialName, const TNAP::EShaderType argShaderType, const bool argIncrementNameIfExisting)
 	{
-		std::string programName{ "" };
-		bool foundProgram{ false };
-		for (const TNAP::SProgram& program : m_programs)
-		{
-			if (program.m_type == argMaterialType)
-			{
-				foundProgram = true;
-				programName = program.m_name;
-				break;
-			}
-		}
+		std::pair<bool, size_t> program = getProgramHandle(argShaderType);
 
-		if (foundProgram && !programName.empty())
-			return createMaterial(argMaterialName, programName, argIncrementNameIfExisting);
+		if (program.first)
+			return createMaterial(argMaterialName, m_programs.at(program.second).m_name, argIncrementNameIfExisting);
 		else
 			return false;
+	}
+
+	const std::pair<bool, size_t> Renderer3D::getProgramHandle(const TNAP::EShaderType argType)
+	{
+		for (const TNAP::SProgramData& program : m_programs)
+		{
+			if (program.m_type == argType)
+				return std::make_pair(true, m_mapPrograms.at(program.m_name));
+		}
+		return std::make_pair(false, 0);
 	}
 
 	void Renderer3D::saveMaterials()
@@ -583,9 +593,6 @@ namespace TNAP {
 
 	void Renderer3D::render()
 	{
-		// Configure pipeline settings
-		glEnable(GL_DEPTH_TEST);
-		//glEnable(GL_CULL_FACE);
 
 		// Uncomment to render in wireframe (can be useful when debugging)
 		static bool polyMode{ false };
@@ -608,30 +615,12 @@ namespace TNAP {
 		else
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		// Clear buffers from previous frame
-		glClearColor(0.5f, 0.5f, 0.5f, 1.f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-#if USE_IMGUI
-		m_windowFrameBuffer.bind();
-#endif
-		glViewport(0, 0, static_cast<GLsizei>(m_windowFrameBuffer.getSize().x), static_cast<GLsizei>(m_windowFrameBuffer.getSize().y));
-
-		static bool depthMaskEnabled{ false };
-		if (!depthMaskEnabled)
-		{
-			depthMaskEnabled = true;
-			glDepthMask(true);
-		}
-
-		// Clear FRAME buffers from previous frame
-		glClearColor(0.2f, 0.2f, 0.2f, 1.f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glViewport(0, 0, static_cast<GLsizei>(m_geometryFrameBuffer.getSize().x), static_cast<GLsizei>(m_geometryFrameBuffer.getSize().y));
 
 		Helpers::CheckForGLError();
 
 		/// Creates viewport Projection Matrix
-		float aspectRatio{ m_windowFrameBuffer.getSize().x / m_windowFrameBuffer.getSize().y };
+		float aspectRatio{ m_geometryFrameBuffer.getSize().x / m_geometryFrameBuffer.getSize().y };
 		float nearPlane{ 1.0f }, farPlane{ 12000.0f };
 		glm::mat4 projection_xform{ glm::perspective(glm::radians(45.0f), aspectRatio, nearPlane, farPlane) };
 
@@ -639,52 +628,101 @@ namespace TNAP {
 		glm::mat4 view_xform{ glm::lookAt(Simulation::m_camera->GetPosition(), Simulation::m_camera->GetPosition() + Simulation::m_camera->GetLookVector(), Simulation::m_camera->GetUpVector()) };
 		glm::mat4 combined_xform{ projection_xform * view_xform };
 
-		// First loop = opaque			second = transparent
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < static_cast<int>(ERenderPass::eCount); i++)
 		{
-			if (i)
+			TNAP::FrameBuffer* const currentFrameBuffer{ ERenderPass::eEarlyDepthTest == static_cast<ERenderPass>(i) ? &m_earlyDepthTestFrameBuffer : &m_geometryFrameBuffer };
+
+			currentFrameBuffer->bind();
+
+			Helpers::CheckForGLError();
+
+			GLuint program{ 0 };
+			if (ERenderPass::eEarlyDepthTest == static_cast<ERenderPass>(i))
 			{
-				depthMaskEnabled = false;
-				glDepthMask(false);
+				glEnable(GL_DEPTH_TEST);
+				glEnable(GL_STENCIL_TEST);
+				glDepthMask(GL_TRUE);
+
+				// bind program
+				std::pair<bool, size_t> earlyDepthProgram = getProgramHandle(TNAP::EShaderType::eEarlyDepthTest);
+				assert(earlyDepthProgram.first);
+				program = m_programs.at(earlyDepthProgram.second).m_program;
+				glUseProgram(program);
+				Helpers::CheckForGLError();
+				m_currentProgram = program;
+
+				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+				glClear(GL_DEPTH_BUFFER_BIT);
+			}
+			else if (ERenderPass::eOpaqueRender == static_cast<ERenderPass>(i))
+			{
+				glDisable(GL_DEPTH_TEST);
+				glDisable(GL_STENCIL_TEST);
+				glDepthMask(GL_FALSE);
+
+				glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT);
+				glDisable(GL_BLEND);
+			}
+			else if (ERenderPass::eTransparentRender == static_cast<ERenderPass>(i))
+			{
 				glEnable(GL_BLEND);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			}
-			else
-			{
-				glDisable(GL_BLEND);
-			}
+			Helpers::CheckForGLError();
 
 			for (const auto& programBatch : m_batchRenders)
 			{
-				const GLuint program{ m_programs.at(programBatch.first).m_program };
-				if (program != m_currentProgram)
+				if (ERenderPass::eEarlyDepthTest != static_cast<ERenderPass>(i))
 				{
-					glUseProgram(program);
-					m_currentProgram = program;
+					program = m_programs.at(programBatch.first).m_program;
+					if (program != m_currentProgram)
+					{
+						glUseProgram(program);
+						Helpers::CheckForGLError();
+						m_currentProgram = program;
+					}
+
+
+					if (m_programs.at(programBatch.first).m_useLighting)
+					{
+						for (const std::unique_ptr<SLightData>& lightData : m_nextLights)
+							lightData->sendLightData(m_currentProgram);
+
+						SLightData::sendAmountOfLights(m_currentProgram);
+						SPointLightData::sendAmountOfLights(m_currentProgram);
+						SSpotLightData::sendAmountOfLights(m_currentProgram);
+					}
+
+					getSceneManager()->getCurrentScene()->sendShaderData(m_currentProgram);
+
+					//depthStencil
+					//GLuint attachment = m_textures.at(0).at(1).m_textureBinding;
+					GLuint attachment = m_earlyDepthTestFrameBuffer.getAttachmentOfType(EFrameBufferAttachmentType::eDepth, 0);
+					glActiveTexture(GL_TEXTURE14);
+					glBindTexture(GL_TEXTURE_2D, attachment);
+					glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_DEPTH_COMPONENT);
+					GLuint texture_id = glGetUniformLocation(program, "depthMap");
+					glUniform1i(texture_id, 14);
+
+					const GLuint viewport_size_id = glGetUniformLocation(program, "viewportSize");
+					glUniform2fv(viewport_size_id, 1, glm::value_ptr(m_geometryFrameBuffer.getSize()));
+					Helpers::CheckForGLError();
+
+					/// Create camera ID and then Sends camera forward direction data to shader as Uniform
+					const GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
+					glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
+					Helpers::CheckForGLError();
+
+					const GLuint camera_position_id = glGetUniformLocation(program, "camera_position");
+					glUniform3fv(camera_position_id, 1, glm::value_ptr(Simulation::m_camera->GetPosition()));
+					Helpers::CheckForGLError();
 				}
-
-				if (m_programs.at(programBatch.first).m_useLighting)
-				{
-					for (const std::unique_ptr<SLightData>& lightData : m_nextLights)
-						lightData->sendLightData(m_currentProgram);
-
-					SLightData::sendAmountOfLights(m_currentProgram);
-					SPointLightData::sendAmountOfLights(m_currentProgram);
-					SSpotLightData::sendAmountOfLights(m_currentProgram);
-				}
-
-				getSceneManager()->getCurrentScene()->sendShaderData(m_currentProgram);
-
-				/// Create camera ID and then Sends camera forward direction data to shader as Uniform
-				const GLuint camera_direcion_id = glGetUniformLocation(program, "camera_direction");
-				glUniform3fv(camera_direcion_id, 1, glm::value_ptr(Simulation::m_camera->GetLookVector()));
-
-				const GLuint camera_position_id = glGetUniformLocation(program, "camera_position");
-				glUniform3fv(camera_position_id, 1, glm::value_ptr(Simulation::m_camera->GetPosition()));
 
 				/// Create combined xform ID and then Sends Combined Xform data to shader as Uniform
 				const GLuint combined_xform_id = glGetUniformLocation(program, "combined_xform");
 				glUniformMatrix4fv(combined_xform_id, 1, GL_FALSE, glm::value_ptr(combined_xform));
+				Helpers::CheckForGLError();
 
 				for (const auto& modelBatch : programBatch.second)
 				{
@@ -693,10 +731,10 @@ namespace TNAP {
 
 					const Model* const model{ &m_models.at(modelBatch.first) };
 
-					const MeshBatch& otBatch{ i ? modelBatch.second.second : modelBatch.second.first }; // ot = opaque / transparent
+					const MeshBatch& otBatch{ ERenderPass::eTransparentRender == static_cast<ERenderPass>(i) ? modelBatch.second.second : modelBatch.second.first }; // ot = opaque / transparent
 
 					// Sort transparnt objects
-					if (i)
+					if (ERenderPass::eTransparentRender == static_cast<ERenderPass>(i))
 					{
 						/*glm::vec3 camPos = Simulation::m_camera->GetPosition();
 						const auto sortL{ [&camPos](const glm::mat4& argFirst, const glm::mat4& argSecond)
@@ -713,8 +751,6 @@ namespace TNAP {
 
 					if (meshBatchSize > 0)
 					{
-						Helpers::CheckForGLError();
-
 						glBindBuffer(GL_ARRAY_BUFFER, m_batchRenderingBuffer);
 						glBufferData(GL_ARRAY_BUFFER, meshBatchSize * sizeof(glm::mat4), &otBatch.first.at(0), GL_DYNAMIC_DRAW);
 						//glBufferSubData(GL_ARRAY_BUFFER, 0, meshBatchSize * sizeof(glm::mat4), &otBatch.first.at(0));
@@ -764,7 +800,8 @@ namespace TNAP {
 
 							glBindVertexArray(mesh->VAO);
 
-							mat->sendShaderData(m_currentProgram);
+							if (ERenderPass::eEarlyDepthTest != static_cast<ERenderPass>(i))
+								mat->sendShaderData(m_currentProgram);
 
 							if (meshBatchSize > 1) // Batch Draw
 								glDrawElementsInstanced(GL_TRIANGLES, static_cast<GLsizei>(mesh->elements.size()), GL_UNSIGNED_INT, 0, meshBatchSize);
@@ -776,13 +813,14 @@ namespace TNAP {
 							glBindVertexArray(0);
 						}
 					}
+#if !USE_IMGUI
+					glfwSwapBuffers(getApplication()->getWindow());
+					glfwPollEvents();
+#endif
 				}
 			}
+			currentFrameBuffer->unbind();
 		}
-
-#if USE_IMGUI
-		m_windowFrameBuffer.unbind();
-#endif
 
 		m_nextLights.clear();
 		m_batchRenders.clear();
@@ -867,7 +905,7 @@ namespace TNAP {
 							ImGui::SetDragDropPayload("MATERIAL_CELL", &i, sizeof(i));
 							ImGui::Image((ImTextureID)textureBinding, ImVec2(64, 64), ImVec2(0, 1), ImVec2(1, 0));
 							ImGui::Text(("Material Name: " + m_materials.at(i)->getName()).c_str());
-							ImGui::Text(("Material Type: " + std::to_string(static_cast<int>(m_materials.at(i)->getMaterialType()))).c_str());
+							ImGui::Text(("Material Type: " + std::to_string(static_cast<int>(m_materials.at(i)->getShaderType()))).c_str());
 							ImGui::EndDragDropSource();
 						}
 						ImGui::NextColumn();
@@ -975,18 +1013,18 @@ namespace TNAP {
 						ImGui::EndMenu();
 					}
 
-					static std::array<std::string, static_cast<int>(TNAP::EMaterialType::eCount)> materialNames{ "Unlit", "UnlitTexture", "PBR" };
+					static std::array<std::string, static_cast<int>(TNAP::EShaderType::eCount)> materialNames{ "Unlit", "UnlitTexture", "PBR" };
 
 					if (ImGui::BeginMenu("Material"))
 					{
-						static TNAP::EMaterialType materialType{ TNAP::EMaterialType::eUnlit };
+						static TNAP::EShaderType materialType{ TNAP::EShaderType::eUnlit };
 
 						if (ImGui::BeginCombo("Material Type", materialNames.at(static_cast<int>(materialType)).c_str()))
 						{
 							for (int i = 0; i < materialNames.size(); i++)
 							{
 								if (ImGui::Selectable(materialNames.at(i).c_str()))
-									materialType = static_cast<TNAP::EMaterialType>(i);
+									materialType = static_cast<TNAP::EShaderType>(i);
 							}
 							ImGui::EndCombo();
 						}
@@ -1112,12 +1150,13 @@ namespace TNAP {
 				{
 					getApplication()->setWindowSize(glm::vec2(RegionSize.x, RegionSize.y));
 
-					m_windowFrameBuffer.resize(windowSize);
+					m_geometryFrameBuffer.resize(windowSize);
+					m_earlyDepthTestFrameBuffer.resize(windowSize);
 
 					Helpers::CheckForGLError();
 				}
 
-				ImGui::Image((ImTextureID)m_windowFrameBuffer.getColourAttachment(), ImVec2(windowSize.x, windowSize.y), ImVec2(0, 1), ImVec2(1, 0));
+				ImGui::Image((ImTextureID)m_geometryFrameBuffer.getAttachmentOfType(EFrameBufferAttachmentType::eColour, 0), ImVec2(windowSize.x, windowSize.y), ImVec2(0, 1), ImVec2(1, 0));
 			}
 			ImGui::End();
 		}
@@ -1131,17 +1170,22 @@ namespace TNAP {
 
 	Renderer3D::~Renderer3D()
 	{
-		for(const SProgram& program : m_programs)
+		for(const SProgramData& program : m_programs)
 			glDeleteProgram(program.m_program);
 	}
 
 	void Renderer3D::init()
 	{
-		
-
-		m_windowFrameBuffer.init();
+		m_earlyDepthTestFrameBuffer.init();
+		m_earlyDepthTestFrameBuffer.addDepthAttachment(getApplication()->getWindowSize());
 		const glm::vec2& windowSize{ getApplication()->getWindowSize() };
-		m_windowFrameBuffer.resize(windowSize);
+		m_earlyDepthTestFrameBuffer.resize(windowSize);
+
+		Helpers::CheckForGLError();
+
+		m_geometryFrameBuffer.init();
+		//m_geometryFrameBuffer.addDepthStencilAttachment(getApplication()->getWindowSize());
+		m_geometryFrameBuffer.resize(windowSize);
 
 		Helpers::CheckForGLError();
 		

@@ -1,4 +1,5 @@
 #include "FrameBuffer.hpp"
+#include "Helper.h"
 
 namespace TNAP {
 
@@ -9,41 +10,16 @@ namespace TNAP {
 	FrameBuffer::~FrameBuffer()
 	{
 		glDeleteFramebuffers(1, &m_fbo);
-		glDeleteTextures(1, &m_colourAttachment);
-		glDeleteTextures(1, &m_depthAttachment);
+		for (const SAttachmentData& data : m_attachments)
+			glDeleteTextures(1, &data.m_frameBufferAttachment);
 	}
 
 	void FrameBuffer::init()
 	{
 		glGenFramebuffers(1, &m_fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-
-		glGenTextures(1, &m_colourAttachment);
-		glBindTexture(GL_TEXTURE_2D, m_colourAttachment);
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1600, 900, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_colourAttachment, 0);
-
-		glCreateTextures(GL_TEXTURE_2D, 1, &m_depthAttachment);
-		glBindTexture(GL_TEXTURE_2D, m_depthAttachment);
-		glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, 1600, 900);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_depthAttachment, 0);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	}
-
-	void FrameBuffer::bind()
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-	}
-
-	void FrameBuffer::unbind()
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		addColourAttachment(glm::vec2(1));
+		//addDepthStencilAttachment(glm::vec2(1));
+		Helpers::CheckForGLError();
 	}
 
 	void FrameBuffer::resize(const glm::vec2 argSize)
@@ -53,15 +29,79 @@ namespace TNAP {
 
 		m_frameBufferSize = argSize;
 
-		bind();
-		glBindTexture(GL_TEXTURE_2D, m_colourAttachment);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, static_cast<GLsizei>(argSize.x), static_cast<GLsizei>(argSize.y), 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glBindTexture(GL_TEXTURE_2D, 0);
+		if (!bind())
+			return;
+		for (const SAttachmentData& data : m_attachments)
+		{
+			//if (EFrameBufferAttachmentType::eColour != data.m_attachmentType)
+			//	continue;
+			glBindTexture(GL_TEXTURE_2D, data.m_frameBufferAttachment);
+			glTexImage2D(GL_TEXTURE_2D, 0, data.m_internalFormat, static_cast<GLsizei>(argSize.x), static_cast<GLsizei>(argSize.y), 0, data.m_pixelFormat, data.m_dataType, NULL);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 		unbind();
 
 		/*glBindTexture(GL_TEXTURE_2D, m_depthAttachment);
 		glTexStorage2D(GL_TEXTURE_2D, 1, GL_DEPTH24_STENCIL8, argSize.x, argSize.y);
 		glBindTexture(GL_TEXTURE_2D, 0);*/
+	}
+
+	void FrameBuffer::addColourAttachment(const glm::vec2& argSize, const GLint argInternalFormat, const GLint argPixelFormat, const GLint argDataType, const GLint argTextureFilter)
+	{
+		if (!bind(false))
+			return;
+		m_attachments.emplace_back(SAttachmentData(EFrameBufferAttachmentType::eColour, argInternalFormat, argPixelFormat, argDataType));
+
+		glGenTextures(1, &m_attachments.back().m_frameBufferAttachment);
+		glBindTexture(GL_TEXTURE_2D, m_attachments.back().m_frameBufferAttachment);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, argInternalFormat, argSize.x, argSize.y, 0, argPixelFormat, argDataType, NULL);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, argTextureFilter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, argTextureFilter);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, static_cast<GLenum>(EFrameBufferAttachmentType::eColour)+m_numberOfColourAttachments, GL_TEXTURE_2D, m_attachments.back().m_frameBufferAttachment, 0);
+		m_numberOfColourAttachments++;
+		unbind();
+		Helpers::CheckForGLError();
+	}
+
+	void FrameBuffer::addDepthStencilAttachment(const glm::vec2& argSize, const GLint argInternalFormat, const GLint argPixelFormat, const GLint argDataType)
+	{
+		if (!bind(false))
+			return;
+		m_attachments.emplace_back(SAttachmentData(EFrameBufferAttachmentType::eDepthStencil, argInternalFormat, argPixelFormat, argDataType));
+		//glCreateTextures(GL_TEXTURE_2D, 1, &m_attachments.back().m_frameBufferAttachment);
+
+		glGenTextures(1, &m_attachments.back().m_frameBufferAttachment);
+		glBindTexture(GL_TEXTURE_2D, m_attachments.back().m_frameBufferAttachment);
+
+		glTexImage2D(GL_TEXTURE_2D, 0, argInternalFormat, argSize.x, argSize.y, 0, argPixelFormat, argDataType, NULL);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_ALPHA);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, static_cast<GLenum>(EFrameBufferAttachmentType::eDepthStencil), GL_TEXTURE_2D, m_attachments.back().m_frameBufferAttachment, 0);
+		unbind();
+		Helpers::CheckForGLError();
+	}
+
+	void FrameBuffer::addDepthAttachment(const glm::vec2& argSize, const GLint argInternalFormat, const GLint argPixelFormat, const GLint argDataType)
+	{
+		if (!bind(false))
+			return;
+		m_attachments.emplace_back(SAttachmentData(EFrameBufferAttachmentType::eDepth, argInternalFormat, argPixelFormat, argDataType));
+		glCreateTextures(GL_TEXTURE_2D, 1, &m_attachments.back().m_frameBufferAttachment);
+		glBindTexture(GL_TEXTURE_2D, m_attachments.back().m_frameBufferAttachment);
+		glTexImage2D(GL_TEXTURE_2D, 0, argInternalFormat, argSize.x, argSize.y, 0, argPixelFormat, argDataType, NULL);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, static_cast<GLenum>(EFrameBufferAttachmentType::eDepth), GL_TEXTURE_2D, m_attachments.back().m_frameBufferAttachment, 0);
+		unbind();
+		Helpers::CheckForGLError();
 	}
 
 }

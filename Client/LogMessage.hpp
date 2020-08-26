@@ -21,6 +21,7 @@ namespace TNAP
 		};
 
 	public:
+		LogMessage() : TNAP::Message() {}
 		LogMessage(const std::string& argMessage)
 			: TNAP::Message(),
 			m_message(argMessage)

@@ -1,4 +1,4 @@
-#version 330
+#version 430
 
 //struct SMaterial
 //{
@@ -15,6 +15,7 @@
 //	float m_emissionIntensity;
 //};
 
+
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec3 vertex_normal;
 layout(location = 2) in vec2 vertex_uv;
@@ -28,7 +29,7 @@ uniform vec3 camera_position;
 
 uniform mat4 combined_xform;
 
-out vec3 varying_position;
+//out vec3 varying_position;
 //out vec3 varying_normal;
 out vec2 varying_uv;
 
@@ -39,7 +40,7 @@ out vec3 tangentFragPos;
 
 void main(void)
 {	
-	varying_position = vec3(aInstanceMatrix * vec4(vertex_position, 1));
+	vec3 varying_position = vec3(aInstanceMatrix * vec4(vertex_position, 1));
 	varying_uv = vertex_uv;
 	//varying_normal = vertex_normal;
 	//varying_normal = normalize(mat3(aInstanceMatrix) * vertex_normal);
@@ -52,7 +53,6 @@ void main(void)
 	vec3 B = cross(N, T);
 
 	varying_TBN = transpose(mat3(T, B, N));
-
 
 	tangentViewPos = varying_TBN * camera_position;
 	tangentFragPos = varying_TBN * varying_position;
